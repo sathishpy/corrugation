@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include corrugation *.css
+recursive-include corrugation *.csv
+recursive-include corrugation *.html
+recursive-include corrugation *.ico
+recursive-include corrugation *.js
+recursive-include corrugation *.json
+recursive-include corrugation *.md
+recursive-include corrugation *.png
+recursive-include corrugation *.py
+recursive-include corrugation *.svg
+recursive-include corrugation *.txt
+recursive-exclude corrugation *.pyc
