@@ -11,25 +11,7 @@ class CMItemDescription(Document):
 		self.name = self.item + "-description"
 
 	def on_submit(self):
-		sheet_length = float(item.sheet_length)
-		sheet_width = float(item.sheet_width)
-
-		print "Sheet length is {0} and width is {1}".format(sheet_length, sheet_width)
-		print "Bottom paper is {0}".format(self.item_rm_bottom)
-
-		paper_measurements = self.item_rm_bottom.split("-")
-		size = len(paper_measurements)
-		gsm = float(paper_measurements[size-3])
-		bf = paper_measurements[size-2]
-		deck = paper_measurements[size-1]
-
-		weight_top  = float((sheet_length * sheet_width / 10000) * gsm/1000)
-		flute = float(self.item_flute)
-		weight_bottom = weight_top + weight_top * flute
-		weight = weight_top + weight_bottom
-		print "Paper measurement gsm={0} bf={1} deck={2} weight={3}kg".format(gsm, bf, deck, weight)
-
-		#raise ArithmeticError
+		pass
 
 @frappe.whitelist()
 def make_new_bom(source_name):

@@ -12,7 +12,7 @@ frappe.ui.form.on('CM Item Description', {
 	},
 	make_bom: function() {
 		frappe.model.open_mapped_doc({
-			method: "corrugation.corrugation_manufacturing.doctype.cm_item_description.cm_item_description.make_new_bom",
+			method: "corrugation.corrugation.doctype.cm_item_description.cm_item_description.make_new_bom",
 			frm: cur_frm
 		})
 	},
