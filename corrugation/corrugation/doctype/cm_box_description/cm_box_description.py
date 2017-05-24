@@ -14,9 +14,6 @@ class CMBoxDescription(Document):
 		pass
 
 	def populate_raw_materals(self):
-		keys = self.__dict__.keys()
-		print ("Object Keys:" + ",".join(keys))
-		#print key: for key in keys
 		if len(self.item_papers) == 0:
 			rm_item = frappe.new_doc("CM Paper Item")
 			rm_item.rm_type = 'Top Paper'
@@ -78,7 +75,7 @@ class CMBoxDescription(Document):
 			elif (item.rm_type == 'Flute Paper'):
 				(weight, cost) = self.get_paper_weight_cost(item.rm)
 				item.rm_weight = weight * self.item_flute
-				item.rm_cost = weight * cost
+				item.rm_cost = cost * self.item_flute
 				rms_cost += item.rm_cost
 				paper_weight += item.rm_weight
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
@@ -91,8 +88,8 @@ class CMBoxDescription(Document):
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
 		self.item_rm_cost = rms_cost
-		self.item_op_cost = self.item_rm_cost * 0.2
-		self.item_total_cost = float(self.item_rm_cost + self.item_op_cost)/int(self.item_per_sheet)
+		self.item_prod_cost = 0
+		self.item_total_cost = float(self.item_rm_cost + self.item_prod_cost)/int(self.item_per_sheet)
 
 def get_paper_measurements(paper):
 	paper_measurements = paper.split("-")
@@ -117,7 +114,7 @@ def make_new_bom(source_name):
 	bom = frappe.new_doc("BOM")
 	bom.item = item_desc.item
 	bom.item_name = item_desc.item_name
-	bom.quantity = 100
+	bom.quantity = 1
 
 	list_empty = True
 
@@ -128,14 +125,13 @@ def make_new_bom(source_name):
 			bom_item = next((bi for bi in bom.items if bi.item_code == item.rm), None)
 			if bom_item is not None:
 				print ("Updating Item {0}".format(bom_item.item_code))
-				bom_item.qty += bom.quantity * item.rm_weight
-				bom_item.rate += bom.quantity * item.rm_cost
+				bom_item.qty += (bom.quantity * item.rm_weight)/item_desc.item_per_sheet
 				continue
 
 		bom_item = frappe.new_doc("BOM Item")
 		bom_item.item_code = item.rm
-		bom_item.qty = bom.quantity * item.rm_weight
-		bom_item.rate = bom.quantity * item.rm_cost
+		bom_item.qty = (bom.quantity * item.rm_weight)/item_desc.item_per_sheet
+		bom_item.rate = get_item_rate(item.rm)
 		rm_item = frappe.get_doc("Item", item.rm)
 		bom_item.stock_uom = rm_item.stock_uom
 		bom.append("items", bom_item)
