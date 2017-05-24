@@ -16,7 +16,8 @@ frappe.ui.form.on('CM Box Description', {
 				{fieldname: 'rm_cost', columns: 1}
 			];
 	},
-	add_rm: function(frm) {
+	onload: function(frm) {
+		if (!frm.doc.__islocal) return;
 		frappe.call({
 			doc: frm.doc,
 			method: "populate_raw_materals",

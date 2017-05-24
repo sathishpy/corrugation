@@ -8,40 +8,49 @@ from frappe.model.document import Document
 
 class CMBoxDescription(Document):
 	def autoname(self):
-		self.name = self.item + "-description"
+
+		items = frappe.db.sql_list("""select name from `tabCM Box Description` where item=%s""", self.item)
+		if items:
+			idx = len(items) + 1
+		else:
+			idx = 1
+
+		self.name = self.item + "-description" + ('-%.3i' % idx)
 
 	def on_submit(self):
 		pass
 
 	def populate_raw_materals(self):
-		if len(self.item_papers) == 0:
-			rm_item = frappe.new_doc("CM Paper Item")
-			rm_item.rm_type = 'Top Paper'
-			self.append("item_papers", rm_item)
+		rm_item = frappe.new_doc("CM Paper Item")
+		rm_item.rm_type = 'Top Paper'
+		self.append("item_papers", rm_item)
 
-			rm_item = frappe.new_doc("CM Paper Item")
-			rm_item.rm_type = 'Flute Paper'
-			self.append("item_papers", rm_item)
+		rm_item = frappe.new_doc("CM Paper Item")
+		rm_item.rm_type = 'Flute Paper'
+		self.append("item_papers", rm_item)
 
-			rm_item = frappe.new_doc("CM Paper Item")
-			rm_item.rm_type = "Bottom Paper"
-			self.append("item_papers", rm_item)
+		rm_item = frappe.new_doc("CM Paper Item")
+		rm_item.rm_type = "Bottom Paper"
+		self.append("item_papers", rm_item)
 
-		if len(self.item_others) == 0:
-			rm_item = frappe.new_doc("CM Misc Item")
-			rm_item.rm_type = "Corrugation Gum"
-			rm_item.rm_percent = 3
-			self.append("item_others", rm_item)
+		rm_item = frappe.new_doc("CM Misc Item")
+		rm_item.rm_type = "Corrugation Gum"
+		rm_item.rm_percent = 3
+		self.append("item_others", rm_item)
 
-			rm_item = frappe.new_doc("CM Misc Item")
-			rm_item.rm_type = "Pasting Gum"
-			rm_item.rm_percent = 2
-			self.append("item_others", rm_item)
+		rm_item = frappe.new_doc("CM Misc Item")
+		rm_item.rm_type = "Pasting Gum"
+		rm_item.rm_percent = 2
+		self.append("item_others", rm_item)
 
-			rm_item = frappe.new_doc("CM Misc Item")
-			rm_item.rm_type = "Printing Ink"
-			rm_item.rm_percent = 0.3
-			self.append("item_others", rm_item)
+		rm_item = frappe.new_doc("CM Misc Item")
+		rm_item.rm_type = "Printing Ink"
+		rm_item.rm_percent = 0.3
+		self.append("item_others", rm_item)
+
+	def populate_raw_materals_check(self):
+		if len(self.item_papers) != 0 or len(self.item_others) != 0: return
+		self.populate_raw_materals()
 
 	def get_overall_cost(self):
 		(top_weight, top_cost) = get_paper_weight_cost(self.item_rm_top)
@@ -61,13 +70,13 @@ class CMBoxDescription(Document):
 		return (weight, cost)
 
 	def validate(self):
-		self.populate_raw_materals()
+		pass
 
 	def on_update(self):
 		rms_cost = 0
 		paper_weight = 0
 		for item in self.item_papers:
-			if item.rm is None: continue
+			if item.rm is None: return
 			if (item.rm_type == 'Top Paper' or item.rm_type == 'Bottom Paper'):
 				(item.rm_weight, item.rm_cost) = self.get_paper_weight_cost(item.rm)
 				rms_cost += item.rm_cost
@@ -81,7 +90,7 @@ class CMBoxDescription(Document):
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
 		for item in self.item_others:
-			if item.rm is None: continue
+			if item.rm is None: return
 			item.rm_weight = paper_weight * item.rm_percent / 100
 			item.rm_cost = item.rm_weight * get_item_rate(item.rm)
 			rms_cost += item.rm_cost
