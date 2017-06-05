@@ -41,8 +41,8 @@ class CMProductCosts(Document):
 										where production_order is not NULL and posting_date between '{0}' and '{1}'"""\
 										.format(start_date, end_date),as_dict=1)
 
-		self.cm_act_indirect_cost = get_total_expenses(0)
-		per_box_op_cost = get_op_cost_per_box(0)
+		self.cm_act_indirect_cost = get_total_expenses(month)
+		per_box_op_cost = get_op_cost_per_box(month)
 
 		self.cm_est_direct_cost = self.cm_act_direct_cost = self.cm_total_production = 0
 		self.product_cost = []
@@ -94,12 +94,20 @@ def get_op_cost_per_box(month):
 	return op_cost/boxes
 
 def get_total_expenses(month):
-	expenses = frappe.get_all("Journal Entry", fields={"voucher_type":"Journal Entry"})
+	#expenses = frappe.get_all("Journal Entry", fields={"voucher_type":"Journal Entry"})
+	start_date = datetime.date(year=int(self.cm_year), month=month, day=1)
+	end_date = datetime.date(year=int(self.cm_year), month=month, day=30)
+
+	expenses = frappe.db.sql("""select name, total_debit
+									from `tabJournal Entry`
+									where voucher_type='Journal Entry' and posting_date between '{0}' and '{1}'"""\
+									.format(start_date, end_date),as_dict=1)
+
 	expense_total = 0
 
 	for expense_entry in expenses:
 		expense = frappe.get_doc("Journal Entry", expense_entry.name)
-		print("{0}    {1}".format(expense.title, expense.total_debit))
+		#print("{0}    {1}".format(expense.title, expense.total_debit))
 		expense_total += expense.total_debit
 
 	return expense_total

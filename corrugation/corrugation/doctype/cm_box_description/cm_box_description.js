@@ -41,6 +41,7 @@ frappe.ui.form.on('CM Box Description', {
 					frm.events.update_cost(frm)
 				});
 		}
+		if (frm.doc.__islocal) return;
 		frm.events.update_sheet_values(frm);
 	},
 	make_bom: function(curfrm) {

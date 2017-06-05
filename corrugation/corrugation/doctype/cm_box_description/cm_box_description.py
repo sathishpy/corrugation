@@ -76,10 +76,10 @@ class CMBoxDescription(Document):
 	def get_paper_weight_cost(self, paper):
 		if paper is None: return (0, 0)
 		(gsm, bf, deck) = get_paper_measurements(paper)
-		print ("Sheet {0} sl={1} sw={2}", gsm, self.sheet_length, deck)
+		print ("Sheet {0} sl={1} sw={2} deck={3}", gsm, self.sheet_length, self.sheet_width, deck)
 		weight = float((self.sheet_length * self.sheet_width / 10000) * gsm/1000)
 		cost = weight * get_item_rate(paper)
-		print("Paper {0} weight={1} cost={2}".format(paper, weight, cost))
+		print("Paper {0} weight={1} rate={2} cost={3}".format(paper, weight, get_item_rate(paper), cost))
 		return (weight, cost)
 
 	def validate(self):
@@ -119,6 +119,7 @@ class CMBoxDescription(Document):
 		print("Boxes = {0} production={1}".format(boxes, production))
 		if (boxes != 0): self.item_prod_cost = total_expense/boxes
 		self.item_total_cost = float(self.item_rm_cost + self.item_prod_cost)
+		self.item_profit = float((get_item_rate(self.item) - self.item_total_cost)*100/self.item_total_cost)
 
 def get_paper_measurements(paper):
 	paper_measurements = paper.split("-")
@@ -160,15 +161,13 @@ def get_production_details(month):
 
 @frappe.whitelist()
 def make_new_bom(source_name):
-	print "Creating new bom"
 	item_desc = frappe.get_doc("CM Box Description", source_name)
 
 	bom = frappe.new_doc("BOM")
 	bom.item = item_desc.item
 	bom.item_name = item_desc.item_name
 	bom.quantity = 1
-	bom.operating_cost = bom.quantity * item_desc.item_prod_cost
-	
+
 	list_empty = True
 
 	for item in (item_desc.item_papers + item_desc.item_others):
@@ -192,5 +191,7 @@ def make_new_bom(source_name):
 		bom.append("items", bom_item)
 		list_empty = False
 
+	bom.base_operating_cost = bom.operating_cost = bom.quantity * item_desc.item_prod_cost
 	bom.save()
+	print "Creating new bom for {0} with operating cost {1}".format(bom.item_name, bom.operating_cost)
 	return bom

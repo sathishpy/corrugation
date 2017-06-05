@@ -16,7 +16,7 @@ frappe.ui.form.on('CM Product Costs', {
 	},
 	onload: function(frm) {
 		let date = new Date();
-		let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+		let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"];
 		frm.set_value("cm_year", date.getFullYear());
 		frm.set_value("cm_month", months[date.getMonth() - 1])
 
