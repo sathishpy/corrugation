@@ -95,8 +95,9 @@ def get_op_cost_per_box(month):
 
 def get_total_expenses(month):
 	#expenses = frappe.get_all("Journal Entry", fields={"voucher_type":"Journal Entry"})
-	start_date = datetime.date(year=int(self.cm_year), month=month, day=1)
-	end_date = datetime.date(year=int(self.cm_year), month=month, day=30)
+	thisyear = datetime.datetime.now().year
+	start_date = datetime.date(year=thisyear, month=month, day=1)
+	end_date = datetime.date(year=thisyear, month=month, day=30)
 
 	expenses = frappe.db.sql("""select name, total_debit
 									from `tabJournal Entry`
