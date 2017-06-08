@@ -87,6 +87,9 @@ class CMBoxDescription(Document):
 
 	def on_update(self):
 		self.update_cost()
+	def on_submit(self):
+		self.item_bom = make_new_bom(self.name)
+		#item_desc.save()
 
 	def update_cost(self):
 		rms_cost = 0
@@ -120,6 +123,7 @@ class CMBoxDescription(Document):
 		if (boxes != 0): self.item_prod_cost = total_expense/boxes
 		self.item_total_cost = float(self.item_rm_cost + self.item_prod_cost)
 		self.item_profit = float((get_item_rate(self.item) - self.item_total_cost)*100/self.item_total_cost)
+		print("RM cost={0} OP Cost={1} Rate={2}".format(self.item_rm_cost, self.item_prod_cost, get_item_rate(self.item) ))
 
 def get_paper_measurements(paper):
 	paper_measurements = paper.split("-")
@@ -193,5 +197,6 @@ def make_new_bom(source_name):
 
 	bom.base_operating_cost = bom.operating_cost = bom.quantity * item_desc.item_prod_cost
 	bom.save()
+	bom.submit()
 	print "Creating new bom for {0} with operating cost {1}".format(bom.item_name, bom.operating_cost)
-	return bom
+	return bom.name

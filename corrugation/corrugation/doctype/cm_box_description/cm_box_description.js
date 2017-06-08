@@ -15,6 +15,13 @@ frappe.ui.form.on('CM Box Description', {
 				{fieldname: 'rm_percent', columns: 1},
 				{fieldname: 'rm_cost', columns: 1}
 			];
+		frm.fields_dict['item'].get_query = function(doc, dt, dn) {
+			return {
+				filters:[
+					['Item', 'item_group', '=', 'Products']
+				]
+			}
+		}
 	},
 	onload: function(frm) {
 		if (!frm.doc.__islocal) return;
@@ -30,17 +37,10 @@ frappe.ui.form.on('CM Box Description', {
 		});
 	},
 	refresh: function(frm) {
-		if (frm.doc.docstatus == 1) {
-			frm.add_custom_button(__('Make BOM'),
-		  	function() {
-					frm.events.make_bom(frm)
-				});
-		} else {
-			frm.add_custom_button(__('Update Cost'),
-		  	function() {
-					frm.events.update_cost(frm)
-				});
-		}
+		frm.add_custom_button(__('Update Cost'),
+	  	function() {
+				frm.events.update_cost(frm)
+			});
 		if (frm.doc.__islocal) return;
 		frm.events.update_sheet_values(frm);
 	},
