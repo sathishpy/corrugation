@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 
-class PaperRollRegister(Document):
+class CMPaperRollRegister(Document):
 	def autoname(self):
 		self.name = self.cm_purchase_invoice + "-roll-register"
 
@@ -14,24 +14,29 @@ class PaperRollRegister(Document):
 		self.cm_purchase_weight = self.get_purchase_weight()
 
 		invoice = frappe.get_doc("Purchase Invoice", self.cm_purchase_invoice)
-		print("Populating {0} paper rolls for invoice {1}".format(len(invoice.items), self.cm_purchase_invoice))
+		print("Populating {0} CM Paper Rolls for invoice {1}".format(len(invoice.items), self.cm_purchase_invoice))
 		self.cm_paper_rolls = []
 		for item in invoice.items:
 			weight = item.qty
 			while (weight > 0):
-				weight -= 500
-				paper_roll = frappe.new_doc("Paper Roll Item")
+				paper_roll = frappe.new_doc("CM Paper Roll Detail")
 				paper_roll.cm_item = item.item_code
-				paper_roll.cm_weight = 500
+				if (weight > 500):
+					paper_roll.cm_weight = 500
+					weight -= 500
+				else:
+					paper_roll.cm_weight = weight
+					weight = 0
 				self.append("cm_paper_rolls", paper_roll)
 				self.cm_total_weight += paper_roll.cm_weight
-				print "Creating Roll {0}-{1}".format(item.item_code, item.qty)
+				print "Creating Roll {0}-{1}".format(item.item_code, paper_roll.cm_weight)
 
 	def register_rolls(self):
 		for roll in self.cm_paper_rolls:
-			paper_roll = frappe.new_doc("Paper Roll")
+			paper_roll = frappe.new_doc("CM Paper Roll")
 			paper_roll.cm_item = roll.cm_item
 			paper_roll.cm_weight = roll.cm_weight
+			paper_roll.cm_status = "Ready"
 			paper_roll.save()
 
 	def get_purchase_weight(self):

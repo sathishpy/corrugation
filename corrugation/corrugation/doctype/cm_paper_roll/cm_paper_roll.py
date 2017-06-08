@@ -6,9 +6,9 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 
-class PaperRoll(Document):
+class CMPaperRoll(Document):
 	def autoname(self):
-		rolls = frappe.db.sql_list("""select name from `tabPaper Roll` where cm_item=%s""", self.cm_item)
+		rolls = frappe.db.sql_list("""select name from `tabCM Paper Roll` where cm_item=%s""", self.cm_item)
 		if rolls:
 			idx = len(rolls) + 1
 		else:

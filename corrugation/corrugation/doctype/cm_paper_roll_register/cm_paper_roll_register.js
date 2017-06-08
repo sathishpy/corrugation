@@ -1,20 +1,12 @@
 // Copyright (c) 2017, sathishpy@gmail.com and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Paper Roll Register', {
+frappe.ui.form.on('CM Paper Roll Register', {
 	setup: function(frm) {
 		frm.get_field('cm_paper_rolls').grid.editable_fields = [
 				{fieldname: 'cm_item', columns: 2},
 				{fieldname: 'cm_weight', columns: 2},
 			];
-		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
-			return {
-				query: "erpnext.controllers.queries.sales_order_query",
-				filters:{
-					'status': 'Open',
-				}
-			}
-		}
 	},
 	refresh: function(frm) {
 		if (frm.doc.docstatus == 1) {
