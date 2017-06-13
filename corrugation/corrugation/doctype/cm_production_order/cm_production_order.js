@@ -17,8 +17,43 @@ frappe.ui.form.on('CM Production Order', {
 		}
 		frm.add_fetch("CM Paper Roll", "cm_weight", "cm_start_weight");
 	},
+	onload: function(frm) {
+		frm.events.set_default_warehouse(frm);
+	},
 	refresh: function(frm) {
+		if (frm.doc.__islocal) return;
+		frm.add_custom_button(__('Make'),
+	  	function() {
+				frm.events.make_pe(frm)
+			});
+	},
+	set_default_warehouse: function(frm) {
+		if (!(frm.doc.cm_source_wh || frm.doc.cm_target_wh)) {
+			frappe.call({
+				method: "erpnext.manufacturing.doctype.production_order.production_order.get_default_warehouse",
 
+				callback: function(r) {
+					if(!r.exe) {
+						frm.set_value("cm_source_wh", r.message.wip_warehouse);
+						frm.set_value("cm_target_wh", r.message.fg_warehouse)
+					}
+				}
+			});
+		}
+	},
+
+	setup_company_filter: function(frm) {
+		var company_filter = function(doc) {
+			return {
+				filters: {
+					'company': frm.doc.company,
+					'is_group': 0
+				}
+			}
+		}
+
+		frm.fields_dict.cm_source_wh.get_query = company_filter;
+		frm.fields_dict.cm_target_wh.get_query = company_filter;
 	},
 	sales_order: function(frm) {
 		frm.fields_dict['cm_item'].get_query = function(doc, dt, dn) {
@@ -47,8 +82,15 @@ frappe.ui.form.on('CM Production Order', {
 			callback: function(r) {
 				if(!r.exe) {
 					refresh_field("cm_box_rolls");
+					refresh_field("cm_bom")
 				}
 			}
 		});
+	},
+	make_pe: function(frm) {
+		frappe.model.open_mapped_doc({
+			method: "corrugation.corrugation.doctype.cm_production_order.cm_production_order.make_new_pe",
+			frm: frm
+		})
 	}
 });

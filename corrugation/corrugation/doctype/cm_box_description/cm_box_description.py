@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+	# -*- coding: utf-8 -*-
 # Copyright (c) 2017, sathishpy@gmail.com and contributors
 # For license information, please see license.txt
 
@@ -87,9 +87,10 @@ class CMBoxDescription(Document):
 
 	def on_update(self):
 		self.update_cost()
-	def on_submit(self):
+
+	def before_submit(self):
 		self.item_bom = make_new_bom(self.name)
-		#item_desc.save()
+		print("Created item decsription {0} with bom {1}".format(self.name, self.item_bom))
 
 	def update_cost(self):
 		rms_cost = 0
@@ -197,6 +198,6 @@ def make_new_bom(source_name):
 
 	bom.base_operating_cost = bom.operating_cost = bom.quantity * item_desc.item_prod_cost
 	bom.save()
+	print "Creating new bom {0} for {1} with operating cost {2}".format(bom.name, bom.item_name, bom.operating_cost)
 	bom.submit()
-	print "Creating new bom for {0} with operating cost {1}".format(bom.item_name, bom.operating_cost)
 	return bom.name

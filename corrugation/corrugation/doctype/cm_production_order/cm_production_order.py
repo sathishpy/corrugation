@@ -5,10 +5,13 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
+from erpnext.manufacturing.doctype.production_order.production_order import make_stock_entry_object
 
 class CMProductionOrder(Document):
 	def populate_box_rolls(self):
 		box_details = frappe.get_doc("CM Box Description", self.cm_box_detail)
+		print ("Got item {0} having bom {1}".format(box_details.name, box_details.item_bom))
+		self.cm_bom = box_details.item_bom
 		self.cm_box_rolls = []
 		for paper in box_details.item_papers:
 			print "Paper {0}".format(paper.rm)
@@ -24,6 +27,16 @@ class CMProductionOrder(Document):
 			print ("Adding {0}".format(roll_item))
 			self.append("cm_box_rolls", roll_item)
 
+	def get_paper_quantity(self, paper):
+		qty = 0
+		for roll_item in self.cm_box_rolls:
+			roll = frappe.get_doc("CM Paper Roll", roll_item.cm_paper)
+			if roll.cm_item != paper: continue
+			qty += (roll_item.cm_start_weight - roll_item.cm_final_weight)
+		print("Weight of paper {0} is {1}".format(paper, qty))
+		return qty
+
+@frappe.whitelist()
 def is_paper_item(rm):
 	if "paper" in rm.item_name or "Paper" in rm.item_name:
 		return True
@@ -40,3 +53,34 @@ def get_smallest_roll(paper):
 			small_roll = roll
 			weight = roll.cm_weight
 	return small_roll
+
+def update_paper_quantity(po, se):
+	for item in se.items:
+		print ("Updating item {0}".format(item.item_code))
+		rm = frappe.get_doc("Item", item.item_code)
+		if not is_paper_item(rm): continue
+		qty = po.get_paper_quantity(rm.name)
+		if qty != 0:
+			print("Updating item {0} qunatity to {1}".format(rm.name, qty))
+			item.qty = qty
+	return se
+
+@frappe.whitelist()
+def make_new_pe(source_name):
+	cm_po = frappe.get_doc("CM Production Order", source_name)
+	print("Creating PO for CM Order {0}".format(cm_po.name))
+
+	po = frappe.new_doc("Production Order")
+	po.production_item = cm_po.cm_item
+	po.bom_no = cm_po.cm_bom
+	po.sales_order = cm_po.sales_order
+	po.skip_transfer = True
+	po.qty = cm_po.cm_box_qty
+	po.wip_warehouse = po.source_warehouse = cm_po.cm_source_wh
+	po.fg_warehouse = cm_po.cm_target_wh
+	po.submit()
+
+	se = make_stock_entry_object(po.name, "Manufacture")
+	update_paper_quantity(cm_po, se)
+	se.calculate_rate_and_amount()
+	return se.as_dict()

@@ -17,6 +17,7 @@ class CMPaperRollRegister(Document):
 		print("Populating {0} CM Paper Rolls for invoice {1}".format(len(invoice.items), self.cm_purchase_invoice))
 		self.cm_paper_rolls = []
 		for item in invoice.items:
+			if not is_paper_item(item): continue
 			weight = item.qty
 			while (weight > 0):
 				paper_roll = frappe.new_doc("CM Paper Roll Detail")
@@ -60,3 +61,9 @@ class CMPaperRollRegister(Document):
 		purchase_weight = self.get_purchase_weight()
 		if (roll_weight != purchase_weight):
 			frappe.throw(_("Paper roll weight doesn't match the purchase weight"))
+
+@frappe.whitelist()
+def is_paper_item(rm):
+	if "paper" in rm.item_name or "Paper" in rm.item_name:
+		return True
+	return False
