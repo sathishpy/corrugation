@@ -8,24 +8,31 @@ from frappe.model.document import Document
 from erpnext.manufacturing.doctype.production_order.production_order import make_stock_entry_object
 
 class CMProductionOrder(Document):
+	def autoname(self):
+		self.name = "PO-{0}-{1}".format(self.cm_item, self.sales_order)
+
 	def populate_box_rolls(self):
 		box_details = frappe.get_doc("CM Box Description", self.cm_box_detail)
 		print ("Got item {0} having bom {1}".format(box_details.name, box_details.item_bom))
 		self.cm_bom = box_details.item_bom
 		self.cm_box_rolls = []
+
+		available_rolls = []
+		for paper in box_details.item_papers:
+			available_rolls += frappe.get_all("CM Paper Roll", fields={"cm_item" : paper.rm})
+
 		for paper in box_details.item_papers:
 			print "Paper {0}".format(paper.rm)
-			roll = get_smallest_roll(paper.rm)
+			roll = get_smallest_roll(available_rolls, paper.rm)
 			if roll is None:
 				print("Failed to find a roll for paper {0}".format(paper.rm))
 				continue
-			roll.cm_status = "In Use"
-			roll.save()
 			roll_item = frappe.new_doc("CM Box Roll Detail")
 			roll_item.cm_paper = roll.name
 			roll_item.cm_start_weight = roll.cm_weight
 			print ("Adding {0}".format(roll_item))
 			self.append("cm_box_rolls", roll_item)
+			available_rolls = [rl for rl in available_rolls if rl.name != roll.name]
 
 	def get_paper_quantity(self, paper):
 		qty = 0
@@ -36,14 +43,18 @@ class CMProductionOrder(Document):
 		print("Weight of paper {0} is {1}".format(paper, qty))
 		return qty
 
+	def get_all_order_items(self):
+		items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
+								where parent='{0}'""".format(self.sales_order), as_dict=1);
+		return items
+
 @frappe.whitelist()
 def is_paper_item(rm):
 	if "paper" in rm.item_name or "Paper" in rm.item_name:
 		return True
 	return False
 
-def get_smallest_roll(paper):
-	rolls = frappe.get_all("CM Paper Roll", fields={"cm_item" : paper})
+def get_smallest_roll(rolls, paper):
 	weight = 10000
 	small_roll = None
 	for p_roll in rolls:
@@ -70,17 +81,30 @@ def make_new_pe(source_name):
 	cm_po = frappe.get_doc("CM Production Order", source_name)
 	print("Creating PO for CM Order {0}".format(cm_po.name))
 
-	po = frappe.new_doc("Production Order")
-	po.production_item = cm_po.cm_item
-	po.bom_no = cm_po.cm_bom
-	po.sales_order = cm_po.sales_order
-	po.skip_transfer = True
-	po.qty = cm_po.cm_box_qty
-	po.wip_warehouse = po.source_warehouse = cm_po.cm_source_wh
-	po.fg_warehouse = cm_po.cm_target_wh
-	po.submit()
+	orders = frappe.get_all("Production Order", fields={"production_item":cm_po.cm_item, "sales_order":cm_po.sales_order})
+	po = None
+	if len(orders) > 0: po = orders[0]
+	if po is None:
+		po = frappe.new_doc("Production Order")
+		po.production_item = cm_po.cm_item
+		po.bom_no = cm_po.cm_bom
+		po.sales_order = cm_po.sales_order
+		po.skip_transfer = True
+		po.qty = cm_po.cm_box_qty
+		po.wip_warehouse = po.source_warehouse = cm_po.cm_source_wh
+		po.fg_warehouse = cm_po.cm_target_wh
+		po.submit()
 
 	se = make_stock_entry_object(po.name, "Manufacture")
+	#se = make_stock_entry_object(po.name, "Material Transfer for Manufacture")
+
 	update_paper_quantity(cm_po, se)
 	se.calculate_rate_and_amount()
+
+	for roll_item in cm_po.cm_box_rolls:
+		roll = frappe.get_doc("CM Paper Roll", roll_item.cm_paper)
+		roll.status = "Ready"
+		roll.cm_weight = roll_item.cm_final_weight
+		roll.save()
+
 	return se.as_dict()

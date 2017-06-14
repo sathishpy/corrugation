@@ -55,7 +55,7 @@ frappe.ui.form.on('CM Production Order', {
 		frm.fields_dict.cm_source_wh.get_query = company_filter;
 		frm.fields_dict.cm_target_wh.get_query = company_filter;
 	},
-	sales_order: function(frm) {
+	sales_order1: function(frm) {
 		frm.fields_dict['cm_item'].get_query = function(doc, dt, dn) {
 			return {
 				filters:[
@@ -63,6 +63,25 @@ frappe.ui.form.on('CM Production Order', {
 				]
 			}
 		}
+	},
+	sales_order: function(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: "get_all_order_items",
+			callback: function(r) {
+				if(!r.exe) {
+					if (r.message.length == 1) {
+						frm.set_value("cm_item", r.message[0].item_code)
+						frm.set_value("cm_planned_qty", r.message[0].qty)
+					} else {
+						frm.set_value("cm_item", r.message) //XXX
+					}
+					refresh_field("cm_item")
+					refresh_field("cm_planned_qty")
+					frm.events.cm_item(frm)
+				}
+			}
+		});
 	},
 	cm_item: function(frm) {
 		frm.set_query("cm_box_detail", function(doc) {
