@@ -76,8 +76,8 @@ class CMBoxDescription(Document):
 	def get_paper_weight_cost(self, paper):
 		if paper is None: return (0, 0)
 		(gsm, bf, deck) = get_paper_measurements(paper)
-		print ("Sheet {0} sl={1} sw={2} deck={3}", gsm, self.sheet_length, self.sheet_width, deck)
-		weight = float((self.sheet_length * self.sheet_width / 10000) * gsm/1000)
+		print ("Sheet {0} sl={1} sw={2} deck={3}".format(gsm, self.sheet_length, self.sheet_width, deck))
+		weight = float((self.sheet_length * self.sheet_width)/10000 * gsm)/1000
 		cost = weight * get_item_rate(paper)
 		print("Paper {0} weight={1} rate={2} cost={3}".format(paper, weight, get_item_rate(paper), cost))
 		return (weight, cost)
@@ -127,6 +127,18 @@ class CMBoxDescription(Document):
 		print("RM cost={0} OP Cost={1} Rate={2}".format(self.item_rm_cost, self.item_prod_cost, get_item_rate(self.item) ))
 
 def get_paper_measurements(paper):
+	(gsm, bf, deck) = (0, 0, 0)
+	item = frappe.get_doc("Item", paper)
+	for attribute in item.attributes:
+		if attribute.attribute == "GSM":
+			gsm = int(attribute.attribute_value)
+		elif attribute.attribute == "BF":
+			bf = int(attribute.attribute_value)
+		elif attribute.attribute == "Deck":
+			deck = int(attribute.attribute_value)
+	return (gsm, bf, deck)
+
+def get_paper_measurements_old(paper):
 	paper_measurements = paper.split("-")
 	size = len(paper_measurements)
 	gsm = float(paper_measurements[size-3])
