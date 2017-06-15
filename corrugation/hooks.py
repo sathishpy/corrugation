@@ -53,7 +53,7 @@ app_license = "MIT"
 # Installation
 # ------------
 
-#before_install = "corrugation.install.before_install"
+before_install = "corrugation.install.before_install"
 # after_install = "corrugation.install.after_install"
 
 # Desk Notifications

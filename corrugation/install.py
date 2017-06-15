@@ -12,14 +12,14 @@ def add_records(records):
 
 def add_paper_item_groups(raw_material_group):
     raw_material_group.is_group = True
-    raw_material_group.save()
+    raw_material_group.insert()
 
     records = [
-        {"doctype": "Item Group", "item_group_name": _("Paper"), "is_group": 0, "parent_item_group": raw_material_group },
-        {"doctype": "Item Group", "item_group_name": _("Gum"), "is_group": 0, "parent_item_group": raw_material_group },
-        {"doctype": "Item Group", "item_group_name": _("Ink"), "is_group": 0, "parent_item_group": raw_material_group },
+        {"doctype": "Item Group", "item_group_name": _("Paper"), "is_group": 0, "parent_item_group": raw_material_group.name },
+        {"doctype": "Item Group", "item_group_name": _("Gum"), "is_group": 0, "parent_item_group": raw_material_group.name },
+        {"doctype": "Item Group", "item_group_name": _("Ink"), "is_group": 0, "parent_item_group": raw_material_group.name },
     ]
-    add_records(recods)
+    add_records(records)
 
 def add_paper_template(name):
     records = [
@@ -32,13 +32,13 @@ def add_paper_template(name):
                 {"attribute_value": _("Mysore"), "abbr": "MSR"},
         ]},
         {"doctype": "Item", "item_code": name, "item_group": "Paper", "stock_uom": "Kg", "default_material_request_type": "Purchase",
-                            "is_stock_item": True, "is_fixed_asset": True, "has_variants": True, "variant_based_on": "Item Attribute",
+                            "is_stock_item": True, "is_fixed_asset": False, "has_variants": True, "variant_based_on": "Item Attribute",
                             "attributes": [
                                 {"attribute": _("GSM")},
                                 {"attribute": _("BF")},
                                 {"attribute": _("Deck")},
-                                {"attribute": _("Color")},
-                                {"attribute": _("GSM")},
+                                {"attribute": _("Colour")},
+                                {"attribute": _("Supplier")},
                             ]
         },
     ]
@@ -47,7 +47,7 @@ def add_paper_template(name):
 
 def before_install():
     rm_group = "Raw Material"
-    paper_template = "Paper"
+    paper_template = "Paper-RM"
     raw_material_group = frappe.get_doc("Item Group", rm_group)
     if (raw_material_group.is_group == False):
         add_paper_item_groups(raw_material_group)
