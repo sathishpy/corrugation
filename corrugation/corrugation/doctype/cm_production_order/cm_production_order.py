@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from erpnext.manufacturing.doctype.production_order.production_order import make_stock_entry_object
+from erpnext.manufacturing.doctype.production_order.production_order import make_stock_entry
 
 class CMProductionOrder(Document):
 	def autoname(self):
@@ -95,8 +95,9 @@ def make_new_pe(source_name):
 		po.fg_warehouse = cm_po.cm_target_wh
 		po.submit()
 
-	se = make_stock_entry_object(po.name, "Manufacture")
-	#se = make_stock_entry_object(po.name, "Material Transfer for Manufacture")
+	stock_entry = make_stock_entry(po.name, "Manufacture", po.qty)
+	se = frappe.new_doc("Stock Entry")
+	se.update(stock_entry)
 
 	update_paper_quantity(cm_po, se)
 	se.calculate_rate_and_amount()
