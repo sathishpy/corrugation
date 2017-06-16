@@ -138,6 +138,17 @@ def get_paper_measurements(paper):
 			bf = int(attribute.attribute_value)
 		elif attribute.attribute == "Deck":
 			deck = int(attribute.attribute_value)
+<<<<<<< HEAD
+=======
+	return (gsm, bf, deck)
+
+def get_paper_measurements_old(paper):
+	paper_measurements = paper.split("-")
+	size = len(paper_measurements)
+	gsm = float(paper_measurements[size-3])
+	bf = paper_measurements[size-2]
+	deck = float(paper_measurements[size-1])
+>>>>>>> cb5babf2485462112d84e8bd1cdf230fb9ee5b75
 	return (gsm, bf, deck)
 
 def get_item_rate(item_name):

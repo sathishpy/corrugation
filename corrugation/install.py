@@ -34,10 +34,10 @@ def add_paper_template(name):
         {"doctype": "Item", "item_code": name, "item_group": "Paper", "stock_uom": "Kg", "default_material_request_type": "Purchase",
                             "is_stock_item": True, "is_fixed_asset": False, "has_variants": True, "variant_based_on": "Item Attribute",
                             "attributes": [
+                                {"attribute": _("Colour")},
                                 {"attribute": _("GSM")},
                                 {"attribute": _("BF")},
                                 {"attribute": _("Deck")},
-                                {"attribute": _("Colour")},
                                 {"attribute": _("Supplier")},
                             ]
         },
