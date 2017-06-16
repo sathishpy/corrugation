@@ -22,6 +22,25 @@ frappe.ui.form.on('CM Box Description', {
 				]
 			}
 		}
+		frm.fields_dict.item_papers.grid.get_field('rm').get_query = function(doc, cdt, cdn) {
+			return {
+				filters: [
+					['Item', 'item_group', '=', 'Paper']
+				]
+			};
+		}
+		frm.fields_dict.item_others.grid.get_field('rm').get_query = function(doc, cdt, cdn) {
+			item = locals[cdt][cdn]
+			group = 'Gum'
+			if (item.rm_type == 'Printing Ink') {
+				group = 'Ink'
+			}
+			return {
+				filters: [
+					['Item', 'item_group', '=', group]
+				]
+			};
+		}
 	},
 	onload: function(frm) {
 		if (!frm.doc.__islocal) return;
@@ -37,10 +56,7 @@ frappe.ui.form.on('CM Box Description', {
 		});
 	},
 	refresh: function(frm) {
-		frm.add_custom_button(__('Update Cost'),
-	  	function() {
-				frm.events.update_cost(frm)
-			});
+		frm.events.refresh_fields(frm);
 		if (frm.doc.__islocal) return;
 		frm.events.update_sheet_values(frm);
 	},
@@ -56,6 +72,7 @@ frappe.ui.form.on('CM Box Description', {
 			method: "update_cost",
 			callback: function(r) {
 				if(!r.exe) {
+					frm.events.refresh_fields(frm);
 				}
 			}
 		});
@@ -82,11 +99,13 @@ frappe.ui.form.on('CM Box Description', {
 			method: "populate_paper_materials",
 			callback: function(r) {
 				if(!r.exe) {
-					refresh_field("item_papers");
-					refresh_field("item_others");
+					frm.events.refresh_fields(frm);
 				}
 			}
 		});
+	},
+	item_prod_cost : function(frm) {
+		frm.events.update_cost(frm);
 	},
 	update_sheet_values : function(frm) {
 		let sheet_length = 2 * (frm.doc.item_width + frm.doc.item_length) + frm.doc.item_pin_lap
@@ -94,10 +113,19 @@ frappe.ui.form.on('CM Box Description', {
 		frm.set_value("sheet_length", sheet_length);
 		frm.set_value("sheet_width", sheet_width);
 		frm.events.update_cost(frm);
+	},
+	refresh_fields : function(frm) {
+		refresh_field("item_papers");
+		refresh_field("item_others");
 		refresh_field("item_rm_cost");
 		refresh_field("item__cost");
 		refresh_field("item_total_cost");
-		refresh_field("item_papers");
-		refresh_field("item_others");
+		refresh_field("item_profit");
 	},
+});
+frappe.ui.form.on("CM Paper Item", "rm", function(frm, cdt, cdn) {
+	frm.events.update_cost(frm);
+});
+frappe.ui.form.on("CM Misc Item", "rm", function(frm, cdt, cdn) {
+	frm.events.update_cost(frm);
 });
