@@ -9,12 +9,9 @@ frappe.ui.form.on('CM Paper Roll Register', {
 			];
 	},
 	refresh: function(frm) {
-		if (frm.doc.docstatus == 1) {
-			frm.add_custom_button(__('Register Rolls'),
-				function() {
-					frm.events.register_rolls(frm)
-				});
-		}
+		frm.refresh_field("cm_paper_rolls")
+		frm.refresh_field("cm_purchase_weight")
+		frm.refresh_field("cm_total_weight")
 	},
 	cm_purchase_invoice: function(frm) {
 		frappe.call({
@@ -22,20 +19,16 @@ frappe.ui.form.on('CM Paper Roll Register', {
 			method: "populate_rolls",
 			callback: function(r) {
 				if(!r.exe) {
-					refresh_field("cm_paper_rolls")
+					frm.events.refresh(frm)
 				}
 			}
 		});
 	},
-	register_rolls: function(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: "register_rolls",
-			callback: function(r) {
-				if(!r.exe) {
-					msgprint("Paper Rolls registered")
-				}
-			}
-		});
-	}
+});
+frappe.ui.form.on("CM Paper Roll Detail", "cm_weight", function(frm, cdt, cdn) {
+	weight = 0
+	frm.doc.cm_paper_rolls.forEach(function(d) { weight += d.cm_weight; });
+	frm.set_value("cm_total_weight", weight)
+	refresh_field("cm_purchase_weight")
+	refresh_field("cm_total_weight")
 });

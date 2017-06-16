@@ -53,15 +53,13 @@ class CMPaperRollRegister(Document):
 			weight += roll.cm_weight
 		return weight
 
-	def on_update(self):
-		self.cm_total_weight = self.get_roll_weight()
-
 	def on_submit(self):
 		roll_weight = self.get_roll_weight()
 		purchase_weight = self.get_purchase_weight()
 		if (roll_weight != purchase_weight):
 			frappe.throw(_("Paper roll weight doesn't match the purchase weight"))
-
+		self.register_rolls()
+		
 @frappe.whitelist()
 def is_paper_item(rm):
 	if "paper" in rm.item_name or "Paper" in rm.item_name:

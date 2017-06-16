@@ -7,7 +7,7 @@ def get_data():
 		{
 			"module_name": "Corrugation",
 			"color": "grey",
-			"icon": "octicon octicon-file-directory",
+			"icon": "octicon octicon-package",
 			"type": "module",
 			"label": _("Corrugation")
 		}
