@@ -6,6 +6,7 @@ frappe.ui.form.on('CM Production Order', {
 		frm.get_field('cm_box_rolls').grid.editable_fields = [
 				{fieldname: 'cm_paper', columns: 2},
 				{fieldname: 'cm_start_weight', columns: 2},
+				{fieldname: 'cm_est_final_weight', columns: 2},
 				{fieldname: 'cm_final_weight', columns: 2}
 			];
 		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {

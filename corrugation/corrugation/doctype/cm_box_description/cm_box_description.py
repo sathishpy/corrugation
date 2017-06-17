@@ -77,7 +77,7 @@ class CMBoxDescription(Document):
 		if paper is None: return (0, 0)
 		(gsm, bf, deck) = get_paper_measurements(paper)
 		print ("Sheet {0} sl={1} sw={2} deck={3}".format(gsm, self.sheet_length, self.sheet_width, deck))
-		weight = float((self.sheet_length * self.sheet_width)/10000 * gsm)/1000
+		weight = float((self.sheet_length * deck) * gsm/1000)/10000
 		cost = weight * get_item_rate(paper)
 		print("Paper {0} weight={1} rate={2} cost={3}".format(paper, weight, get_item_rate(paper), cost))
 		return (weight, cost)
@@ -93,19 +93,21 @@ class CMBoxDescription(Document):
 		print("Created item decsription {0} with bom {1}".format(self.name, self.item_bom))
 
 	def update_cost(self):
-		rms_cost = 0
+		self.item_rm_cost = 0
 		paper_weight = 0
 		for item in self.item_papers:
 			if item.rm is None: continue
 			if (item.rm_type == 'Top Paper' or item.rm_type == 'Bottom Paper' or item.rm_type == 'Liner Paper'):
-				(item.rm_weight, item.rm_cost) = self.get_paper_weight_cost(item.rm)
-				rms_cost += item.rm_cost
+				(weight, cost) = self.get_paper_weight_cost(item.rm)
+				item.rm_weight = float(weight/self.item_per_sheet)
+				item.rm_cost = float(cost/self.item_per_sheet)
+				self.item_rm_cost += item.rm_cost
 				paper_weight += item.rm_weight
 			elif (item.rm_type == 'Flute Paper' or item.rm_type == 'Flute Liner Paper'):
 				(weight, cost) = self.get_paper_weight_cost(item.rm)
-				item.rm_weight = weight * self.item_flute
-				item.rm_cost = cost * self.item_flute
-				rms_cost += item.rm_cost
+				item.rm_weight = float(weight * self.item_flute/self.item_per_sheet)
+				item.rm_cost = float(cost * self.item_flute/self.item_per_sheet)
+				self.item_rm_cost += item.rm_cost
 				paper_weight += item.rm_weight
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
@@ -113,20 +115,19 @@ class CMBoxDescription(Document):
 			if item.rm is None: continue
 			item.rm_weight = paper_weight * item.rm_percent / 100
 			item.rm_cost = item.rm_weight * get_item_rate(item.rm)
-			rms_cost += item.rm_cost
+			self.item_rm_cost += item.rm_cost
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
 		print("Raw Material cost={0} items={1}".format(rms_cost, self.item_per_sheet))
-		if (rms_cost == 0): return
+		if (self.item_rm_cost == 0): return
 
-		self.item_rm_cost = rms_cost/int(self.item_per_sheet)
 		total_expense = get_total_expenses(0)
 		(boxes, production) = get_production_details(0)
 		print("Boxes = {0} production={1}".format(boxes, production))
 		if (boxes != 0 and self.item_prod_cost == 0): self.item_prod_cost = total_expense/boxes
 		self.item_total_cost = float(self.item_rm_cost + self.item_prod_cost)
 		self.item_profit = float((get_item_rate(self.item) - self.item_total_cost)*100/self.item_total_cost)
-		print("RM cost={0} OP Cost={1} Rate={2}".format(self.item_rm_cost, self.item_prod_cost, get_item_rate(self.item) ))
+		print("RM cost={0} OP Cost={1} Rate={2}".format(self.item_rm_cost, self.item_prod_cost, get_item_rate(self.item)))
 
 def get_paper_measurements(paper):
 	(gsm, bf, deck) = (0, 0, 0)

@@ -18,21 +18,34 @@ class CMProductionOrder(Document):
 		self.cm_box_rolls = []
 
 		available_rolls = []
+		added_rolls = []
 		for paper in box_details.item_papers:
 			available_rolls += frappe.get_all("CM Paper Roll", fields={"cm_item" : paper.rm})
 
 		for paper in box_details.item_papers:
-			print "Paper {0}".format(paper.rm)
-			roll = get_smallest_roll(available_rolls, paper.rm)
-			if roll is None:
-				print("Failed to find a roll for paper {0}".format(paper.rm))
-				continue
-			roll_item = frappe.new_doc("CM Box Roll Detail")
-			roll_item.cm_paper = roll.name
-			roll_item.cm_start_weight = roll.cm_weight
-			print ("Adding {0}".format(roll_item))
-			self.append("cm_box_rolls", roll_item)
-			available_rolls = [rl for rl in available_rolls if rl.name != roll.name]
+			planned_qty = paper.rm_weight * self.cm_planned_qty
+			print "{0} Paper {1} needed: {2}".format(paper.rm_type, paper.rm, planned_qty)
+			# Select all the rolls needed to manufacture required quantity
+			while planned_qty > 0:
+				roll = get_smallest_roll(available_rolls, paper.rm)
+				if roll is None:
+					print("Failed to find a roll for paper {0}".format(paper.rm))
+					break
+				print "Selected Roll is {0} Weight {1}".format(roll.name, roll.cm_weight)
+				roll_item = frappe.new_doc("CM Box Roll Detail")
+				roll_item.cm_paper = roll.name
+				roll_item.cm_start_weight = roll.cm_weight
+
+				if (roll.cm_weight > planned_qty):
+					roll_item.cm_est_final_weight = roll.cm_weight - planned_qty
+					planned_qty = 0
+				else:
+					roll_item.cm_est_final_weight = 0
+					planned_qty -= roll.cm_weight
+
+				print ("Adding {0}".format(roll_item))
+				self.append("cm_box_rolls", roll_item)
+				available_rolls = [rl for rl in available_rolls if rl.name != roll.name]
 
 	def get_paper_quantity(self, paper):
 		qty = 0
@@ -59,8 +72,7 @@ def get_smallest_roll(rolls, paper):
 	small_roll = None
 	for p_roll in rolls:
 		roll = frappe.get_doc("CM Paper Roll", p_roll.name)
-		print "Roll is {0} Weight {1}".format(roll.name, roll.cm_weight)
-		if (roll.cm_status == "Ready" and roll.cm_weight < weight):
+		if (roll.cm_status == "Ready" and roll.cm_item == paper and roll.cm_weight < weight):
 			small_roll = roll
 			weight = roll.cm_weight
 	return small_roll
