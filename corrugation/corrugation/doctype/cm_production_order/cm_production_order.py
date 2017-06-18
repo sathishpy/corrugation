@@ -11,6 +11,9 @@ class CMProductionOrder(Document):
 	def autoname(self):
 		self.name = "PO-{0}-{1}".format(self.cm_item, self.sales_order)
 
+	def update_box_roll_qty(self):
+		pass
+
 	def populate_box_rolls(self):
 		box_details = frappe.get_doc("CM Box Description", self.cm_box_detail)
 		print ("Got item {0} having bom {1}".format(box_details.name, box_details.item_bom))
@@ -18,7 +21,6 @@ class CMProductionOrder(Document):
 		self.cm_box_rolls = []
 
 		available_rolls = []
-		added_roll_items = []
 		for paper in box_details.item_papers:
 			available_rolls += frappe.get_all("CM Paper Roll", fields={"cm_item" : paper.rm})
 
@@ -27,11 +29,17 @@ class CMProductionOrder(Document):
 			print "{0} Paper {1} needed: {2}".format(paper.rm_type, paper.rm, planned_qty)
 			# Select all the rolls needed to manufacture required quantity
 			while planned_qty > 0:
-				roll = get_smallest_roll(available_rolls, paper.rm)
+				roll = get_prod_used_roll(self.cm_box_rolls, paper.rm, paper.rm_type)
+				if roll == None:
+					roll = get_smallest_roll(available_rolls, paper.rm)
+					print "Selected Roll is {0} Weight {1}".format(roll.name, roll.cm_weight)
+				else:
+					print "Re-using Roll {0} of Weight {1}".format(roll.name, roll.cm_weight)
+
 				if roll is None:
-					print("Failed to find a roll for paper {0}".format(paper.rm))
+					frappe.throw("Failed to find a roll for paper {0}".format(paper.rm))
 					break
-				print "Selected Roll is {0} Weight {1}".format(roll.name, roll.cm_weight)
+
 				roll_item = frappe.new_doc("CM Box Roll Detail")
 				roll_item.cm_rm_type = paper.rm_type
 				roll_item.cm_paper = roll.name
@@ -44,10 +52,9 @@ class CMProductionOrder(Document):
 					roll_item.cm_est_final_weight = 0
 					planned_qty -= roll.cm_weight
 
-				print ("Adding {0}".format(roll_item))
 				self.append("cm_box_rolls", roll_item)
+				print ("Adding {0}".format(roll_item))
 				available_rolls = [rl for rl in available_rolls if rl.name != roll.name]
-				added_roll_items += [roll_item]
 
 	def get_paper_quantity(self, paper):
 		qty = 0
@@ -68,6 +75,34 @@ def is_paper_item(rm):
 	if "paper" in rm.item_name or "Paper" in rm.item_name:
 		return True
 	return False
+
+def get_prod_used_roll(rolls, paper, rm_type):
+	reuse_roll = None
+	for p_roll in rolls:
+		roll = frappe.get_doc("CM Paper Roll", p_roll.cm_paper)
+		if roll.cm_item != paper: continue
+		#Flute and bottom paper used simultaneosuly, so can't be shared
+		sharing_conflict = False
+		if (p_roll.cm_rm_type == "Flute" and rm_type == "Bottom"): sharing_conflict = True
+		if (p_roll.cm_rm_type == "Bottom" and rm_type == "Flute"): sharing_conflict = True
+		if (p_roll.cm_rm_type == "Flute Liner" and rm_type == "Liner"): sharing_conflict = True
+		if (p_roll.cm_rm_type == "Liner" and rm_type == "Flute Liner"): sharing_conflict = True
+		# Handle duplicate entries of shared rolls
+		if (sharing_conflict):
+			if (reuse_roll != None and reuse_roll.name == roll.name):
+				reuse_roll = None
+			continue
+
+		print("Found roll {0} of weight {1} for {2}".format(p_roll.cm_paper, p_roll.cm_est_final_weight, rm_type))
+		if (reuse_roll != None and reuse_roll.name == roll.name):
+			if p_roll.cm_est_final_weight < 10:
+				reuse_roll = None
+				continue
+		if p_roll.cm_est_final_weight > 10:
+			reuse_roll = roll
+			reuse_roll.cm_weight = p_roll.cm_est_final_weight
+	# Update the weight, but don't save it
+	return reuse_roll
 
 def get_smallest_roll(rolls, paper):
 	weight = 10000
