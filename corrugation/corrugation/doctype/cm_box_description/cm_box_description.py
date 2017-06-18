@@ -22,25 +22,25 @@ class CMBoxDescription(Document):
 	def populate_paper_materials(self):
 		self.item_papers = []
 		rm_item = frappe.new_doc("CM Paper Item")
-		rm_item.rm_type = 'Top Paper'
+		rm_item.rm_type = 'Top'
 		self.append("item_papers", rm_item)
 		print ("Ply count {0}".format(self.item_ply_count))
 		if (int(self.item_ply_count) == 5):
 			print ("Adding additional layers")
 			rm_item = frappe.new_doc("CM Paper Item")
-			rm_item.rm_type = 'Flute Liner Paper'
+			rm_item.rm_type = 'Flute Liner'
 			self.append("item_papers", rm_item)
 
 			rm_item = frappe.new_doc("CM Paper Item")
-			rm_item.rm_type = "Liner Paper"
+			rm_item.rm_type = "Liner"
 			self.append("item_papers", rm_item)
 
 		rm_item = frappe.new_doc("CM Paper Item")
-		rm_item.rm_type = 'Flute Paper'
+		rm_item.rm_type = 'Flute'
 		self.append("item_papers", rm_item)
 
 		rm_item = frappe.new_doc("CM Paper Item")
-		rm_item.rm_type = "Bottom Paper"
+		rm_item.rm_type = "Bottom"
 		self.append("item_papers", rm_item)
 
 	def populate_raw_materials(self):
@@ -97,13 +97,13 @@ class CMBoxDescription(Document):
 		paper_weight = 0
 		for item in self.item_papers:
 			if item.rm is None: continue
-			if (item.rm_type == 'Top Paper' or item.rm_type == 'Bottom Paper' or item.rm_type == 'Liner Paper'):
+			if (item.rm_type == 'Top' or item.rm_type == 'Bottom' or item.rm_type == 'Liner'):
 				(weight, cost) = self.get_paper_weight_cost(item.rm)
 				item.rm_weight = float(weight/self.item_per_sheet)
 				item.rm_cost = float(cost/self.item_per_sheet)
 				self.item_rm_cost += item.rm_cost
 				paper_weight += item.rm_weight
-			elif (item.rm_type == 'Flute Paper' or item.rm_type == 'Flute Liner Paper'):
+			elif (item.rm_type == 'Flute' or item.rm_type == 'Flute Liner'):
 				(weight, cost) = self.get_paper_weight_cost(item.rm)
 				item.rm_weight = float(weight * self.item_flute/self.item_per_sheet)
 				item.rm_cost = float(cost * self.item_flute/self.item_per_sheet)
