@@ -4,10 +4,11 @@
 frappe.ui.form.on('CM Production Order', {
 	setup: function(frm) {
 		frm.get_field('cm_box_rolls').grid.editable_fields = [
-				{fieldname: 'cm_paper', columns: 2},
-				{fieldname: 'cm_start_weight', columns: 2},
-				{fieldname: 'cm_est_final_weight', columns: 2},
-				{fieldname: 'cm_final_weight', columns: 2}
+			  {fieldname: 'cm_rm_type', columns: 1},
+				{fieldname: 'cm_paper', columns: 4},
+				{fieldname: 'cm_start_weight', columns: 1},
+				{fieldname: 'cm_est_final_weight', columns: 1},
+				{fieldname: 'cm_final_weight', columns: 1}
 			];
 		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
 			return {
@@ -17,6 +18,9 @@ frappe.ui.form.on('CM Production Order', {
 			}
 		}
 		frm.add_fetch("CM Paper Roll", "cm_weight", "cm_start_weight");
+	},
+	onload_post_render: function(frm) {
+		frm.get_field("cm_box_rolls").grid.set_multiple_add("cm_rm_type", "cm_paper");
 	},
 	onload: function(frm) {
 		frm.events.set_default_warehouse(frm);

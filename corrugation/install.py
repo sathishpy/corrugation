@@ -12,7 +12,7 @@ def add_records(records):
 
 def add_paper_item_groups(raw_material_group):
     raw_material_group.is_group = True
-    raw_material_group.insert()
+    raw_material_group.save()
 
     records = [
         {"doctype": "Item Group", "item_group_name": _("Paper"), "is_group": 0, "parent_item_group": raw_material_group.name },

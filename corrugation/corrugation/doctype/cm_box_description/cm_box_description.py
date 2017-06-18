@@ -118,7 +118,7 @@ class CMBoxDescription(Document):
 			self.item_rm_cost += item.rm_cost
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
-		print("Raw Material cost={0} items={1}".format(rms_cost, self.item_per_sheet))
+		print("Raw Material cost={0} items={1}".format(self.item_rm_cost, self.item_per_sheet))
 		if (self.item_rm_cost == 0): return
 
 		total_expense = get_total_expenses(0)

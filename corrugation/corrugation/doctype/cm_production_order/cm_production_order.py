@@ -18,7 +18,7 @@ class CMProductionOrder(Document):
 		self.cm_box_rolls = []
 
 		available_rolls = []
-		added_rolls = []
+		added_roll_items = []
 		for paper in box_details.item_papers:
 			available_rolls += frappe.get_all("CM Paper Roll", fields={"cm_item" : paper.rm})
 
@@ -33,6 +33,7 @@ class CMProductionOrder(Document):
 					break
 				print "Selected Roll is {0} Weight {1}".format(roll.name, roll.cm_weight)
 				roll_item = frappe.new_doc("CM Box Roll Detail")
+				roll_item.cm_rm_type = paper.rm_type
 				roll_item.cm_paper = roll.name
 				roll_item.cm_start_weight = roll.cm_weight
 
@@ -46,6 +47,7 @@ class CMProductionOrder(Document):
 				print ("Adding {0}".format(roll_item))
 				self.append("cm_box_rolls", roll_item)
 				available_rolls = [rl for rl in available_rolls if rl.name != roll.name]
+				added_roll_items += [roll_item]
 
 	def get_paper_quantity(self, paper):
 		qty = 0
