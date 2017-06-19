@@ -11,8 +11,30 @@ class CMProductionOrder(Document):
 	def autoname(self):
 		self.name = "PO-{0}-{1}".format(self.cm_item, self.sales_order)
 
+	def get_planned_paper_quantity(self, rmtype):
+		box_details = frappe.get_doc("CM Box Description", self.cm_box_detail)
+		for paper in box_details.item_papers:
+			if paper.rm_type == rmtype: return paper.rm_weight * self.cm_planned_qty
+		return 0
+
 	def update_box_roll_qty(self):
-		pass
+		added_rolls = []
+		for roll_item in self.cm_box_rolls:
+			rm_type = roll_item.cm_rm_type
+			planned_qty = self.get_planned_paper_quantity(rm_type)
+			used_roll = get_prod_used_roll(added_rolls, roll_item.cm_paper, rm_type)
+			print ("Amount of {0} paper {1} needed is {2}".format(rm_type, roll_item.cm_paper, planned_qty))
+			if used_roll is None:
+				roll = frappe.get_doc("CM Paper Roll", roll_item.cm_paper)
+				roll_item.cm_start_weight = roll.cm_weight
+			else:
+				roll_item.cm_start_weight = used_roll.cm_est_final_weight
+
+			if (planned_qty < roll_item.cm_start_weight):
+				roll_item.cm_est_final_weight = (roll_item.cm_start_weight - planned_qty)
+			else:
+				roll_item.cm_est_final_weight = 0
+			added_rolls += [roll_item]
 
 	def populate_box_rolls(self):
 		box_details = frappe.get_doc("CM Box Description", self.cm_box_detail)
@@ -21,8 +43,14 @@ class CMProductionOrder(Document):
 		self.cm_box_rolls = []
 
 		available_rolls = []
-		for paper in box_details.item_papers:
-			available_rolls += frappe.get_all("CM Paper Roll", fields={"cm_item" : paper.rm})
+		#build the unique list
+		papers = [pi.rm for pi in box_details.item_papers]
+		papers = list(set(papers))
+
+		for paper_name in papers:
+			rolls = frappe.get_all("CM Paper Roll", fields={"cm_item" : paper_name})
+			available_rolls += rolls
+			print("Found {0} rolls for paper {1}".format(len(rolls), paper_name))
 
 		for paper in box_details.item_papers:
 			planned_qty = paper.rm_weight * self.cm_planned_qty
@@ -32,13 +60,11 @@ class CMProductionOrder(Document):
 				roll = get_prod_used_roll(self.cm_box_rolls, paper.rm, paper.rm_type)
 				if roll == None:
 					roll = get_smallest_roll(available_rolls, paper.rm)
-					print "Selected Roll is {0} Weight {1}".format(roll.name, roll.cm_weight)
-				else:
-					print "Re-using Roll {0} of Weight {1}".format(roll.name, roll.cm_weight)
 
 				if roll is None:
-					frappe.throw("Failed to find a roll for paper {0}".format(paper.rm))
+					frappe.throw("Failed to find a roll for {0} paper {1}".format(paper.rm))
 					break
+				print "Selected Roll is {0} Weight {1}".format(roll.name, roll.cm_weight)
 
 				roll_item = frappe.new_doc("CM Box Roll Detail")
 				roll_item.cm_rm_type = paper.rm_type
@@ -52,17 +78,32 @@ class CMProductionOrder(Document):
 					roll_item.cm_est_final_weight = 0
 					planned_qty -= roll.cm_weight
 
+				roll_item.cm_final_weight = roll_item.cm_est_final_weight
 				self.append("cm_box_rolls", roll_item)
 				print ("Adding {0}".format(roll_item))
 				available_rolls = [rl for rl in available_rolls if rl.name != roll.name]
 
 	def get_paper_quantity(self, paper):
-		qty = 0
+		#Prepare a list removing identical rolls
+		box_rolls = {}
 		for roll_item in self.cm_box_rolls:
+			ri = box_rolls.get(roll_item.cm_paper)
+			if (ri == None):
+				box_rolls[roll_item.cm_paper] = roll_item
+			else:
+				if (roll_item.cm_final_weight > ri.cm_final_weight):
+					ri.cm_start_weight = roll_item.cm_start_weight
+					box_rolls[ri.cm_paper] = ri
+				else:
+					box_rolls[ri.cm_paper] = roll_item
+					roll_item.cm_start_weight = ri.cm_start_weight
+
+		qty = 0
+		for (key, roll_item) in box_rolls.items():
 			roll = frappe.get_doc("CM Paper Roll", roll_item.cm_paper)
 			if roll.cm_item != paper: continue
 			qty += (roll_item.cm_start_weight - roll_item.cm_final_weight)
-		print("Weight of paper {0} is {1}".format(paper, qty))
+			print("Weight of roll {0} is {1}".format(roll_item.cm_paper, qty))
 		return qty
 
 	def get_all_order_items(self):
@@ -105,11 +146,11 @@ def get_prod_used_roll(rolls, paper, rm_type):
 	return reuse_roll
 
 def get_smallest_roll(rolls, paper):
-	weight = 10000
+	weight = 100000
 	small_roll = None
 	for p_roll in rolls:
 		roll = frappe.get_doc("CM Paper Roll", p_roll.name)
-		if (roll.cm_status == "Ready" and roll.cm_item == paper and roll.cm_weight < weight):
+		if (roll.cm_status == "Ready" and roll.cm_item == paper and roll.cm_weight < weight and roll.cm_weight > 10):
 			small_roll = roll
 			weight = roll.cm_weight
 	return small_roll

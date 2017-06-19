@@ -118,3 +118,14 @@ frappe.ui.form.on('CM Production Order', {
 		})
 	}
 });
+frappe.ui.form.on("CM Box Roll Detail", "cm_paper", function(frm, cdt, cdn) {
+	frappe.call({
+		doc: frm.doc,
+		method: "update_box_roll_qty",
+		callback: function(r) {
+			if(!r.exe) {
+				refresh_field("cm_box_rolls");
+			}
+		}
+	});
+});

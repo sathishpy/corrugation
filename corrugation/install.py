@@ -44,8 +44,20 @@ def add_paper_template(name):
     ]
     add_records(records)
 
+def update_mf_settings():
+    #Allow over production
+    mf_settings = frappe.get_doc({"doctype": "Manufacturing Settings", "allow_production_on_holidays": 0})
+    mf_settings.allow_production_on_holidays = 1
+    mf_settings.allow_overtime = 1
+    mf_settings.over_production_allowance_percentage = 50
+    #This doesn't handle multiple companies
+    mf_settings.default_wip_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Work In Progress")})
+    mf_settings.default_fg_warehouse  = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})
+    mf_settings.save()
 
 def before_install():
+    update_mf_settings()
+
     rm_group = "Raw Material"
     paper_template = "Paper-RM"
     raw_material_group = frappe.get_doc("Item Group", rm_group)

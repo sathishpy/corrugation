@@ -6,7 +6,7 @@ def get_data():
 	return [
 		{
 			"module_name": "Corrugation",
-			"color": "grey",
+			"color": "green",
 			"icon": "octicon octicon-package",
 			"type": "module",
 			"label": _("Corrugation")
