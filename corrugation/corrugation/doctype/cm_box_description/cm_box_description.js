@@ -5,15 +5,15 @@ cur_frm.add_fetch("item", "item_name", "item_name");
 frappe.ui.form.on('CM Box Description', {
 	setup: function(frm) {
 		frm.get_field('item_papers').grid.editable_fields = [
-				{fieldname: 'rm_type', columns: 1},
-				{fieldname: 'rm', columns: 2},
-				{fieldname: 'rm_cost', columns: 1}
+				{fieldname: 'rm_type', columns: 3},
+				{fieldname: 'rm', columns: 5},
+				{fieldname: 'rm_cost', columns: 2}
 			];
 		frm.get_field('item_others').grid.editable_fields = [
-				{fieldname: 'rm_type', columns: 1},
-				{fieldname: 'rm', columns: 2},
-				{fieldname: 'rm_percent', columns: 1},
-				{fieldname: 'rm_cost', columns: 1}
+				{fieldname: 'rm_type', columns: 2},
+				{fieldname: 'rm', columns: 4},
+				{fieldname: 'rm_percent', columns: 2},
+				{fieldname: 'rm_cost', columns: 2}
 			];
 		frm.fields_dict['item'].get_query = function(doc, dt, dn) {
 			return {
