@@ -58,9 +58,9 @@ class CMProductionOrder(Document):
 		#Prepare a list removing identical rolls
 		box_rolls = {}
 		for roll_item in self.paper_rolls:
-			ri = box_rolls.get(roll_item.paper)
+			ri = box_rolls.get(roll_item.paper_roll)
 			if (ri == None):
-				box_rolls[roll_item.paper] = roll_item
+				box_rolls[roll_item.paper_roll] = roll_item
 			else:
 				if (roll_item.final_weight > ri.final_weight):
 					ri.start_weight = roll_item.start_weight
@@ -71,10 +71,10 @@ class CMProductionOrder(Document):
 
 		qty = 0
 		for (key, roll_item) in box_rolls.items():
-			roll = frappe.get_doc("CM Paper Roll", roll_item.paper)
+			roll = frappe.get_doc("CM Paper Roll", roll_item.paper_roll)
 			if roll.paper != paper: continue
 			qty += (roll_item.start_weight - roll_item.final_weight)
-			print("Weight of roll {0} is {1}".format(roll_item.paper, qty))
+			print("Weight of roll {0} is {1}".format(roll_item.paper_roll, qty))
 		return qty
 
 	def get_all_order_items(self):

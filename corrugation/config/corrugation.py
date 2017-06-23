@@ -11,11 +11,13 @@ def get_data():
 					"type": "doctype",
 					"name": "CM Production Order",
 					"description": _("Orders released for production."),
+                    "label": _("Production Order")
 				},
 				{
 					"type": "doctype",
 					"name": "CM Shared Production Order",
 					"description": _("Shared Production Orders."),
+                    "label": _("Shared Production Order")
 				},
             ]
         },
@@ -25,10 +27,12 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "CM Paper Roll Register",
+                    "label": _("Register Paper Rolls")
 				},
                 {
                     "type": "doctype",
-                    "name": "CM Paper Roll"
+                    "name": "CM Paper Roll",
+                    "label": _("Paper Rolls")
                 }
 			]
 		},
@@ -39,7 +43,7 @@ def get_data():
 					"type": "doctype",
 					"name": "CM Box Description",
 					"description": _("Bill of Materials (BOM)"),
-					"label": _("Product Registration")
+					"label": _("Box Description")
 				},
 				{
 					"type": "doctype",

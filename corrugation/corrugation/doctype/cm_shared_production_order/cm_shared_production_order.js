@@ -5,7 +5,7 @@ frappe.ui.form.on('CM Shared Production Order', {
 	setup: function(frm) {
 		frm.get_field('paper_rolls').grid.editable_fields = [
 				{fieldname: 'rm_type', columns: 1},
-				{fieldname: 'paper', columns: 4},
+				{fieldname: 'paper_roll', columns: 4},
 				{fieldname: 'start_weight', columns: 1},
 				{fieldname: 'est_final_weight', columns: 1},
 				{fieldname: 'final_weight', columns: 1}

@@ -55,6 +55,10 @@ def update_mf_settings():
     mf_settings.default_fg_warehouse  = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})
     mf_settings.save()
 
+    stock_settings = frappe.get_doc({"doctype": "Stock Settings", "tolerance": 0})
+    stock_settings.tolerance = 50
+    stock_settings.save()
+
 def before_install():
     update_mf_settings()
 

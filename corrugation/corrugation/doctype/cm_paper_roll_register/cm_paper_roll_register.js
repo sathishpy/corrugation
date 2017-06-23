@@ -14,7 +14,7 @@ frappe.ui.form.on('CM Paper Roll Register', {
 		frm.refresh_field("purchase_weight")
 		frm.refresh_field("total_weight")
 	},
-	purchase_invoice: function(frm) {
+	purchase_receipt: function(frm) {
 		frappe.call({
 			doc: frm.doc,
 			method: "populate_rolls",

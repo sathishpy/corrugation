@@ -8,16 +8,16 @@ from frappe.model.document import Document
 
 class CMPaperRollRegister(Document):
 	def autoname(self):
-		self.name = self.purchase_invoice + "-roll-register"
+		self.name = self.purchase_receipt + "-roll-register"
 
 	def populate_rolls(self):
 		self.purchase_weight = self.get_purchase_weight()
 		self.total_weight = 0
 
-		invoice = frappe.get_doc("Purchase Invoice", self.purchase_invoice)
-		print("Populating {0} CM Paper Rolls for invoice {1}".format(len(invoice.items), self.purchase_invoice))
+		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
+		print("Populating {0} CM Paper Rolls for receipt {1}".format(len(receipt.items), self.purchase_receipt))
 		self.paper_rolls = []
-		for item in invoice.items:
+		for item in receipt.items:
 			if not is_paper_item(item): continue
 			weight = item.qty
 
@@ -50,9 +50,9 @@ class CMPaperRollRegister(Document):
 			paper_roll.save()
 
 	def get_purchase_weight(self):
-		invoice = frappe.get_doc("Purchase Invoice", self.purchase_invoice)
+		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
 		weight = 0
-		for item in invoice.items:
+		for item in receipt.items:
 			weight += item.qty
 		return weight
 
