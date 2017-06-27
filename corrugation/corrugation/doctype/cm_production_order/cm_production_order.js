@@ -3,12 +3,12 @@
 
 frappe.ui.form.on('CM Production Order', {
 	setup: function(frm) {
-		frm.get_field('cm_box_rolls').grid.editable_fields = [
-			  {fieldname: 'cm_rm_type', columns: 1},
-				{fieldname: 'cm_paper', columns: 4},
-				{fieldname: 'cm_start_weight', columns: 1},
-				{fieldname: 'cm_est_final_weight', columns: 1},
-				{fieldname: 'cm_final_weight', columns: 1}
+		frm.get_field('paper_rolls').grid.editable_fields = [
+			  {fieldname: 'rm_type', columns: 1},
+				{fieldname: 'paper_roll', columns: 4},
+				{fieldname: 'start_weight', columns: 2},
+				{fieldname: 'est_final_weight', columns: 1},
+				{fieldname: 'final_weight', columns: 2}
 			];
 		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
 			return {
@@ -17,10 +17,7 @@ frappe.ui.form.on('CM Production Order', {
 				]
 			}
 		}
-		frm.add_fetch("CM Paper Roll", "cm_weight", "cm_start_weight");
-	},
-	onload_post_render: function(frm) {
-		frm.get_field("cm_box_rolls").grid.set_multiple_add("cm_rm_type", "cm_paper");
+		frm.add_fetch("CM Paper Roll", "weight", "start_weight");
 	},
 	onload: function(frm) {
 		frm.events.set_default_warehouse(frm);
@@ -33,14 +30,14 @@ frappe.ui.form.on('CM Production Order', {
 			});
 	},
 	set_default_warehouse: function(frm) {
-		if (!(frm.doc.cm_source_wh || frm.doc.cm_target_wh)) {
+		if (!(frm.doc.source_warehouse || frm.doc.target_warehouse)) {
 			frappe.call({
 				method: "erpnext.manufacturing.doctype.production_order.production_order.get_default_warehouse",
 
 				callback: function(r) {
 					if(!r.exe) {
-						frm.set_value("cm_source_wh", r.message.wip_warehouse);
-						frm.set_value("cm_target_wh", r.message.fg_warehouse)
+						frm.set_value("source_warehouse", r.message.wip_warehouse);
+						frm.set_value("target_warehouse", r.message.fg_warehouse)
 					}
 				}
 			});
@@ -57,17 +54,8 @@ frappe.ui.form.on('CM Production Order', {
 			}
 		}
 
-		frm.fields_dict.cm_source_wh.get_query = company_filter;
-		frm.fields_dict.cm_target_wh.get_query = company_filter;
-	},
-	sales_order1: function(frm) {
-		frm.fields_dict['cm_item'].get_query = function(doc, dt, dn) {
-			return {
-				filters:[
-					['Item', 'total_projected_qty', '<', '0']
-				]
-			}
-		}
+		frm.fields_dict.source_warehouse.get_query = company_filter;
+		frm.fields_dict.target_warehouse.get_query = company_filter;
 	},
 	sales_order: function(frm) {
 		frappe.call({
@@ -76,55 +64,55 @@ frappe.ui.form.on('CM Production Order', {
 			callback: function(r) {
 				if(!r.exe) {
 					if (r.message.length == 1) {
-						frm.set_value("cm_item", r.message[0].item_code)
-						frm.set_value("cm_planned_qty", r.message[0].qty)
+						frm.set_value("box", r.message[0].item_code)
+						frm.set_value("planned_qty", r.message[0].qty)
 					} else {
-						frm.set_value("cm_item", r.message) //XXX
+						frm.set_value("box", r.message) //XXX
 					}
-					refresh_field("cm_item")
-					refresh_field("cm_planned_qty")
-					frm.events.cm_item(frm)
+					refresh_field("box")
+					refresh_field("planned_qty")
+					frm.events.box(frm)
 				}
 			}
 		});
 	},
-	cm_item: function(frm) {
-		frm.set_query("cm_box_detail", function(doc) {
-			if (doc.cm_item) {
+	box: function(frm) {
+		frm.set_query("box_desc", function(doc) {
+			if (doc.box) {
 				return {
 					filters:[
-						['CM Box Description', 'item', '=', doc.cm_item]
+						['CM Box Description', 'item', '=', doc.box]
 					]
 				}
 			} else msgprint(__("Please select the Item first"));
 		});
 	},
-	cm_box_detail: function(frm) {
+	box_desc: function(frm) {
 		frappe.call({
 			doc: frm.doc,
 			method: "populate_box_rolls",
 			callback: function(r) {
 				if(!r.exe) {
-					refresh_field("cm_box_rolls");
-					refresh_field("cm_bom")
+					refresh_field("paper_rolls");
+					refresh_field("bom")
 				}
 			}
 		});
 	},
 	make_pe: function(frm) {
 		frappe.model.open_mapped_doc({
-			method: "corrugation.corrugation.doctype.cm_production_order.cm_production_order.make_new_pe",
+			method: "corrugation.corrugation.doctype.cm_production_order.cm_production_order.make_new_stock_entry",
 			frm: frm
 		})
 	}
 });
-frappe.ui.form.on("CM Box Roll Detail", "cm_paper", function(frm, cdt, cdn) {
+frappe.ui.form.on("CM Production Roll Detail", "paper_roll", function(frm, cdt, cdn) {
 	frappe.call({
 		doc: frm.doc,
 		method: "update_box_roll_qty",
 		callback: function(r) {
 			if(!r.exe) {
-				refresh_field("cm_box_rolls");
+				refresh_field("paper_rolls");
 			}
 		}
 	});

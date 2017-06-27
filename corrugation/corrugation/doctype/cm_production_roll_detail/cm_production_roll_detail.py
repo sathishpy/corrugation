@@ -6,5 +6,5 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 
-class CMManufactureCost(Document):
+class CMProductionRollDetail(Document):
 	pass
