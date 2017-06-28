@@ -10,7 +10,7 @@ import calendar
 
 def execute(filters=None):
 	print "YYYYYYYYYYYYYYYYYYYYYYYYYY",filters
-	columns, data = [], []	
+	columns, data = [], []
 	columns = get_columns ()
 	# form header with year and month
 	cm_product_cost_entries = frappe.db.sql("""select cm_year, cm_month from `tabCM Product Costs`""",as_dict=1)
@@ -26,7 +26,7 @@ def execute(filters=None):
 		start_date = datetime.date(year=int(en.cm_year), month=month, day=1)
 		end_date = datetime.date(year=int(en.cm_year), month=month, day=15)
 		stock_entries = frappe.db.sql("""select name, posting_date, production_order
-		
+
 										from `tabStock Entry`
 										where production_order is not NULL and posting_date between '{0}' and '{1}'"""\
 										.format(start_date, end_date),as_dict=1)
@@ -97,7 +97,7 @@ def execute(filters=None):
 			data.append (en)
 		if (len(product_list) == 0):
 			data.append (("-", "-", "-", "-", "-"));
-				
+
 	return columns, data
 
 

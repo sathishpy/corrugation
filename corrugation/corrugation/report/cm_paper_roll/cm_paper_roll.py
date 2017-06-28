@@ -9,60 +9,67 @@ import calendar
 
 def execute(filters=None):
 	columns, data = [], []
-	cm_paper_roll = frappe.db.sql("""select name, cm_weight, cm_location, cm_status, cm_item  from `tabCM Paper Roll`""",as_dict=1)
+	paper_rolls = frappe.db.sql("""select name, paper, weight, location, status from `tabCM Paper Roll` where weight > 0""",as_dict=1)
 	columns = get_columns ()
-	for en in cm_paper_roll:
-		print en
-		l = ()
-		lt = list (l)
-		lt.append (en.name)
-		lt.append (en.cm_weight)
-		lt.append (en.cm_location)
-		lt.append (en.cm_status)
-		#lt.append (en.cm_item)
-		cm_item = frappe.db.sql("""select valuation_rate, standard_rate, weightage from `tabItem` where name = %s """,en.cm_item)
-		for it_en in cm_item:
-			print it_en
-			for it in it_en:
-				lt.append (it)
+	for roll in paper_rolls:
+		print roll
+		lt = list()
+		lt.append (roll.name)
+		lt.append (roll.weight)
+		item = frappe.get_doc("Item", roll.paper)
+		for attribute in item.attributes:
+			lt.append(attribute.attribute_value)
+			print ("{0} : {1}".format(attribute.attribute, attribute.attribute_value))
+		lt.append (roll.location)
+		lt.append (roll.status)
 		data.append (lt)
 	return columns, data
 
 def get_columns():
         return [
                 {
-                        "fieldname": "name",
-			"label"	   : "name",
-                        "width": 250 
+                    "fieldname": "name",
+					"label"	   : "name",
+                    "width": 250
                 },
                 {
-                        "fieldname": "weight",
-			"label"	   : "Weight",
-                        "width": 60
+                    "fieldname": "weight",
+					"label"	   : "Weight",
+                    "width": 60
                 },
                 {
-                        "fieldname": "location",
-			"label"	   : "location",
-                        "width": 100
+                    "fieldname": "colour",
+					"label"	   : "colour",
+                    "width": 120
                 },
                 {
-                        "fieldname": "status",
-			"label"	   : "Status",
-                        "width": 60 
+                    "fieldname": "bf",
+					"label"	   : "BF",
+                    "width": 90
                 },
                 {
-                        "fieldname": "valuation_rate",
-			"label"	   : "Valuation Rate",
-                        "width": 120
+                    "fieldname": "gsm",
+					"label"	   : "GSM",
+                    "width": 110
                 },
                 {
-                        "fieldname": "standard_rate",
-			"label"	   : "Standard Rate",
-                        "width": 90
+                    "fieldname": "deck",
+					"label"	   : "Deck",
+                    "width": 110
                 },
                 {
-                        "fieldname": "weightage",
-			"label"	   : "Weightage",
-                        "width": 110
-                }
+                    "fieldname": "supplier",
+					"label"	   : "Supplier",
+                    "width": 110
+                },
+                {
+                    "fieldname": "location",
+					"label"	   : "location",
+                    "width": 100
+                },
+                {
+                    "fieldname": "status",
+					"label"	   : "Status",
+                    "width": 60
+                },
 	       ]

@@ -30,9 +30,10 @@ def get_data():
                     "label": _("Register Paper Rolls")
 				},
                 {
-                    "type": "doctype",
+                    "type": "report",
                     "name": "CM Paper Roll",
-                    "label": _("Paper Rolls")
+                    "label": _("Paper Rolls"),
+					"is_query_report": True,
                 }
 			]
 		},
@@ -70,8 +71,9 @@ def get_data():
 			"icon": "fa fa-list",
 			"items": [
 				{
-					"type": "doctype",
-                    "name": "CM Product Costs"
+					"type": "report",
+                    "name": "CM Product Costs",
+					"is_query_report": True,
 				},
 			]
 		},
