@@ -105,9 +105,7 @@ def select_rolls_for_box(paper_items):
 		print "{0} Paper {1} needed: {2}".format(paper.rm_type, paper.rm, planned_qty)
 		# Select all the rolls needed to manufacture required quantity
 		while planned_qty > 0:
-			roll = get_prod_used_roll(added_rolls, paper.rm, paper.rm_type)
-			if roll == None:
-				roll = get_smallest_roll(available_rolls, paper.rm)
+			roll = get_suitable_roll(paper.rm, paper.rm_type, planned_qty, added_rolls, available_rolls)
 
 			if roll is None:
 				frappe.throw("Failed to find a roll for {0} paper {1}".format(paper.rm))
@@ -166,15 +164,37 @@ def get_prod_used_roll(rolls, paper, rm_type):
 	# Update the weight, but don't save it
 	return reuse_roll
 
-def get_smallest_roll(rolls, paper):
+def get_smallest_roll(paper, rolls):
 	weight = 100000
 	small_roll = None
 	for p_roll in rolls:
 		roll = frappe.get_doc("CM Paper Roll", p_roll.name)
-		if (roll.status == "Ready" and roll.paper == paper and roll.weight < weight and roll.weight > 10):
+		if (roll.status != "Ready" or roll.paper != paper): continue
+		if (roll.weight < weight and roll.weight > 10):
 			small_roll = roll
 			weight = roll.weight
 	return small_roll
+
+def get_roll_matching_weight(paper, weight, available_rolls):
+	difference = 100000
+	matching_roll = None
+	for p_roll in available_rolls:
+		roll = frappe.get_doc("CM Paper Roll", p_roll.name)
+		if (roll.status != "Ready" or roll.paper != paper): continue
+		weight_difference = (roll.weight - weight)
+		if (weight_difference < difference or difference < 0):
+			matching_roll = roll
+			difference = weight_difference
+	return matching_roll
+
+def get_suitable_roll(paper, paper_type, weight, added_rolls, available_rolls):
+	roll = get_prod_used_roll(added_rolls, paper, paper_type)
+	if roll != None: return roll
+	if (paper_type != "Top"):
+		roll = get_roll_matching_weight(paper, weight, available_rolls)
+	else:
+		roll = get_smallest_roll(paper, available_rolls)
+	return roll
 
 def update_paper_quantity(po, se):
 	for item in se.items:
