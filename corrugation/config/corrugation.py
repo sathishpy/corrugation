@@ -75,6 +75,11 @@ def get_data():
                     "name": "CM Product Costs",
 					"is_query_report": True,
 				},
+				{
+					"type": "report",
+                    "name": "CM Tally Export",
+					"is_query_report": True,
+				},
 			]
 		},
 	]
