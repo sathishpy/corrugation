@@ -6,112 +6,101 @@ import frappe
 from frappe.model.document import Document
 import datetime
 import calendar
+from frappe import _
 
 
 def execute(filters=None):
-	print "YYYYYYYYYYYYYYYYYYYYYYYYYY",filters
-	columns, data = [], []
-	columns = get_columns ()
-	# form header with year and month
-	cm_product_cost_entries = frappe.db.sql("""select cm_year, cm_month from `tabCM Product Costs`""",as_dict=1)
-	print cm_product_cost_entries
-	for en in cm_product_cost_entries:
-		l = ()
-		lt = list(l)
-		lt.append("<b>"+en.cm_month+"</b>")
-		lt.append("<b>"+str(en.cm_year)+"</b>")
-		data.append (lt)
+    columns = get_columns()
+    entries = get_result(filters)
+    for entry in entries:
+        print entry
 
-		month = list(calendar.month_abbr).index(en.cm_month)
-		start_date = datetime.date(year=int(en.cm_year), month=month, day=1)
-		end_date = datetime.date(year=int(en.cm_year), month=month, day=15)
-		stock_entries = frappe.db.sql("""select name, posting_date, production_order
+    return columns, entries
 
-										from `tabStock Entry`
-										where production_order is not NULL and posting_date between '{0}' and '{1}'"""\
-										.format(start_date, end_date),as_dict=1)
-		cm_act_indirect_cost = get_total_expenses(month)
-		per_box_op_cost = get_op_cost_per_box(month)
-		cm_est_direct_cost = cm_act_direct_cost = cm_total_production = cm_est_indirect_cost = 0
-		product = ()
-		product_t = list(product)
-		product_list = []
-		for se in stock_entries:
-			print ("--------------------------------------------------------------")
-			print "Processing stock entry {0} on {1} for {2}".format(se.name, se.posting_date, se.production_order)
+def get_result(filters=None):
+	print filters
 
-			order = frappe.get_doc("Production Order", se.production_order)
-			stock_entry = frappe.get_doc("Stock Entry", se.name)
-			bom = frappe.get_doc("BOM", order.bom_no)
+	start_date = filters.get("from_date")
+	end_date = filters.get("to_date")
+	print("Genarating report from {0} to {1}".format(start_date, end_date))
 
-			per_item_cost = bom.base_total_cost/bom.quantity
-			print ("Item BOM Cost {0} Item Op Cost {1}".format(per_item_cost, per_box_op_cost))
+	act_indirect_cost = get_total_expenses(start_date, end_date)
+	per_box_op_cost = get_op_cost_per_box(start_date, end_date)
 
-			rm_cost = 0
-			item_qty = 0
-			product = []
-			for sitem in stock_entry.items:
-				item = frappe.get_doc("Stock Entry Detail", sitem.name)
-				if (item.s_warehouse is not None):
-					rm_cost += item.amount
-					print("RM:{0}    Price:{1}".format(item.item_name, item.amount))
-				else:
-					print("Item:{0}  Qty:{1}".format(item.item_name, item.qty))
-					item_qty += item.qty
+	total_bom_rm_cost = total_bom_op_cost = total_act_rm_cost = total_act_op_cost = total_bom_cost = total_act_cost = total_production = 0
+	result = []
+	stock_entries = frappe.db.sql("""select name, posting_date, production_order
+									from `tabStock Entry`
+									where production_order is not NULL and posting_date between '{0}' and '{1}'"""\
+									.format(start_date, end_date),as_dict=1)
+	for se in stock_entries:
+		print ("--------------------------------------------------------------")
+		print "Processing stock entry {0} on {1} for {2}".format(se.name, se.posting_date, se.production_order)
 
-			if (item_qty == 0): continue
+		order = frappe.get_doc("Production Order", se.production_order)
+		stock_entry = frappe.get_doc("Stock Entry", se.name)
+		bom_entries = frappe.db.sql("""select item_rm_cost, item_prod_cost
+										from `tabCM Box Description`
+										where item_bom='{0}'""".format(order.bom_no), as_dict=1)
+		print bom_entries[0]
 
-			#product = frappe.new_doc("CM Product Cost")
-			cm_product = order.production_item
-			cm_date = se.posting_date
-			cm_stock_info = se.name
-			cm_bom_cost = per_item_cost * item_qty
-			cm_act_cost = rm_cost + (per_box_op_cost * item_qty)
-			cm_sales_price = stock_entry.total_incoming_value
-			cm_int_loss = 0
-			cm_profit = (cm_sales_price - cm_act_cost - cm_int_loss) * 100 / cm_act_cost
+		act_rm_cost = 0
+		item_qty = 0
+		for sitem in stock_entry.items:
+			item = frappe.get_doc("Stock Entry Detail", sitem.name)
+			if (item.s_warehouse is not None):
+				act_rm_cost += item.amount
+				print("RM:{0}    Price:{1}".format(item.item_name, item.amount))
+			else:
+				print("Item:{0}  Qty:{1}".format(item.item_name, item.qty))
+				item_qty += item.qty
 
-			cm_est_direct_cost += product.cm_bom_cost
-			cm_act_direct_cost += product.cm_act_cost
-			cm_total_production += product.cm_sales_price
-			product_t.append (cm_date)
-			product_t.append (cm_product)
-			product_t.append (cm_bom_cost)
-			product_t.append (cm_act_cost)
-			product_t.append (cm_profit)
-			product_list.append (product_t)
-		l = ("Estimated Materail Cost", "Estimated Operation Cost", "Actual Materila Cost", "Actual Operation Cost", "Total Production Cost")
-		lt = list(l)
-		data.append (lt)
-		l = ()
-		lt = list (l)
-		cm_est_direct_cost = cm_act_direct_cost = cm_total_production = 0
-		lt.append (cm_est_direct_cost)
-		lt.append (cm_est_indirect_cost)
-		lt.append (cm_act_direct_cost)
-		lt.append (cm_act_indirect_cost)
-		lt.append (cm_total_production)
-		data.append (lt)
-		data.append (("Date", "Product", "BOM Cost", "ACT Cost", "Profit"));
-		for en in product_list:
-			data.append (en)
-		if (len(product_list) == 0):
-			data.append (("-", "-", "-", "-", "-"));
+		if (item_qty == 0): continue
 
-	return columns, data
+		bom_rm_cost = bom_entries[0].item_rm_cost * item_qty
+		bom_op_cost = bom_entries[0].item_prod_cost * item_qty
+		act_op_cost = per_box_op_cost * item_qty
 
+		bom_cost = bom_rm_cost + bom_op_cost
+		act_cost = act_rm_cost + act_op_cost
 
-def get_op_cost_per_box(month):
-	op_cost = get_total_expenses(month)
-	(boxes, production) = get_production_details(month)
+		sales_price = stock_entry.total_incoming_value
+		int_loss = 0
+		print("Sales Price={0} Actual cost={1}".format(sales_price, act_cost))
+		profit = ((sales_price - act_cost - int_loss) * 100)/act_cost
+
+		total_bom_rm_cost += bom_rm_cost
+		total_bom_op_cost += bom_op_cost
+		total_act_rm_cost += act_rm_cost
+		total_act_op_cost += act_op_cost
+		total_bom_cost += bom_cost
+		total_act_cost += act_cost
+		total_production += sales_price
+
+		result.append([order.production_item, se.posting_date, se.name, bom_rm_cost, act_rm_cost, bom_op_cost, act_op_cost, bom_cost, act_cost, profit])
+
+	total_profit = ((total_production - total_act_cost) * 100 / total_act_cost)
+	result.append(["", "", "", "", "", "", "", "","",""])
+	result.append(["Total", "", "", total_bom_rm_cost, total_act_rm_cost, total_bom_op_cost, total_act_op_cost, total_bom_cost, total_act_cost, total_profit])
+
+	return result
+
+def get_columns():
+	columns = [
+			_("Product Name") + ":Link/Item:150", _("Production Date") + ":Date:120", _("Stock Entry") + ":Link/Stock Entry:100",
+			_("BOM Material Cost") + ":Float:100", _("Actual Material Cost") + ":Float:100",
+			_("BOM Operation Cost") + ":Float:100", _("Actual Operation Cost") + ":Float:100",
+			_("BOM Cost") + ":Float:100", _("Actual Cost") + ":Float:100",
+			  _("Profit") + ":Float:100",
+			]
+	return columns
+
+def get_op_cost_per_box(start_date, end_date):
+	op_cost = get_total_expenses(start_date, end_date)
+	(boxes, production) = get_production_details(start_date, end_date)
 	return op_cost/boxes
 
-def get_total_expenses(month):
-	#expenses = frappe.get_all("Journal Entry", fields={"voucher_type":"Journal Entry"})
-	thisyear = datetime.datetime.now().year
-	start_date = datetime.date(year=thisyear, month=month, day=1)
-	end_date = datetime.date(year=thisyear, month=month, day=30)
-
+def get_total_expenses(start_date, end_date):
 	expenses = frappe.db.sql("""select name, total_debit
 									from `tabJournal Entry`
 									where voucher_type='Journal Entry' and posting_date between '{0}' and '{1}'"""\
@@ -126,7 +115,7 @@ def get_total_expenses(month):
 
 	return expense_total
 
-def get_production_details(month):
+def get_production_details(start_date, end_date):
 	prod_orders = frappe.get_all("Production Order", fields={"status":"Completed"})
 	total_boxes = total_production = 0
 
@@ -137,27 +126,3 @@ def get_production_details(month):
 		total_production += stock_entry.total_outgoing_value
 
 	return (total_boxes, total_production)
-
-def get_columns():
-        return [
-                {
-                        "fieldname": "1",
-                        "width": 145
-                },
-                {
-                        "fieldname": "2",
-                        "width": 150
-                },
-                {
-                        "fieldname": "3",
-                        "width": 120
-                },
-                {
-                        "fieldname": "4",
-                        "width": 130
-                },
-                {
-                        "fieldname": "5",
-                        "width": 130
-                }
-	       ]
