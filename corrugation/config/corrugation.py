@@ -57,16 +57,6 @@ def get_data():
 			]
 		},
 		{
-			"label": _("Setup"),
-			"items": [
-				{
-					"type": "doctype",
-					"name": "Manufacturing Settings",
-					"description": _("Global settings for all manufacturing processes."),
-				}
-			]
-		},
-		{
 			"label": _("Reports"),
 			"icon": "fa fa-list",
 			"items": [
@@ -80,6 +70,30 @@ def get_data():
                     "name": "CM Tally Export",
 					"is_query_report": True,
 				},
+			]
+		},
+		{
+			"label": _("Tools"),
+			"items": [
+				{
+					"type": "doctype",
+                    "name": "CM Export Data",
+				},
+			]
+		},
+		{
+			"label": _("Setup"),
+			"items": [
+				{
+					"type": "doctype",
+					"name": "Manufacturing Settings",
+					"description": _("Global settings for all manufacturing processes."),
+				},
+				{
+					"type": "doctype",
+					"name": "CM Tally Account Mapper",
+					"label": _("ERP-Tally Account Map")
+				}
 			]
 		},
 	]

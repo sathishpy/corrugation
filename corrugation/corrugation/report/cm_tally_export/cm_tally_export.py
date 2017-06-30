@@ -69,3 +69,7 @@ def get_conditions(filters):
     if match_conditions: conditions.append(match_conditions)
 
     return "and {}".format(" and ".join(conditions)) if conditions else ""
+
+@frappe.whitelist()
+def export_data(report):
+	print("Exporting data from report {0}".format(report))
