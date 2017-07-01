@@ -78,6 +78,12 @@ def get_data():
 				{
 					"type": "doctype",
                     "name": "CM Export Data",
+					"label": _("Data Export to Tally"),
+				},
+				{
+					"type": "doctype",
+					"name": "CM Party Import Tool",
+					"label": _("Import Master From Tally"),
 				},
 			]
 		},
@@ -89,11 +95,6 @@ def get_data():
 					"name": "Manufacturing Settings",
 					"description": _("Global settings for all manufacturing processes."),
 				},
-				{
-					"type": "doctype",
-					"name": "CM Tally Account Mapper",
-					"label": _("ERP-Tally Account Map")
-				}
 			]
 		},
 	]

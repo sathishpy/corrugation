@@ -43,6 +43,10 @@ frappe.ui.form.on('CM Box Description', {
 		}
 	},
 	onload: function(frm) {
+		frm.add_custom_button(__("Create Parties"), function() {
+			frm.events.create_parties(frm)
+		});
+
 		if (!frm.doc.__islocal) return;
 		frappe.call({
 			doc: frm.doc,
