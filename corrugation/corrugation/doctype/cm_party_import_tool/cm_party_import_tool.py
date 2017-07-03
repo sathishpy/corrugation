@@ -12,6 +12,7 @@ class CMPartyImportTool(Document):
 		self.name = "exported-data"
 
 	def on_update(self):
+		if self.filename is None: return
 		filename = self.filename.split("/")[-1]
 		filepath = frappe.get_site_path('private', 'files', filename)
 		print("File is {0}".format(filepath))
