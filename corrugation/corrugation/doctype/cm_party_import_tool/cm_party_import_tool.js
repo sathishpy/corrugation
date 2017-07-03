@@ -9,16 +9,25 @@ frappe.ui.form.on('CM Party Import Tool', {
 			{fieldname: 'party_tin', columns: 1},
 			{fieldname: 'party_address', columns:6},
 		];
-		frm.add_custom_button(__("Create Parties"), function() {
-			frm.events.create_parties(frm)
-		});
 	},
 	refresh: function(frm) {
-
+		frm.add_custom_button(__('Export Data'),
+	  	function() {
+				frm.events.create_parties(frm)
+			});
 	},
 	onload: function(frm) {
 	},
 	create_parties: function(frm) {
-		msgprint("Creating parties")
+		frappe.call({
+			doc: frm.doc,
+			method: "export_parties",
+			callback: function(r) {
+				if(!r.exe) {
+					msgprint("Export Complete")
+					set_route("List", "Customer")
+				}
+			}
+		});
 	},
 });
