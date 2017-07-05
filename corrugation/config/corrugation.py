@@ -82,8 +82,8 @@ def get_data():
 				},
 				{
 					"type": "doctype",
-					"name": "CM Party Import Tool",
-					"label": _("Import Master From Tally"),
+					"name": "CM Data Import Tool",
+					"label": _("Import Master Data"),
 				},
 			]
 		},

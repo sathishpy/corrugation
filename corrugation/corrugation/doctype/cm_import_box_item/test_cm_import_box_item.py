@@ -6,5 +6,5 @@ from __future__ import unicode_literals
 import frappe
 import unittest
 
-class TestCMPartyImportTool(unittest.TestCase):
+class TestCMImportBoxItem(unittest.TestCase):
 	pass

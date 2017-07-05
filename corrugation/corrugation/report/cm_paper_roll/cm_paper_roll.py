@@ -6,6 +6,7 @@ import frappe
 from frappe.model.document import Document
 import datetime
 import calendar
+from frappe import _
 
 def execute(filters=None):
 	columns, data = [], []
@@ -26,50 +27,9 @@ def execute(filters=None):
 	return columns, data
 
 def get_columns():
-        return [
-                {
-                    "fieldname": "name",
-					"label"	   : "name",
-                    "width": 250
-                },
-                {
-                    "fieldname": "weight",
-					"label"	   : "Weight",
-                    "width": 60
-                },
-                {
-                    "fieldname": "colour",
-					"label"	   : "colour",
-                    "width": 120
-                },
-                {
-                    "fieldname": "bf",
-					"label"	   : "BF",
-                    "width": 90
-                },
-                {
-                    "fieldname": "gsm",
-					"label"	   : "GSM",
-                    "width": 110
-                },
-                {
-                    "fieldname": "deck",
-					"label"	   : "Deck",
-                    "width": 110
-                },
-                {
-                    "fieldname": "supplier",
-					"label"	   : "Supplier",
-                    "width": 110
-                },
-                {
-                    "fieldname": "location",
-					"label"	   : "location",
-                    "width": 100
-                },
-                {
-                    "fieldname": "status",
-					"label"	   : "Status",
-                    "width": 60
-                },
-	       ]
+	columns = [
+			_("Roll Name") + ":Link/CM Paper Roll:300",  _("Weight") + ":Float:70",	_("Colour") + ":Data:100",
+			_("BF") + ":Float:70",  _("GSM") + ":Float:70", _("Deck") + ":Float:70",
+			_("Supplier") + ":Data:100", _("Location") + ":Data:100", _("Status") + ":Data:100"
+			]
+	return columns
