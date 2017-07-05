@@ -83,7 +83,9 @@ class CMBoxDescription(Document):
 		return (weight, cost)
 
 	def validate(self):
-		pass
+		if not self.item:
+			box = frappe.get_doc("CM Box", self.box)
+			self.item = box.box_item
 
 	def on_update(self):
 		self.update_cost()

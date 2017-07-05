@@ -29,12 +29,16 @@ def get_data():
 					"name": "CM Paper Roll Register",
                     "label": _("Register Paper Rolls")
 				},
-                {
-                    "type": "report",
-                    "name": "CM Paper Roll",
-                    "label": _("Paper Rolls"),
-					"is_query_report": True,
-                }
+				{
+					"type": "doctype",
+					"name": "CM Box",
+                    "label": _("Register New Box")
+				},
+				{
+					"type": "doctype",
+					"name": "CM Paper",
+                    "label": _("Register New Paper")
+				},
 			]
 		},
 		{
@@ -65,11 +69,12 @@ def get_data():
                     "name": "CM Product Costs",
 					"is_query_report": True,
 				},
-				{
-					"type": "report",
-                    "name": "CM Tally Export",
+                {
+                    "type": "report",
+                    "name": "CM Paper Roll",
+                    "label": _("Paper Rolls"),
 					"is_query_report": True,
-				},
+                }
 			]
 		},
 		{
@@ -78,12 +83,17 @@ def get_data():
 				{
 					"type": "doctype",
                     "name": "CM Export Data",
-					"label": _("Data Export to Tally"),
+					"label": _("Export Data"),
 				},
 				{
 					"type": "doctype",
 					"name": "CM Data Import Tool",
 					"label": _("Import Master Data"),
+				},
+				{
+					"type": "report",
+                    "name": "CM Tally Export",
+					"is_query_report": True,
 				},
 			]
 		},

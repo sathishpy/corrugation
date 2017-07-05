@@ -1,7 +1,5 @@
 // Copyright (c) 2017, sathishpy@gmail.com and contributors
 // For license information, please see license.txt
-cur_frm.add_fetch("item", "item_name", "item_name");
-
 frappe.ui.form.on('CM Box Description', {
 	setup: function(frm) {
 		frm.get_field('item_papers').grid.editable_fields = [
@@ -43,6 +41,11 @@ frappe.ui.form.on('CM Box Description', {
 		}
 	},
 	onload: function(frm) {
+		frm.add_fetch("item", "item_name", "item_name");
+		frm.add_fetch("CM Box", "box_length", "item_length")
+		frm.add_fetch("CM Box", "box_width", "item_width")
+		frm.add_fetch("CM Box", "box_height", "item_height")
+		frm.add_fetch("CM Box", "box_ply_count", "item_ply_count")
 		frm.add_custom_button(__("Create Parties"), function() {
 			frm.events.create_parties(frm)
 		});
