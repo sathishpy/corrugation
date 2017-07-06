@@ -13,18 +13,13 @@ frappe.ui.form.on('CM Box Description', {
 				{fieldname: 'rm_percent', columns: 2},
 				{fieldname: 'rm_cost', columns: 2}
 			];
-		frm.fields_dict['item'].get_query = function(doc, dt, dn) {
-			return {
-				filters:[
-					['Item', 'item_group', '=', 'Products']
-				]
-			}
-		}
 		frm.fields_dict.item_papers.grid.get_field('rm').get_query = function(doc, cdt, cdn) {
 			return {
-				filters: [
-					['Item', 'item_group', '=', 'Paper']
-				]
+				query: "corrugation.corrugation.doctype.cm_box_description.cm_box_description.filter_papers",
+				filters: {'sheet_length': doc.sheet_length,
+									'sheet_width': doc.sheet_width,
+									'top_type': doc.item_top_type,
+								},
 			};
 		}
 		frm.fields_dict.item_others.grid.get_field('rm').get_query = function(doc, cdt, cdn) {
@@ -41,15 +36,17 @@ frappe.ui.form.on('CM Box Description', {
 		}
 	},
 	onload: function(frm) {
+		frm.add_fetch("box", "box_item", "item");
 		frm.add_fetch("item", "item_name", "item_name");
-		frm.add_fetch("CM Box", "box_length", "item_length")
-		frm.add_fetch("CM Box", "box_width", "item_width")
-		frm.add_fetch("CM Box", "box_height", "item_height")
-		frm.add_fetch("CM Box", "box_ply_count", "item_ply_count")
-		frm.add_fetch("CM Box", "box_top_type", "item_top_type")
-		frm.add_fetch("CM Box", "box_rate", "item_rate")
-
-		if (!frm.doc.__islocal) return;
+		frm.add_fetch("box", "box_length", "item_length")
+		frm.add_fetch("box", "box_width", "item_width")
+		frm.add_fetch("box", "box_height", "item_height")
+		frm.add_fetch("box", "box_ply_count", "item_ply_count")
+		frm.add_fetch("box", "box_top_type", "item_top_type")
+		frm.add_fetch("box", "box_rate", "item_rate")
+	},
+	box: function(frm) {
+		frm.events.update_sheet_values(frm)
 		frappe.call({
 			doc: frm.doc,
 			method: "populate_raw_materials",
@@ -63,8 +60,6 @@ frappe.ui.form.on('CM Box Description', {
 	},
 	refresh: function(frm) {
 		frm.events.refresh_fields(frm);
-		if (frm.doc.__islocal) return;
-		frm.events.update_sheet_values(frm);
 	},
 	update_cost: function(frm) {
 		frappe.call({
@@ -77,32 +72,11 @@ frappe.ui.form.on('CM Box Description', {
 			}
 		});
 	},
-	item_width : function(frm, cdt, cdn) {
-		frm.events.update_sheet_values(frm);
-	},
-	item_length : function(frm, cdt, cdn) {
-		frm.events.update_sheet_values(frm);
-	},
-	item_height : function(frm, cdt, cdn) {
-		frm.events.update_sheet_values(frm);
-	},
 	item_margin : function(frm, cdt, cdn) {
-		frm.events.update_sheet_values(frm);
+		frm.events.update_cost(frm);
 	},
 	item_per_sheet : function(frm, cdt, cdn) {
-		frm.events.update_sheet_values(frm);
-	},
-	item_ply_count : function(frm, cdt, cdn) {
-		frm.events.update_sheet_values(frm);
-		frappe.call({
-			doc: frm.doc,
-			method: "populate_paper_materials",
-			callback: function(r) {
-				if(!r.exe) {
-					frm.events.refresh_fields(frm);
-				}
-			}
-		});
+		frm.events.update_cost(frm);
 	},
 	item_prod_cost : function(frm) {
 		frm.events.update_cost(frm);
@@ -112,7 +86,6 @@ frappe.ui.form.on('CM Box Description', {
 		let sheet_width = frm.doc.item_per_sheet * (frm.doc.item_width + frm.doc.item_height + frm.doc.item_fold_lap)
 		frm.set_value("sheet_length", sheet_length);
 		frm.set_value("sheet_width", sheet_width);
-		frm.events.update_cost(frm);
 	},
 	refresh_fields : function(frm) {
 		refresh_field("item_papers");

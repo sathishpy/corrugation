@@ -21,10 +21,20 @@ class CMBoxDescription(Document):
 
 	def populate_paper_materials(self):
 		self.item_papers = []
+		colour = "Brown"
+		if "White" in self.item_top_type:	colour = 'White'
+		print("Popualting papers for box {0} of {1}-{2}-{3}".format(self.box, self.sheet_length, self.sheet_width, colour))
+		length, width = float(self.sheet_length), float(self.sheet_width)
+
 		rm_item = frappe.new_doc("CM Paper Item")
 		rm_item.rm_type = 'Top'
+		papers = get_layer_papers(length, width, colour)
+		if (len(papers) > 0):
+			print "Assigning paper {0} for top".format(papers[0])
+			paper, deck = papers[0]
+			rm_item.rm = paper
 		self.append("item_papers", rm_item)
-		print ("Ply count {0}".format(self.item_ply_count))
+
 		if (int(self.item_ply_count) == 5):
 			print ("Adding additional layers")
 			rm_item = frappe.new_doc("CM Paper Item")
@@ -37,10 +47,20 @@ class CMBoxDescription(Document):
 
 		rm_item = frappe.new_doc("CM Paper Item")
 		rm_item.rm_type = 'Flute'
+		papers = get_layer_papers(length, width, "Brown")
+		if (len(papers) > 0):
+			print "Assigning paper {0} for Flute".format(papers[0])
+			paper, deck = papers[0]
+			rm_item.rm = paper
 		self.append("item_papers", rm_item)
 
 		rm_item = frappe.new_doc("CM Paper Item")
 		rm_item.rm_type = "Bottom"
+		papers = get_layer_papers(length, width, "Brown")
+		if (len(papers) > 0):
+			print "Assigning paper {0} for Bottom".format(papers[0])
+			paper, deck = papers[0]
+			rm_item.rm = paper
 		self.append("item_papers", rm_item)
 
 	def populate_raw_materials(self):
@@ -210,3 +230,74 @@ def make_new_bom(source_name):
 	print "Creating new bom {0} for {1} with operating cost {2}".format(bom.name, bom.item_name, bom.operating_cost)
 	bom.submit()
 	return bom.name
+
+@frappe.whitelist()
+def filter_papers_deck(doctype, txt, searchfield, start, page_len, filters):
+	sheet_length = filters["sheet_length"]
+	sheet_width = filters["sheet_width"]
+	filter_query =	"""select item.name, attr.attribute_value
+						from tabItem item left join `tabItem Variant Attribute` attr
+						on (item.name=attr.parent)
+						where item.docstatus < 2
+							and item.variant_of='Paper-RM'
+							and item.disabled=0
+							and (attr.attribute='Deck' and
+									((attr.attribute_value >= {0} and attr.attribute_value <= {1})
+										or (attr.attribute_value >= {2} and attr.attribute_value <= {3})
+									)
+								)
+					""".format(sheet_length, sheet_length+10, sheet_width, sheet_width+10)
+	print "Searching papers matching deck {0} with query {1}".format(sheet_length, filter_query)
+	return frappe.db.sql(filter_query)
+
+@frappe.whitelist()
+def filter_papers(doctype, txt, searchfield, start, page_len, filters):
+	sheet_length = filters["sheet_length"]
+	sheet_width = filters["sheet_width"]
+	colour = 'Brown'
+	if "White" in filters["top_type"]:	colour = 'White'
+	return get_layer_papers(sheet_length, sheet_width, colour)
+
+def get_layer_papers_1(sheet_length, sheet_width, colour):
+	filter_query =	"""select tabItem.name,
+						from tabItem
+						where tabItem.docstatus < 2
+							and tabItem.variant_of='Paper-RM'
+							and tabItem.disabled=0
+							and exists (
+									select name, attribute_value
+									from `tabItem Variant Attribute` iv_attribute
+									where iv_attribute.parent=tabItem.name
+										and iv_attribute.attribute='Deck'
+										and ((iv_attribute.attribute_value >= {0} and iv_attribute.attribute_value <= {1})
+											or (iv_attribute.attribute_value >= {2} and iv_attribute.attribute_value <= {3}))
+									)
+							and exists (
+									select name from `tabItem Variant Attribute` iv_attribute
+									where iv_attribute.parent=tabItem.name
+										and (iv_attribute.attribute='Colour' and iv_attribute.attribute_value = '{4}')
+									)
+					""".format(sheet_length, sheet_length+10, sheet_width, sheet_width+10, colour)
+	#print "Searching papers matching deck {0} with query {1}".format(sheet_length, filter_query)
+	return frappe.db.sql(filter_query)
+
+def get_layer_papers(sheet_length, sheet_width, colour):
+	filter_query =	"""select item.name, attr.attribute_value
+						from tabItem item left join `tabItem Variant Attribute` attr
+						on (item.name=attr.parent)
+						where item.docstatus < 2
+							and item.variant_of='Paper-RM'
+							and item.disabled=0
+							and (attr.attribute='Deck' and
+									((attr.attribute_value >= {0} and attr.attribute_value <= {1})
+										or (attr.attribute_value >= {2} and attr.attribute_value <= {3})
+									)
+								)
+							and exists (
+									select name from `tabItem Variant Attribute` iv_attr
+									where iv_attr.parent=item.name
+										and (iv_attr.attribute='Colour' and iv_attr.attribute_value = '{4}')
+									)
+					""".format(sheet_length, sheet_length+10, sheet_width, sheet_width+10, colour)
+	#print "Searching papers matching deck {0} with query {1}".format(sheet_length, filter_query)
+	return frappe.db.sql(filter_query)
