@@ -16,7 +16,8 @@ frappe.ui.form.on('CM Box Description', {
 		frm.fields_dict.item_papers.grid.get_field('rm').get_query = function(doc, cdt, cdn) {
 			return {
 				query: "corrugation.corrugation.doctype.cm_box_description.cm_box_description.filter_papers",
-				filters: {'sheet_length': doc.sheet_length,
+				filters: {
+									'sheet_length': doc.sheet_length,
 									'sheet_width': doc.sheet_width,
 									'top_type': doc.item_top_type,
 								},
