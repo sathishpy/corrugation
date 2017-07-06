@@ -3,10 +3,12 @@
 
 frappe.ui.form.on('CM Box', {
 	refresh: function(frm) {
+		if (!frm.doc.__islocal) {
+			frm.add_custom_button(__("Update Description"), function() {
+				frappe.route_options = {"box": frm.doc.box_name}
+				frappe.set_route("List", "CM Box Description")
+			});
+		}
 
 	},
-	on_update_after_submit: function(frm) {
-		msgprint("In on_update_after_submit")
-		set_route("Form", "CM Box Description", frm.document.box_name)
-	}
 });

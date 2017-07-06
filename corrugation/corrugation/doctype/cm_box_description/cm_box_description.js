@@ -46,9 +46,8 @@ frappe.ui.form.on('CM Box Description', {
 		frm.add_fetch("CM Box", "box_width", "item_width")
 		frm.add_fetch("CM Box", "box_height", "item_height")
 		frm.add_fetch("CM Box", "box_ply_count", "item_ply_count")
-		frm.add_custom_button(__("Create Parties"), function() {
-			frm.events.create_parties(frm)
-		});
+		frm.add_fetch("CM Box", "box_top_type", "item_top_type")
+		frm.add_fetch("CM Box", "box_rate", "item_rate")
 
 		if (!frm.doc.__islocal) return;
 		frappe.call({
@@ -66,12 +65,6 @@ frappe.ui.form.on('CM Box Description', {
 		frm.events.refresh_fields(frm);
 		if (frm.doc.__islocal) return;
 		frm.events.update_sheet_values(frm);
-	},
-	make_bom: function(curfrm) {
-		frappe.model.open_mapped_doc({
-			method: "corrugation.corrugation.doctype.cm_box_description.cm_box_description.make_new_bom",
-			frm: curfrm
-		})
 	},
 	update_cost: function(frm) {
 		frappe.call({

@@ -65,3 +65,7 @@ def before_install():
     paper_rm = frappe.db.sql_list("""select name from `tabItem` where item_name=%s""", paper_template)
     if not paper_rm:
         add_paper_template(paper_template)
+
+def after_install():
+    doc = frappe.new_doc("CM Paper")
+    doc.save(ignore_permissions=True)

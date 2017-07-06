@@ -7,4 +7,5 @@ import frappe
 from frappe.model.document import Document
 
 class CMPaper(Document):
-	pass
+	def autoname(self):
+		self.name = "Create New Paper"

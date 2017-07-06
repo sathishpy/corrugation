@@ -19,6 +19,12 @@ def get_data():
 					"description": _("Shared Production Orders."),
                     "label": _("Shared Production Order")
 				},
+				{
+					"type": "doctype",
+					"name": "CM Box Description",
+					"description": _("Bill of Materials (BOM)"),
+					"label": _("Box Manufacturing Details")
+				},
             ]
         },
         {
@@ -42,21 +48,22 @@ def get_data():
 			]
 		},
 		{
-			"label": _("Bill of Materials"),
+			"label": _("Sales and Purchase"),
 			"items": [
 				{
 					"type": "doctype",
-					"name": "CM Box Description",
-					"description": _("Bill of Materials (BOM)"),
-					"label": _("Box Description")
+					"name": "Sales Order",
+					"label": _("Sales Order"),
 				},
 				{
 					"type": "doctype",
-					"name": "BOM",
-					"icon": "fa fa-sitemap",
-					"label": _("BOM Browser"),
-					"description": _("Tree of Bill of Materials"),
-					"link": "Tree/BOM",
+					"name": "Purchase Invoice",
+					"label": _("Purchase Invoice"),
+				},
+				{
+					"type": "doctype",
+					"name": "Purchase Receipt",
+					"label": _("Purchase Receipt"),
 				},
 			]
 		},
@@ -67,6 +74,7 @@ def get_data():
 				{
 					"type": "report",
                     "name": "CM Product Costs",
+					"label": _("Production Cost Analysis"),
 					"is_query_report": True,
 				},
                 {

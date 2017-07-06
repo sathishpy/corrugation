@@ -54,4 +54,6 @@ class CMBox(Document):
 			box_bom.item_width = self.box_width
 			box_bom.item_height = self.box_height
 			box_bom.item_ply_count = self.box_ply_count
+			box_bom.item_top_type = self.box_top_type
+			box_bom.item_rate = self.box_rate
 			box_bom.save(ignore_permissions=True)
