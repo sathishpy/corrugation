@@ -114,7 +114,7 @@ class CMDataImportTool(Document):
 			rolls = csv.DictReader(csvfile)
 			for roll in rolls:
 				roll_item = frappe.new_doc("CM Import Roll Item")
-				roll_item.paper_color = roll["Color"]
+				roll_item.paper_color = roll["Colour"]
 				roll_item.paper_bf = roll["BF"]
 				roll_item.paper_gsm = roll["GSM"]
 				roll_item.paper_deck = roll["Deck"]
@@ -158,29 +158,21 @@ class CMDataImportTool(Document):
 				box_item.width = box["Width"]
 				box_item.height = box["Height"]
 				box_item.ply = box["Ply"]
+				box_item.top_type = box["Top"]
 				box_item.rate = box["Rate"]
 				self.append("box_items", box_item)
 
 	def export_boxes(self):
 		for box_item in self.box_items:
-			item = frappe.new_doc("Item")
-			item.item_name = box_item.box_name
-			if (box_item.box_code):
-				item.item_code = box_item.box_code
-			else:
-				item.item_code = box_item.box_name
-			item.standard_rate = box_item.rate
-			item.item_group = "Products"
-			item.default_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})
-			print "Exporting box {0}-{1}.".format(item.item_name, item.item_code)
-			item.save(ignore_permissions=True)
-
-			box = frappe.new_doc("CM Box Description")
-			box.item = item.name
-			box.item_length = box_item.length
-			box.item_width = box_item.width
-			box.item_height = box_item.height
-			box.item_ply_count = box_item.ply
+			box = frappe.new_doc("CM Box")
+			box.box_name = box_item.box_name
+			box.box_code = box_item.box_code
+			box.box_length = box_item.length
+			box.box_width = box_item.width
+			box.box_height = box_item.height
+			box.box_top_type = box_item.top_type
+			box.box_ply_count = box_item.ply
+			box.box_rate = box_item.rate
 			box.save(ignore_permissions=True)
 
 def getText(node):

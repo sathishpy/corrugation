@@ -39,7 +39,10 @@ class CMBoxDescription(Document):
 
 		self.item_papers = []
 		self.add_paper_item("Top")
-		if (int(self.item_ply_count) == 5):
+		if (int(self.item_ply_count) > 3):
+			self.add_paper_item("Flute Liner")
+			self.add_paper_item("Liner")
+		if (int(self.item_ply_count) > 5):
 			self.add_paper_item("Flute Liner")
 			self.add_paper_item("Liner")
 		self.add_paper_item("Flute")
@@ -147,7 +150,7 @@ def get_paper_measurements(paper):
 		elif attribute.attribute == "BF":
 			bf = int(attribute.attribute_value)
 		elif attribute.attribute == "Deck":
-			deck = int(attribute.attribute_value)
+			deck = float(attribute.attribute_value)
 	return (gsm, bf, deck)
 
 def get_item_rate(item_name):
