@@ -14,12 +14,14 @@ frappe.ui.form.on('CM Box Description', {
 				{fieldname: 'rm_cost', columns: 2}
 			];
 		frm.fields_dict.item_papers.grid.get_field('rm').get_query = function(doc, cdt, cdn) {
+			row = locals[cdt][cdn]
 			return {
 				query: "corrugation.corrugation.doctype.cm_box_description.cm_box_description.filter_papers",
 				filters: {
 									'sheet_length': doc.sheet_length,
 									'sheet_width': doc.sheet_width,
 									'top_type': doc.item_top_type,
+									'layer_type': row.rm_type,
 								},
 			};
 		}
@@ -73,10 +75,19 @@ frappe.ui.form.on('CM Box Description', {
 			}
 		});
 	},
-	item_margin : function(frm, cdt, cdn) {
+	item_pin_lap : function(frm, cdt, cdn) {
+		frm.events.update_sheet_values(frm)
+		frm.events.update_cost(frm);
+	},
+	item_fold_lap : function(frm, cdt, cdn) {
+		frm.events.update_sheet_values(frm)
 		frm.events.update_cost(frm);
 	},
 	item_per_sheet : function(frm, cdt, cdn) {
+		frm.events.update_sheet_values(frm)
+		frm.events.update_cost(frm);
+	},
+	item_flute : function(frm) {
 		frm.events.update_cost(frm);
 	},
 	item_prod_cost : function(frm) {

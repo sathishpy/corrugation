@@ -50,10 +50,12 @@ class CMBox(Document):
 			box_bom.box = self.name
 			box_bom.item = item.name
 			box_bom.item_name = item.item_name
-			box_bom.item_length = self.box_length
-			box_bom.item_width = self.box_width
-			box_bom.item_height = self.box_height
 			box_bom.item_ply_count = self.box_ply_count
 			box_bom.item_top_type = self.box_top_type
 			box_bom.item_rate = self.box_rate
+			if box_bom.item_length != self.box_length or box_bom.item_width != self.box_width or box_bom.item_height != self.box_height:
+				box_bom.item_length = self.box_length
+				box_bom.item_width = self.box_width
+				box_bom.item_height = self.box_height
+				box_bom.populate_raw_materials()
 			box_bom.save(ignore_permissions=True)

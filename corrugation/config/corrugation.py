@@ -45,6 +45,11 @@ def get_data():
 					"name": "CM Paper",
                     "label": _("Register New Paper")
 				},
+				{
+					"type": "page",
+					"name": "stock-balance",
+					"label": _("Stock Summary")				
+				}
 			]
 		},
 		{

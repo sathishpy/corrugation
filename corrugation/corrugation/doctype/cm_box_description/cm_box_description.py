@@ -19,49 +19,31 @@ class CMBoxDescription(Document):
 	def on_submit(self):
 		pass
 
-	def populate_paper_materials(self):
-		self.item_papers = []
+	def add_paper_item(self, layer):
 		colour = "Brown"
-		if "White" in self.item_top_type:	colour = 'White'
-		print("Popualting papers for box {0} of {1}-{2}-{3}".format(self.box, self.sheet_length, self.sheet_width, colour))
-		length, width = float(self.sheet_length), float(self.sheet_width)
+		if "White" in self.item_top_type and layer == "Top":
+			colour = 'White'
 
 		rm_item = frappe.new_doc("CM Paper Item")
-		rm_item.rm_type = 'Top'
-		papers = get_layer_papers(length, width, colour)
+		rm_item.rm_type = layer
+		papers = get_layer_papers(self.sheet_length, self.sheet_width, colour)
 		if (len(papers) > 0):
-			print "Assigning paper {0} for top".format(papers[0])
+			print "Assigning paper {0} for {1}".format(papers[0], layer)
 			paper, deck = papers[0]
 			rm_item.rm = paper
 		self.append("item_papers", rm_item)
 
+	def populate_paper_materials(self):
+		self.sheet_length = 2 * (self.item_width + self.item_length) + self.item_pin_lap
+		self.sheet_width = self.item_per_sheet * (self.item_width + self.item_height + self.item_fold_lap)
+
+		self.item_papers = []
+		self.add_paper_item("Top")
 		if (int(self.item_ply_count) == 5):
-			print ("Adding additional layers")
-			rm_item = frappe.new_doc("CM Paper Item")
-			rm_item.rm_type = 'Flute Liner'
-			self.append("item_papers", rm_item)
-
-			rm_item = frappe.new_doc("CM Paper Item")
-			rm_item.rm_type = "Liner"
-			self.append("item_papers", rm_item)
-
-		rm_item = frappe.new_doc("CM Paper Item")
-		rm_item.rm_type = 'Flute'
-		papers = get_layer_papers(length, width, "Brown")
-		if (len(papers) > 0):
-			print "Assigning paper {0} for Flute".format(papers[0])
-			paper, deck = papers[0]
-			rm_item.rm = paper
-		self.append("item_papers", rm_item)
-
-		rm_item = frappe.new_doc("CM Paper Item")
-		rm_item.rm_type = "Bottom"
-		papers = get_layer_papers(length, width, "Brown")
-		if (len(papers) > 0):
-			print "Assigning paper {0} for Bottom".format(papers[0])
-			paper, deck = papers[0]
-			rm_item.rm = paper
-		self.append("item_papers", rm_item)
+			self.add_paper_item("Flute Liner")
+			self.add_paper_item("Liner")
+		self.add_paper_item("Flute")
+		self.add_paper_item("Bottom")
 
 	def populate_raw_materials(self):
 		self.populate_paper_materials()
@@ -112,7 +94,7 @@ class CMBoxDescription(Document):
 			box = frappe.get_doc("CM Box", self.box)
 			self.item = box.box_item
 
-	def on_update(self):
+	def before_save(self):
 		self.update_cost()
 
 	def before_submit(self):
@@ -150,7 +132,7 @@ class CMBoxDescription(Document):
 
 		total_expense = get_total_expenses(0)
 		(boxes, production) = get_production_details(0)
-		print("Boxes = {0} production={1}".format(boxes, production))
+		print("Boxes = {0} production={1} expense={2}".format(boxes, production, total_expense))
 		if (boxes != 0 and self.item_prod_cost == 0): self.item_prod_cost = total_expense/boxes
 		self.item_total_cost = float(self.item_rm_cost + self.item_prod_cost)
 		self.item_profit = float((get_item_rate(self.item) - self.item_total_cost)*100/self.item_total_cost)
@@ -240,8 +222,9 @@ def make_new_bom(source_name):
 def filter_papers(doctype, txt, searchfield, start, page_len, filters):
 	sheet_length = filters["sheet_length"]
 	sheet_width = filters["sheet_width"]
+	layer_type = filters["layer_type"]
 	colour = 'Brown'
-	if "White" in filters["top_type"]:	colour = 'White'
+	if layer_type == "Top" and "White" in filters["top_type"]:	colour = 'White'
 	return get_layer_papers(sheet_length, sheet_width, colour)
 
 def get_layer_papers(sheet_length, sheet_width, colour):
@@ -261,6 +244,7 @@ def get_layer_papers(sheet_length, sheet_width, colour):
 									where iv_attr.parent=item.name
 										and (iv_attr.attribute='Colour' and iv_attr.attribute_value = '{4}')
 									)
+						order by attr.attribute_value asc
 					""".format(sheet_length, sheet_length+10, sheet_width, sheet_width+10, colour)
 	#print "Searching papers matching deck {0} with query {1}".format(sheet_length, filter_query)
 	return frappe.db.sql(filter_query)
