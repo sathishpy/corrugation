@@ -19,13 +19,22 @@ def add_paper_item_groups(raw_material_group):
         {"doctype": "Item Group", "item_group_name": _("Gum"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Ink"), "is_group": 0, "parent_item_group": raw_material_group.name },
     ]
+    print("Adding new categories to Raw Material")
     add_records(records)
 
 def add_paper_template(name):
+    frappe.db.sql("""delete from `tabItem Attribute` where name='Colour'""")
+    frappe.db.sql("""delete from `tabItem Attribute Value` where parent='Colour'""")
+    frappe.db.sql("""delete from `tabItem Attribute` where name='Size'""")
+    frappe.db.sql("""delete from `tabItem Attribute Value` where parent='Size'""")
     records = [
         {"doctype": "Item Attribute", "attribute_name":_("BF"), "numeric_values": True, "from_range": 12, "increment": 2, "to_range": 30},
         {"doctype": "Item Attribute", "attribute_name":_("GSM"), "numeric_values": True, "from_range": 100, "increment": 20, "to_range": 250},
         {"doctype": "Item Attribute", "attribute_name":_("Deck"), "numeric_values": True, "from_range": 50, "increment": 0.5, "to_range": 250},
+        {'doctype': "Item Attribute", "attribute_name": _("Colour"), "item_attribute_values": [
+                                                                        {"attribute_value": _("White"), "abbr": "WHI"},
+                                                                        {"attribute_value": _("Brown"), "abbr": "BRW"},]
+        },
         {"doctype": "Item", "item_code": name, "item_group": "Paper", "stock_uom": "Kg", "default_material_request_type": "Purchase",
                             "is_stock_item": True, "is_fixed_asset": False, "has_variants": True, "variant_based_on": "Item Attribute",
                             "attributes": [
@@ -36,10 +45,12 @@ def add_paper_template(name):
                             ]
         },
     ]
+    print("Adding paper template as Item")
     add_records(records)
 
 def update_mf_settings():
     #Allow over production
+    print "Updating manufacturing settings"
     mf_settings = frappe.get_doc({"doctype": "Manufacturing Settings", "allow_production_on_holidays": 0})
     mf_settings.allow_production_on_holidays = 1
     mf_settings.allow_overtime = 1
