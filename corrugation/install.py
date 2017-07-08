@@ -29,7 +29,7 @@ def add_paper_template(name):
     frappe.db.sql("""delete from `tabItem Attribute Value` where parent='Size'""")
     records = [
         {"doctype": "Item Attribute", "attribute_name":_("BF"), "numeric_values": True, "from_range": 12, "increment": 2, "to_range": 30},
-        {"doctype": "Item Attribute", "attribute_name":_("GSM"), "numeric_values": True, "from_range": 100, "increment": 20, "to_range": 250},
+        {"doctype": "Item Attribute", "attribute_name":_("GSM"), "numeric_values": True, "from_range": 100, "increment": 10, "to_range": 250},
         {"doctype": "Item Attribute", "attribute_name":_("Deck"), "numeric_values": True, "from_range": 50, "increment": 0.5, "to_range": 250},
         {'doctype': "Item Attribute", "attribute_name": _("Colour"), "item_attribute_values": [
                                                                         {"attribute_value": _("White"), "abbr": "WHI"},
