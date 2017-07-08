@@ -118,6 +118,7 @@ class CMDataImportTool(Document):
 				roll_item.paper_bf = roll["BF"]
 				roll_item.paper_gsm = roll["GSM"]
 				roll_item.paper_deck = roll["Deck"]
+				roll_item.paper_rate = roll["Rate"]
 				roll_item.roll_weight = roll["Weight"]
 				self.append("roll_items", roll_item)
 
@@ -129,6 +130,7 @@ class CMDataImportTool(Document):
 				print ("Creating Paper for args {0}".format(variant_args))
 				paper_doc = create_variant("Paper-RM", variant_args)
 				if (paper_doc != None):
+					paper_doc.valuation_rate = roll.paper_rate
 					paper_doc.save(ignore_permissions=True)
 					paper = paper_doc.name
 			else:
@@ -137,6 +139,10 @@ class CMDataImportTool(Document):
 			if (paper == None):
 				frappe.throw("Failed to create the paper variant")
 				continue
+			paper_item = frappe.get_doc("Item", paper)
+			paper_item.opening_stock += roll.roll_weight
+			paper_item.set_opening_stock()
+			paper_item.save(ignore_permissions=True)
 
 			paper_roll = frappe.new_doc("CM Paper Roll")
 			paper_roll.paper = paper
