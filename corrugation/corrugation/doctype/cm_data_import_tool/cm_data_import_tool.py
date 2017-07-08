@@ -127,20 +127,19 @@ class CMDataImportTool(Document):
 			variant_args = {"Colour": roll.paper_color, "BF": roll.paper_bf, "GSM": roll.paper_gsm, "Deck": roll.paper_deck}
 			paper = find_variant("Paper-RM", variant_args)
 			if (paper == None):
-				print ("Creating Paper for args {0}".format(variant_args))
+				print ("Creating Paper for args {0} weight: {1}".format(variant_args, roll.roll_weight))
 				paper_doc = create_variant("Paper-RM", variant_args)
 				if (paper_doc != None):
 					paper_doc.valuation_rate = roll.paper_rate
 					paper_doc.save(ignore_permissions=True)
 					paper = paper_doc.name
-			else:
-				print("Found paper {0}".format(paper))
+				else:
+					frappe.throw("Failed to create the paper variant")
+					continue
 
-			if (paper == None):
-				frappe.throw("Failed to create the paper variant")
-				continue
 			paper_item = frappe.get_doc("Item", paper)
-			paper_item.opening_stock += roll.roll_weight
+			paper_item.opening_stock = roll.roll_weight
+			print("Updating paper {0} stock to {1}".format(paper, paper_item.opening_stock))
 			paper_item.set_opening_stock()
 			paper_item.save(ignore_permissions=True)
 
