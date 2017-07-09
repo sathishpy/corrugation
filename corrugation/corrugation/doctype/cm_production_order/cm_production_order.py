@@ -108,7 +108,7 @@ def select_rolls_for_box(paper_items):
 			roll = get_suitable_roll(paper.rm, paper.rm_type, planned_qty, added_rolls, available_rolls)
 
 			if roll is None:
-				frappe.throw("Failed to find a roll for {0} paper {1}".format(paper.rm))
+				frappe.throw("Failed to find a roll of weight {0} for paper {1}".format(planned_qty, paper.rm))
 				break
 			print "Selected Roll is {0} Weight {1}".format(roll.name, roll.weight)
 

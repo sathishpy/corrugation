@@ -5,8 +5,16 @@ frappe.ui.form.on('CM Box', {
 	refresh: function(frm) {
 		if (!frm.doc.__islocal) {
 			frm.add_custom_button(__("Update Description"), function() {
-				frappe.route_options = {"box": frm.doc.box_name}
-				frappe.set_route("List", "CM Box Description")
+				frappe.call({
+					doc: frm.doc,
+					method: "save",
+					callback: function(r) {
+						if(!r.exe) {
+							frappe.route_options = {"box": frm.doc.box_name}
+							frappe.set_route("List", "CM Box Description")
+						}
+					}
+				});
 			});
 		}
 

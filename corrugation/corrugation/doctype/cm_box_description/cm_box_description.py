@@ -208,7 +208,7 @@ def make_new_bom(source_name):
 
 		bom_item = frappe.new_doc("BOM Item")
 		bom_item.item_code = item.rm
-		bom_item.qty = quantity
+		bom_item.stock_qty = bom_item.qty = quantity
 		bom_item.rate = get_item_rate(item.rm)
 		rm_item = frappe.get_doc("Item", item.rm)
 		bom_item.stock_uom = rm_item.stock_uom
