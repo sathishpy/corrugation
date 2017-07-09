@@ -56,7 +56,7 @@ def update_mf_settings():
     mf_settings.allow_overtime = 1
     mf_settings.over_production_allowance_percentage = 50
     #This doesn't handle multiple companies
-    mf_settings.default_wip_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Work In Progress")})
+    mf_settings.default_wip_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Stores")})
     mf_settings.default_fg_warehouse  = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})
     mf_settings.save()
 

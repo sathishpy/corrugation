@@ -13,7 +13,6 @@ def execute(filters=None):
 	paper_rolls = frappe.db.sql("""select name, paper, weight, location, status from `tabCM Paper Roll` where weight > 0""",as_dict=1)
 	columns = get_columns ()
 	for roll in paper_rolls:
-		print roll
 		lt = list()
 		lt.append (roll.name)
 		lt.append (roll.weight)
