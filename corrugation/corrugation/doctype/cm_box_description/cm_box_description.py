@@ -247,7 +247,7 @@ def get_layer_papers(sheet_length, sheet_width, colour):
 									where iv_attr.parent=item.name
 										and (iv_attr.attribute='Colour' and iv_attr.attribute_value = '{4}')
 									)
-						order by attr.attribute_value asc
+						order by attr.attribute_value * 1 asc
 					""".format(sheet_length, sheet_length+10, sheet_width, sheet_width+10, colour)
 	#print "Searching papers matching deck {0} with query {1}".format(sheet_length, filter_query)
 	return frappe.db.sql(filter_query)
