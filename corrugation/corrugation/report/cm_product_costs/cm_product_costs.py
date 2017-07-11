@@ -10,12 +10,12 @@ from frappe import _
 
 
 def execute(filters=None):
-    columns = get_columns()
-    entries = get_result(filters)
-    for entry in entries:
-        print entry
+	columns = get_columns()
+	entries = get_result(filters)
+	for entry in entries:
+		print entry
 
-    return columns, entries
+	return columns, entries
 
 def get_result(filters=None):
 	print filters
@@ -65,6 +65,8 @@ def get_result(filters=None):
 		act_cost = act_rm_cost + act_op_cost
 
 		sales_price = stock_entry.total_incoming_value
+		nitem = frappe.get_doc("Item", order.production_item)
+		sales_price = item_qty * nitem.standard_rate
 		int_loss = 0
 		print("Sales Price={0} Actual cost={1}".format(sales_price, act_cost))
 		profit = ((sales_price - act_cost - int_loss) * 100)/act_cost
