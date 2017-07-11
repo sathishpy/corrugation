@@ -9,7 +9,11 @@ from erpnext.manufacturing.doctype.production_order.production_order import make
 
 class CMProductionOrder(Document):
 	def autoname(self):
-		self.name = "PO-{0}-{1}".format(self.box, self.sales_order)
+		orders = frappe.db.sql_list("""select name from `tabCM Production Order` where sales_order=%s""", self.sales_order)
+		if orders is None:
+			self.name = "PO-{0}-{1}".format(self.box, self.sales_order, idx)
+		else:
+			self.name = "PO-{0}-{1}-{2}".format(self.box, self.sales_order, len(orders))
 
 	def get_planned_paper_quantity(self, rmtype):
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
@@ -223,11 +227,6 @@ def update_rm_quantity(po, se):
 	return se
 
 def submit_production_order(cm_po):
-	orders = frappe.get_all("Production Order", fields={"production_item":cm_po.box, "sales_order":cm_po.sales_order})
-	if len(orders) > 0:
-		print("Production order {0} is already created".format(orders[0].name))
-		return
-
 	po = frappe.new_doc("Production Order")
 	po.production_item = cm_po.box
 	po.bom_no = cm_po.bom

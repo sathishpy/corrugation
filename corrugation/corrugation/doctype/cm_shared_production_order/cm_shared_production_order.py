@@ -81,13 +81,13 @@ class CMSharedProductionOrder(Document):
 		for cbbox in self.box_details:
 			box_desc = frappe.get_doc("CM Box Description", cbbox.box_desc)
 			for paper_item in box_desc.item_papers:
-				planned_total_paper_weight[paper_item.rm_type] += (paper_item.rm_weight * cbbox.prod_qty)
+				planned_total_paper_weight[paper_item.rm_type] += (paper_item.rm_weight * cbbox.mfg_qty)
 
 		for cbbox in self.box_details:
 			box_desc = frappe.get_doc("CM Box Description", cbbox.box_desc)
 			actual_paper_used = {"Top": 0, "Flute": 0, "Bottom": 0}
 			for paper_item in box_desc.item_papers:
-				paper_weight_ratio = float((paper_item.rm_weight * cbbox.prod_qty)/planned_total_paper_weight[paper_item.rm_type])
+				paper_weight_ratio = float((paper_item.rm_weight * cbbox.mfg_qty)/planned_total_paper_weight[paper_item.rm_type])
 				actual_paper_used[paper_item.rm_type] = paper_weight_ratio * total_paper_used[paper_item.rm_type]
 				print("Box:{0}     Type:{1}   Ratio:{2}".format(cbbox.box, paper_item.rm_type, paper_weight_ratio))
 			weight_map[cbbox.box] = actual_paper_used
@@ -116,7 +116,7 @@ class CMSharedProductionOrder(Document):
 			prod_order.box = paper_box.box
 			prod_order.box_desc = paper_box.box_desc
 			prod_order.mfg_qty = paper_box.mfg_qty
-			prod_order.prod_qty = paper_box.prod_qty
+			prod_order.mfg_qty = paper_box.mfg_qty
 			box_desc = frappe.get_doc("CM Box Description", paper_box.box_desc)
 			prod_order.bom = box_desc.item_bom
 			prod_order.source_warehouse = self.source_warehouse
@@ -132,7 +132,7 @@ class CMSharedProductionOrder(Document):
 						roll.final_weight = 0
 						weight = weight - roll.start_weight
 					planned_weight = next((rm.rm_weight for rm in box_desc.item_papers if rm.rm_type == ptype), None)
-					roll.est_final_weight = roll.start_weight - (planned_weight * paper_box.prod_qty)
+					roll.est_final_weight = roll.start_weight - (planned_weight * paper_box.mfg_qty)
 					prod_order.append("paper_rolls", copy.copy(roll))
 					roll.start_weight = roll.final_weight
 
