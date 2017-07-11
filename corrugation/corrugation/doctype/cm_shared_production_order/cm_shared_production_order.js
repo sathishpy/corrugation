@@ -13,9 +13,8 @@ frappe.ui.form.on('CM Shared Production Order', {
 		frm.get_field('box_details').grid.editable_fields = [
 			{fieldname: 'sales_order', columns:2},
 			{fieldname: 'box', columns:2},
-			{fieldname: 'planned_qty', columns:2},
-			{fieldname: 'box_desc', columns:3},
-			{fieldname: 'prod_qty', columns:2},
+			{fieldname: 'box_desc', columns:4},
+			{fieldname: 'mfg_qty', columns:2},
 		];
 		frm.set_query("box", "box_details", function(doc, cdt, cdn) {
 			return {

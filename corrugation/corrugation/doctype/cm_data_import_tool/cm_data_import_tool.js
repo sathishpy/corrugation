@@ -26,7 +26,7 @@ frappe.ui.form.on('CM Data Import Tool', {
 		];
 	},
 	refresh: function(frm) {
-		frm.add_custom_button(__('Export Data'),
+		frm.add_custom_button(__('Import Data'),
 	  	function() {
 				frm.events.create_parties(frm)
 			});
@@ -39,7 +39,7 @@ frappe.ui.form.on('CM Data Import Tool', {
 			method: "export_data",
 			callback: function(r) {
 				if(!r.exe) {
-					msgprint("Export Complete")
+					msgprint("Import Complete")
 					set_route("List", "Customer")
 				}
 			}
