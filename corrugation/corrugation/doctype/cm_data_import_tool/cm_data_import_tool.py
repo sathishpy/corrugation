@@ -7,6 +7,7 @@ import frappe
 from frappe.model.document import Document
 import xml.dom.minidom
 import csv
+import os
 from frappe import _
 from erpnext.controllers.item_variant import create_variant, find_variant
 class CMDataImportTool(Document):
@@ -15,8 +16,14 @@ class CMDataImportTool(Document):
 
 	def on_update(self):
 		if self.filename is None: return
+		print "Retrieving data from file {0}".format(self.filename)
 		filename = self.filename.split("/")[-1]
-		filepath = frappe.get_site_path('private', 'files', filename)
+
+		filepath = frappe.get_site_path("private", "files", filename);
+		if (not os.path.isfile(filepath)):
+			filepath = frappe.get_site_path("public", "files", filename);
+		if (not os.path.isfile(filepath)):
+			frappe.throw("Unable to find the uploaded  file {0}".format(self.filename))
 		if (self.data_type == "Party"):
 			self.extract_party_details(filepath)
 		elif self.data_type == "Roll":
