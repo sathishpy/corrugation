@@ -16,7 +16,8 @@ frappe.ui.form.on('CM Production Order', {
 					['Sales Order', 'status', '=', 'To Deliver and Bill']
 				]
 			}
-		}
+		};
+		frm.events.set_box_filter(frm)
 	},
 	onload: function(frm) {
 		frm.events.set_default_warehouse(frm);
@@ -64,23 +65,18 @@ frappe.ui.form.on('CM Production Order', {
 	sales_order: function(frm) {
 		frappe.call({
 			doc: frm.doc,
-			method: "get_all_order_items",
+			method: "populate_order_items",
 			callback: function(r) {
 				if(!r.exe) {
-					if (r.message.length == 1) {
-						frm.set_value("box", r.message[0].item_code)
-						frm.set_value("mfg_qty", r.message[0].qty)
-					} else {
-						frm.set_value("box", r.message) //XXX
-					}
 					refresh_field("box")
 					refresh_field("mfg_qty")
-					frm.events.box(frm)
+					refresh_field("box_desc")
+					frm.events.box_desc(frm)
 				}
 			}
 		});
 	},
-	box: function(frm) {
+	set_box_filter: function(frm) {
 		frm.set_query("box_desc", function(doc) {
 			if (doc.box) {
 				return {
@@ -104,15 +100,7 @@ frappe.ui.form.on('CM Production Order', {
 		});
 	},
 	mfg_qty: function(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: "update_box_roll_qty",
-			callback: function(r) {
-				if(!r.exe) {
-					refresh_field("paper_rolls");
-				}
-			}
-		});
+		frm.events.box_desc(frm)
 	},
 	make_po: function(frm) {
 		frappe.model.open_mapped_doc({

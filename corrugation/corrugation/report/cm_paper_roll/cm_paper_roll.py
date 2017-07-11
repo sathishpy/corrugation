@@ -19,7 +19,6 @@ def execute(filters=None):
 		item = frappe.get_doc("Item", roll.paper)
 		for attribute in item.attributes:
 			lt.append(attribute.attribute_value)
-			print ("{0} : {1}".format(attribute.attribute, attribute.attribute_value))
 		lt.append ("")
 		lt.append (roll.location)
 		lt.append (roll.status)

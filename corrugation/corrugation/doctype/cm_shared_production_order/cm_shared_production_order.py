@@ -19,13 +19,28 @@ class CMSharedProductionOrder(Document):
 				return roll.paper
 		return None
 
-	def is_matching_paper(self, item_info):
-		if (len(self.box_details) == 1): return {"Result": True}
-		box_details = frappe.get_doc("CM Box Description", item_info["box_desc"])
-		for item in box_details.item_papers:
-			matching_item = self.get_item_name(item.rm_type)
-			if (matching_item == item.rm): return {"Result": True}
-		return {"Result": False}
+	def is_compatible_bom(self):
+		count = len(self.box_details)
+		if (count == 1): return {"Result": True}
+
+		for box in self.box_details:
+			box_desc = frappe.get_doc("CM Box Description", box.box_desc)
+			for item in box_desc.item_papers:
+				matching_item = self.get_item_name(item.rm_type)
+				if (matching_item != item.rm): return {"Result": False}
+		return {"Result": True}
+
+	def populate_order_items(self, item_info):
+		order_items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
+								where parent='{0}'""".format(item_info["sales_order"]), as_dict=1);
+		box_item = next((bi for bi in self.box_details if bi.sales_order == item_info["sales_order"]), None)
+		print("Sales order {0} matches row {1}".format(item_info["sales_order"], box_item.sales_order))
+		if (len(order_items) > 0 and box_item is not None):
+			selected_item = order_items[0]
+			box_item.box = selected_item.item_code
+			box_item.mfg_qty = selected_item.qty
+			box_boms = frappe.get_all("CM Box Description", filters={'box': box_item.box})
+			box_item.box_desc = box_boms[0].name
 
 	def populate_rolls(self):
 		self.paper_rolls = []
@@ -42,13 +57,13 @@ class CMSharedProductionOrder(Document):
 					new_item = frappe.new_doc("CM Paper Item")
 					new_item.rm_type = paper_item.rm_type
 					new_item.rm = paper_item.rm
-					new_item.rm_weight = paper_item.rm_weight * paper_box.planned_qty
+					new_item.rm_weight = paper_item.rm_weight * paper_box.mfg_qty
 					paper_items += [new_item]
 				else:
-					new_item.rm_weight += paper_item.rm_weight * paper_box.planned_qty
+					new_item.rm_weight += paper_item.rm_weight * paper_box.mfg_qty
 
 
-		#populate_rolls_for_box(self, item_info.box_desc, item_info.planned_qty)
+		#populate_rolls_for_box(self, item_info.box_desc, item_info.mfg_qty)
 		selected_rolls = select_rolls_for_box(paper_items)
 		for roll_item in selected_rolls:
 			print("Selected roll " + roll_item.paper_roll)
@@ -100,7 +115,7 @@ class CMSharedProductionOrder(Document):
 			prod_order.sales_order = paper_box.sales_order
 			prod_order.box = paper_box.box
 			prod_order.box_desc = paper_box.box_desc
-			prod_order.planned_qty = paper_box.planned_qty
+			prod_order.mfg_qty = paper_box.mfg_qty
 			prod_order.prod_qty = paper_box.prod_qty
 			box_desc = frappe.get_doc("CM Box Description", paper_box.box_desc)
 			prod_order.bom = box_desc.item_bom

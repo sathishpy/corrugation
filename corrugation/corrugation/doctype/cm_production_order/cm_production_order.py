@@ -81,6 +81,15 @@ class CMProductionOrder(Document):
 		items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
 								where parent='{0}'""".format(self.sales_order), as_dict=1);
 		return items
+	def populate_order_items(self):
+		order_items = self.get_all_order_items();
+		if (len(order_items) > 0):
+			selected_item = order_items[0]
+			self.box = selected_item.item_code
+			self.mfg_qty = selected_item.qty
+			box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
+			self.box_desc = box_boms[0].name
+		return order_items
 
 	def on_submit(self):
 		check_material_availability(self)
@@ -129,12 +138,6 @@ def select_rolls_for_box(paper_items):
 			print ("Adding {0}".format(roll_item))
 			available_rolls = [rl for rl in available_rolls if rl.name != roll.name]
 	return added_rolls
-
-@frappe.whitelist()
-def is_paper_item(rm):
-	if "paper" in rm.item_name or "Paper" in rm.item_name:
-		return True
-	return False
 
 def get_prod_used_roll(rolls, paper, rm_type):
 	reuse_roll = None
@@ -200,10 +203,22 @@ def update_paper_quantity(po, se):
 	for item in se.items:
 		print ("Updating item {0}".format(item.item_code))
 		rm = frappe.get_doc("Item", item.item_code)
-		if not is_paper_item(rm): continue
+		if rm.item_group != "Paper": continue
 		qty = po.get_paper_quantity(rm.name)
 		if qty != 0:
 			print("Updating item {0} qunatity to {1}".format(rm.name, qty))
+			item.qty = qty
+	return se
+
+def update_rm_quantity(po, se):
+	for item in se.items:
+		bom = frappe.get_doc("BOM", po.bom)
+		bom_item = next((bi for bi in bom.items if bi.item_code == item.item_code), None)
+		if (bom_item == None): continue
+		print ("Updating RM {0} for quantity {1}".format(item.item_code, po.mfg_qty))
+		qty = bom_item.qty * po.mfg_qty
+		if qty != 0:
+			print("Updating item {0} qunatity to {1}".format(item.item_code, qty))
 			item.qty = qty
 	return se
 
@@ -222,6 +237,7 @@ def submit_production_order(cm_po):
 	po.wip_warehouse = po.source_warehouse = cm_po.source_warehouse
 	po.fg_warehouse = cm_po.target_warehouse
 	po.submit()
+	print "Created production order {0} for {1} of quantity {2}".format(po.name, po.production_item, po.qty)
 
 def update_production_roll_qty(cm_po):
 	for roll_item in cm_po.paper_rolls:
@@ -233,13 +249,19 @@ def update_production_roll_qty(cm_po):
 @frappe.whitelist()
 def create_new_stock_entry(cm_po):
 	orders = frappe.get_all("Production Order", fields={"production_item":cm_po.box, "sales_order":cm_po.sales_order})
-	if len(orders) > 0: po = orders[0]
+	if len(orders) > 0:
+		po = frappe.get_doc("Production Order", orders[0].name)
 	else: frappe.throw("Unable to find the production order for sales_order {0}".format(cm_po.sales_order))
 
-	stock_entry = make_stock_entry(po.name, "Manufacture", po.qty)
+	print "Creating stock entry for production order {0} of quantity {1}".format(po.name, po.qty)
+
 	se = frappe.new_doc("Stock Entry")
+	stock_entry = make_stock_entry(po.name, "Manufacture", po.qty)
 	se.update(stock_entry)
 
+	update_rm_quantity(cm_po, se)
+	for item in se.items:
+		print "Item:{0} Quantity:{1}".format(item.item_code, item.qty)
 	update_paper_quantity(cm_po, se)
 	se.calculate_rate_and_amount()
 	se.submit()

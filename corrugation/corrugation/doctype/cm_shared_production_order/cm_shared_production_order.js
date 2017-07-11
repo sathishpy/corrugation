@@ -16,13 +16,6 @@ frappe.ui.form.on('CM Shared Production Order', {
 			{fieldname: 'box_desc', columns:4},
 			{fieldname: 'mfg_qty', columns:2},
 		];
-		frm.set_query("box", "box_details", function(doc, cdt, cdn) {
-			return {
-				filters:[
-					['Item', 'item_group', '=', 'Products']
-				]
-			}
-		})
 		frm.set_query("box_desc", "box_details", function(doc, cdt, cdn) {
 			row = locals[cdt][cdn]
 			if (row.box) {
@@ -31,7 +24,7 @@ frappe.ui.form.on('CM Shared Production Order', {
 						['CM Box Description', 'item', '=', row.box]
 					]
 				}
-			} else msgprint(__("Please select the Item first"));
+			} else frappe.msgprint(__("Please select the Item first"));
 		});
 	},
 	refresh: function(frm) {
@@ -54,33 +47,53 @@ frappe.ui.form.on('CM Shared Production Order', {
 			});
 		}
 	},
-});
-frappe.ui.form.on('CM Box Production Item', {
-	box_desc: function(frm, cdt, cdn) {
-		row = locals[cdt][cdn];
-		matching = false
+	populate_rolls: function(frm) {
 		frappe.call({
 			doc: frm.doc,
-			method: "is_matching_paper",
-			args: {"item_info": row},
+			method: "populate_rolls",
+			callback: function(r) {
+				if(!r.exe) {
+					refresh_field("paper_rolls")
+				}
+			}
+		});
+	},
+	check_and_populate_rolls: function(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: "is_compatible_bom",
 			callback: function(r) {
 				if(!r.exe) {
 					matching = r.message.Result
 					if (matching == false) {
-						msgprint("The item " + row.box + " doesn't share the paper sheet, so can't be produced in shared mode")
+						frappe.msgprint("The item doesn't share the paper sheet, so can't be produced in shared mode")
 					} else {
-						frappe.call({
-							doc: frm.doc,
-							method: "populate_rolls",
-							callback: function(r) {
-								if(!r.exe) {
-									refresh_field("paper_rolls")
-								}
-							}
-						});
+						frm.events.populate_rolls(frm)
 					}
 				}
 			}
 		});
+	}
+});
+frappe.ui.form.on('CM Shared Production Item', {
+	sales_order: function(frm, cdt, cdn) {
+		row = locals[cdt][cdn];
+		frappe.call({
+			doc: frm.doc,
+			method: "populate_order_items",
+			args: {"item_info": row},
+			callback: function(r) {
+				if(!r.exe) {
+					refresh_field("box_details")
+					frm.events.check_and_populate_rolls(frm)
+				}
+			}
+		})
+	},
+	box_desc: function(frm) {
+		frm.events.check_and_populate_rolls(frm)
+	},
+	mfg_qty: function(frm, cdt, cdn) {
+		frm.events.populate_rolls(frm)
 	},
 });
