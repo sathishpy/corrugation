@@ -86,6 +86,7 @@ class CMProductionOrder(Document):
 								where parent='{0}'""".format(self.sales_order), as_dict=1);
 		return items
 	def populate_order_items(self):
+		if (self.sales_order is None): return
 		order_items = self.get_all_order_items();
 		if (len(order_items) > 0):
 			selected_item = order_items[0]

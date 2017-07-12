@@ -13,7 +13,6 @@ class CMBoxDescription(Document):
 			idx = len(items) + 1
 		else:
 			idx = 1
-
 		self.name = self.item + "-DESC" + ('-%.3i' % idx)
 
 	def on_submit(self):
