@@ -53,3 +53,11 @@ class CMBox(Document):
 				box_bom.item_height = self.box_height
 				box_bom.populate_raw_materials()
 			box_bom.save(ignore_permissions=True)
+
+	def on_trash(self):
+		boxes = frappe.get_all("CM Box Description", filters={'box': self.box_code})
+		box_docs = [frappe.get_doc("CM Box Description", box) for box in boxes]
+		for box_doc in box_docs:
+			box_doc.delete()
+		#item = frappe.get_doc("Item", self.box_code)
+		#item.delete()

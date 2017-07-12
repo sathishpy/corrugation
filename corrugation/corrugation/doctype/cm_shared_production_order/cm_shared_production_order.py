@@ -72,12 +72,12 @@ class CMSharedProductionOrder(Document):
 	def create_used_paper_weight_map(self):
 		weight_map = {}
 		# Find the total paper use dfor each layer
-		total_paper_used = {"Top": 0, "Flute": 0, "Bottom": 0}
+		total_paper_used = {"Top": 0, "Flute": 0, "Liner": 0}
 		for paper_roll in self.paper_rolls:
 			total_paper_used[paper_roll.rm_type] += (paper_roll.start_weight - paper_roll.final_weight)
 
 		# Find the planned paper weight of each layer for each box
-		planned_total_paper_weight = {"Top": 0, "Flute": 0, "Bottom": 0}
+		planned_total_paper_weight = {"Top": 0, "Flute": 0, "Liner": 0}
 		for cbbox in self.box_details:
 			box_desc = frappe.get_doc("CM Box Description", cbbox.box_desc)
 			for paper_item in box_desc.item_papers:
@@ -85,7 +85,7 @@ class CMSharedProductionOrder(Document):
 
 		for cbbox in self.box_details:
 			box_desc = frappe.get_doc("CM Box Description", cbbox.box_desc)
-			actual_paper_used = {"Top": 0, "Flute": 0, "Bottom": 0}
+			actual_paper_used = {"Top": 0, "Flute": 0, "Liner": 0}
 			for paper_item in box_desc.item_papers:
 				paper_weight_ratio = float((paper_item.rm_weight * cbbox.mfg_qty)/planned_total_paper_weight[paper_item.rm_type])
 				actual_paper_used[paper_item.rm_type] = paper_weight_ratio * total_paper_used[paper_item.rm_type]
@@ -97,7 +97,7 @@ class CMSharedProductionOrder(Document):
 
 	def create_individual_production_orders(self):
 		weight_map = self.create_used_paper_weight_map()
-		print ("Box          Top         Flute     Bottom")
+		print ("Box          Top         Flute     Liner")
 		for key, value in weight_map.items():
 			weights = ""
 			for ptype, weight in value.items():

@@ -38,14 +38,11 @@ class CMBoxDescription(Document):
 
 		self.item_papers = []
 		self.add_paper_item("Top")
-		if (int(self.item_ply_count) > 3):
-			self.add_paper_item("Flute Liner")
+		count = 1
+		while count < int(self.item_ply_count):
+			self.add_paper_item("Flute")
 			self.add_paper_item("Liner")
-		if (int(self.item_ply_count) > 5):
-			self.add_paper_item("Flute Liner")
-			self.add_paper_item("Liner")
-		self.add_paper_item("Flute")
-		self.add_paper_item("Bottom")
+			count += 2
 
 	def populate_raw_materials(self):
 		self.populate_paper_materials()
@@ -108,13 +105,13 @@ class CMBoxDescription(Document):
 		paper_weight = 0
 		for item in self.item_papers:
 			if item.rm is None: continue
-			if (item.rm_type == 'Top' or item.rm_type == 'Bottom' or item.rm_type == 'Liner'):
+			if (item.rm_type == 'Top' or item.rm_type == 'Liner'):
 				(weight, cost) = self.get_paper_weight_cost(item.rm)
 				item.rm_weight = float(weight/self.item_per_sheet)
 				item.rm_cost = float(cost/self.item_per_sheet)
 				self.item_rm_cost += item.rm_cost
 				paper_weight += item.rm_weight
-			elif (item.rm_type == 'Flute' or item.rm_type == 'Flute Liner'):
+			elif (item.rm_type == 'Flute'):
 				(weight, cost) = self.get_paper_weight_cost(item.rm)
 				item.rm_weight = float(weight * self.item_flute/self.item_per_sheet)
 				item.rm_cost = float(cost * self.item_flute/self.item_per_sheet)

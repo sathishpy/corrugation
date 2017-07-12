@@ -151,10 +151,7 @@ def get_prod_used_roll(rolls, paper, rm_type):
 		if roll.paper != paper: continue
 		#Flute and bottom paper used simultaneosuly, so can't be shared
 		sharing_conflict = False
-		if (p_roll.rm_type == "Flute" and rm_type == "Bottom"): sharing_conflict = True
-		if (p_roll.rm_type == "Bottom" and rm_type == "Flute"): sharing_conflict = True
-		if (p_roll.rm_type == "Flute Liner" and rm_type == "Liner"): sharing_conflict = True
-		if (p_roll.rm_type == "Liner" and rm_type == "Flute Liner"): sharing_conflict = True
+		if (p_roll.rm_type == "Flute" and rm_type == "Liner"): sharing_conflict = True
 		# Handle duplicate entries of shared rolls
 		if (sharing_conflict):
 			if (reuse_roll != None and reuse_roll.name == roll.name):

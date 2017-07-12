@@ -9,6 +9,11 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
+					"name": "CM Board Production Order",
+                    "label": _("Corrugation Order")
+				},
+				{
+					"type": "doctype",
 					"name": "CM Production Order",
 					"description": _("Orders released for production."),
                     "label": _("Production Order")
@@ -48,7 +53,7 @@ def get_data():
 				{
 					"type": "page",
 					"name": "stock-balance",
-					"label": _("Stock Summary")				
+					"label": _("Stock Summary")
 				}
 			]
 		},
