@@ -8,11 +8,8 @@ from frappe import _
 from frappe.model.document import Document
 
 class CMBox(Document):
-	def autoname(self):
-		self.name = self.box_name
-
 	def get_item_doc(self):
-		item = frappe.db.get_value("Item", filters={"item_name": self.box_name})
+		item = frappe.db.get_value("Item", filters={"item_code": self.box_code})
 		if item == None:
 			print "Creating item for box {0}".format(self.box_name)
 			return frappe.new_doc("Item")
@@ -20,23 +17,20 @@ class CMBox(Document):
 			return frappe.get_doc("Item", item)
 
 	def get_item_descriptions(self):
-		bom = frappe.db.get_value("CM Box Description", filters={"box": self.box_name})
+		bom = frappe.db.get_value("CM Box Description", filters={"box": self.box_code})
 		if bom == None:
 			print "Creating BOM for box {0}".format(self.box_name)
 			box =[frappe.new_doc("CM Box Description")]
 			return box
 		else:
-			boxes = frappe.get_all("CM Box Description", filters={'box': self.box_name})
+			boxes = frappe.get_all("CM Box Description", filters={'box': self.box_code})
 			box_docs = [frappe.get_doc("CM Box Description", box) for box in boxes]
 			return box_docs
 
 	def before_save(self):
 		item = self.get_item_doc()
 		item.item_name = self.box_name
-		if (self.box_code):
-			item.item_code = self.box_code
-		else:
-			item.item_code = self.box_name
+		item.item_code = self.box_code
 		item.standard_rate = self.box_rate
 		item.item_group = "Products"
 		item.default_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})

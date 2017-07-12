@@ -10,7 +10,7 @@ frappe.ui.form.on('CM Box', {
 					method: "save",
 					callback: function(r) {
 						if(!r.exe) {
-							frappe.route_options = {"box": frm.doc.box_name}
+							frappe.route_options = {"box": frm.doc.box_code}
 							frappe.set_route("List", "CM Box Description")
 						}
 					}
