@@ -19,6 +19,7 @@ def add_paper_item_groups(raw_material_group):
         {"doctype": "Item Group", "item_group_name": _("Gum"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Ink"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Board"), "is_group": 0, "parent_item_group": raw_material_group.name },
+        {"doctype": "Item Group", "item_group_name": _("Board Layer"), "is_group": 0, "parent_item_group": raw_material_group.name },
     ]
     print("Adding new categories to Raw Material")
     add_records(records)

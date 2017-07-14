@@ -10,6 +10,12 @@ frappe.ui.form.on('CM Production Order', {
 				{fieldname: 'est_final_weight', columns: 1},
 				{fieldname: 'final_weight', columns: 2}
 			];
+		frm.get_field('paper_boards').grid.editable_fields = [
+			  {fieldname: 'layer_type', columns: 2},
+				{fieldname: 'layer', columns: 4},
+				{fieldname: 'est_qty', columns: 2},
+				{fieldname: 'used_qty', columns: 2},
+			];
 		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
 			return {
 				filters:[
@@ -90,16 +96,19 @@ frappe.ui.form.on('CM Production Order', {
 	box_desc: function(frm) {
 		frappe.call({
 			doc: frm.doc,
-			method: "populate_box_rolls",
+			method: "populate_box_source",
 			callback: function(r) {
 				if(!r.exe) {
 					refresh_field("paper_rolls");
-					refresh_field("bom")
+					refresh_field("paper_boards");
 				}
 			}
 		});
 	},
 	mfg_qty: function(frm) {
+		frm.events.box_desc(frm)
+	},
+	source_type: function(frm) {
 		frm.events.box_desc(frm)
 	},
 	make_po: function(frm) {

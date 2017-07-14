@@ -9,7 +9,7 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-					"name": "CM Board Production Order",
+					"name": "CM Corrugation Order",
                     "label": _("Corrugation Order")
 				},
 				{

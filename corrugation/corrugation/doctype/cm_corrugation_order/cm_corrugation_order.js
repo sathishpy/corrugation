@@ -1,7 +1,7 @@
 // Copyright (c) 2017, sathishpy@gmail.com and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('CM Board Production Order', {
+frappe.ui.form.on('CM Corrugation Order', {
 	setup: function(frm) {
 		frm.get_field('paper_rolls').grid.editable_fields = [
 				{fieldname: 'rm_type', columns: 1},
@@ -33,9 +33,12 @@ frappe.ui.form.on('CM Board Production Order', {
 			callback: function(r) {
 				if(!r.exe) {
 					refresh_field("paper_rolls");
+					refresh_field("board_name")
 				}
 			}
 		});
 	},
-
+	layer_type: function(frm) {
+		frm.events.mfg_qty(frm)
+	},
 });

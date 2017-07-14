@@ -15,9 +15,6 @@ class CMBoxDescription(Document):
 			idx = 1
 		self.name = self.item + "-DESC" + ('-%.3i' % idx)
 
-	def on_submit(self):
-		pass
-
 	def add_paper_item(self, layer):
 		colour = "Brown"
 		if "White" in self.item_top_type and layer == "Top":
@@ -36,69 +33,47 @@ class CMBoxDescription(Document):
 		self.sheet_length = 2 * (self.item_width + self.item_length) + self.item_pin_lap
 		self.sheet_width = self.item_per_sheet * (self.item_width + self.item_height + self.item_fold_lap)
 
-		self.item_papers = []
+		count, self.item_papers = 1, []
 		self.add_paper_item("Top")
-		count = 1
 		while count < int(self.item_ply_count):
 			self.add_paper_item("Flute")
 			self.add_paper_item("Liner")
 			count += 2
 
+	def populate_misc_materials(self, rm_type, percent):
+		rm_item = frappe.new_doc("CM Misc Item")
+		rm_item.rm_type = rm_type
+		rm_item.rm_percent = percent
+		self.append("item_others", rm_item)
+
 	def populate_raw_materials(self):
 		self.populate_paper_materials()
 
 		self.item_others = []
-		rm_item = frappe.new_doc("CM Misc Item")
-		rm_item.rm_type = "Corrugation Gum"
-		rm_item.rm_percent = 3
-		self.append("item_others", rm_item)
+		for (rm_type, percent) in [("Corrugation Gum", 3), ("Pasting Gum", 2), ("Printing Ink", 0.3)]:
+			self.populate_misc_materials(rm_type, percent)
 
-		rm_item = frappe.new_doc("CM Misc Item")
-		rm_item.rm_type = "Pasting Gum"
-		rm_item.rm_percent = 2
-		self.append("item_others", rm_item)
+	def validate(self):
+		if (int(self.item_ply_count) != len(self.item_papers)):
+			frappe.trow("Not all box layers added as paper items")
 
-		if ("Plain" in self.item_top_type): return
-
-		rm_item = frappe.new_doc("CM Misc Item")
-		rm_item.rm_type = "Printing Ink"
-		inks = frappe.get_all("Item", fields={"item_group": "Ink"})
-		if(len(inks) > 0): rm_item.rm = inks[0].name
-		rm_item.rm_percent = 0.3
-		self.append("item_others", rm_item)
-
-	def populate_raw_materals_check(self):
-		if len(self.item_papers) != 0 or len(self.item_others) != 0: return
-		self.populate_raw_materals()
-
-	def get_overall_cost(self):
-		(top_weight, top_cost) = get_paper_weight_cost(self.item_rm_top)
-		(flute_weight, flute_cost) = get_paper_weight_cost(self.item_rm_flute)
-		(bottom_weight, bottom_cost) = get_paper_weight_cost(self.item_rm_bottom)
-		paper_cost = top_cost + flute_cost + bottom_cost
-		operating_cost = paper_cost * 0.1
-		return (paper_cost, operating_cost)
+		expected_type = "Top"
+		for paper in self.item_papers:
+			if (paper.rm_type != expected_type):
+				frappe.throw("Paper Type in Item description should follow the order Top, Flute and Liner")
+			if (paper.rm_type == "Top" or paper.rm_type == "Liner"):
+				expected_type = "Flute"
+			else:
+				expected_type = "Liner"
 
 	def get_paper_weight_cost(self, paper):
 		if paper is None: return (0, 0)
 		(gsm, bf, deck) = get_paper_measurements(paper)
-		print ("Sheet {0} sl={1} sw={2} deck={3}".format(gsm, self.sheet_length, self.sheet_width, deck))
 		weight = float((self.sheet_length * deck) * gsm/1000)/10000
 		cost = weight * get_item_rate(paper)
+		print ("Sheet {0} sl={1} sw={2} deck={3}".format(gsm, self.sheet_length, self.sheet_width, deck))
 		print("Paper {0} weight={1} rate={2} cost={3}".format(paper, weight, get_item_rate(paper), cost))
 		return (weight, cost)
-
-	def validate(self):
-		if not self.item:
-			box = frappe.get_doc("CM Box", self.box)
-			self.item = box.box_item
-
-	def before_save(self):
-		self.update_cost()
-
-	def before_submit(self):
-		self.item_bom = make_new_bom(self.name)
-		print("Created item decsription {0} with bom {1}".format(self.name, self.item_bom))
 
 	def update_cost(self):
 		self.item_rm_cost = 0
@@ -136,6 +111,96 @@ class CMBoxDescription(Document):
 		self.item_total_cost = float(self.item_rm_cost + self.item_prod_cost)
 		self.item_profit = float((get_item_rate(self.item) - self.item_total_cost)*100/self.item_total_cost)
 		print("RM cost={0} OP Cost={1} Rate={2}".format(self.item_rm_cost, self.item_prod_cost, get_item_rate(self.item)))
+
+	def get_board_name(self, layer_no):
+		idx = layer_no - 1
+		board_name = None
+		if (idx == 0):
+			board_name = "Layer-Top-{0:.1f}-{1:.1f}".format(self.sheet_length, self.sheet_width)
+			paper_elements = self.item_papers[idx].rm.split("-")
+			board_name += "-" + paper_elements[2] + "-" + paper_elements[3] + "-" + paper_elements[4]
+		else:
+			board_name = "Layer-Flute-{0:.1f}-{1:.1f}".format(self.sheet_length, self.sheet_width)
+			paper_elements = self.item_papers[idx-1].rm.split("-")
+			board_name += "-" + paper_elements[2] + "-" + paper_elements[3] + "-" + paper_elements[4]
+			paper_elements = self.item_papers[idx].rm.split("-")
+			board_name += "-" + paper_elements[2] + "-" + paper_elements[3] + "-" + paper_elements[4]
+		return board_name
+
+	def get_all_boards(self):
+		layer, boards = 1, []
+		while layer <= int(self.item_ply_count):
+			boards += [self.get_board_name(layer)]
+			layer += 2
+		return boards
+
+	def create_board_item(self, layer_no, rate):
+		boardname = self.get_board_name(layer_no)
+		board = frappe.db.get_value("Item", filters={"name": boardname})
+		if board is not None: return board
+
+		item = frappe.new_doc("Item")
+		item.item_code = item.item_name = boardname
+		item.item_group = "Board Layer"
+		item.valuation_rate = rate
+		item.weight_uom = "Kg"
+		item.save()
+		return item.name
+
+	def make_board_items(self):
+		layer, boards = 1, []
+		while layer <= int(self.item_ply_count):
+			item = self.item_papers[layer-1]
+			valuation_rate = item.rm_cost
+			if (item.rm_type == 'Flute'):
+				layer += 1
+				item = self.item_papers[layer-1]
+				valuation_rate += item.rm_cost
+			boards += [self.create_board_item(layer, valuation_rate)]
+			layer += 1
+		return boards
+
+	def make_new_bom(self):
+		bom = frappe.new_doc("BOM")
+		bom.item = self.item
+		bom.item_name = self.item_name
+		bom.quantity, bom.items = 1, []
+
+		for item in (self.item_papers + self.item_others):
+			if item.rm is None: continue
+
+			quantity = (bom.quantity * item.rm_weight)/int(self.item_per_sheet)
+			print ("Updating Item {0} of quantity {1}".format(item.rm, quantity))
+
+			if (len(bom.items) > 0):
+				bom_item = next((bi for bi in bom.items if bi.item_code == item.rm), None)
+				if bom_item is not None:
+					bom_item.qty += quantity
+					continue
+
+			bom_item = frappe.new_doc("BOM Item")
+			bom_item.item_code = item.rm
+			bom_item.stock_qty = bom_item.qty = quantity
+			bom_item.rate = get_item_rate(item.rm)
+			rm_item = frappe.get_doc("Item", item.rm)
+			bom_item.stock_uom = rm_item.stock_uom
+			bom.append("items", bom_item)
+
+		bom.base_operating_cost = bom.operating_cost = bom.quantity * self.item_prod_cost
+		bom.save()
+		print "Creating new bom {0} for {1} with operating cost {2}".format(bom.name, bom.item_name, bom.operating_cost)
+		bom.submit()
+		self.item_bom = bom.name
+
+	def before_save(self):
+		self.update_cost()
+
+	def before_submit(self):
+		self.make_new_bom()
+
+	def on_submit(self):
+		boards = self.make_board_items()
+		print("Created item decsription {0} with bom {1}".format(self.name, self.item_bom))
 
 def get_paper_measurements(paper):
 	(gsm, bf, deck) = (0, 0, 0)
@@ -178,44 +243,6 @@ def get_production_details(month):
 		total_production += stock_entry.total_outgoing_value
 
 	return (total_boxes, total_production)
-
-@frappe.whitelist()
-def make_new_bom(source_name):
-	item_desc = frappe.get_doc("CM Box Description", source_name)
-
-	bom = frappe.new_doc("BOM")
-	bom.item = item_desc.item
-	bom.item_name = item_desc.item_name
-	bom.quantity = 1
-
-	list_empty = True
-
-	for item in (item_desc.item_papers + item_desc.item_others):
-		if item.rm is None: continue
-
-		quantity = (bom.quantity * item.rm_weight)/int(item_desc.item_per_sheet)
-		print ("Updating Item {0} of quantity {1}".format(item.rm, quantity))
-
-		if (list_empty is False):
-			bom_item = next((bi for bi in bom.items if bi.item_code == item.rm), None)
-			if bom_item is not None:
-				bom_item.qty += quantity
-				continue
-
-		bom_item = frappe.new_doc("BOM Item")
-		bom_item.item_code = item.rm
-		bom_item.stock_qty = bom_item.qty = quantity
-		bom_item.rate = get_item_rate(item.rm)
-		rm_item = frappe.get_doc("Item", item.rm)
-		bom_item.stock_uom = rm_item.stock_uom
-		bom.append("items", bom_item)
-		list_empty = False
-
-	bom.base_operating_cost = bom.operating_cost = bom.quantity * item_desc.item_prod_cost
-	bom.save()
-	print "Creating new bom {0} for {1} with operating cost {2}".format(bom.name, bom.item_name, bom.operating_cost)
-	bom.submit()
-	return bom.name
 
 @frappe.whitelist()
 def filter_papers(doctype, txt, searchfield, start, page_len, filters):
