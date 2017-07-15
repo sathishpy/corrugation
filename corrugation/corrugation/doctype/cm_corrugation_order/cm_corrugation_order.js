@@ -10,7 +10,9 @@ frappe.ui.form.on('CM Corrugation Order', {
 				{fieldname: 'est_final_weight', columns: 1},
 				{fieldname: 'final_weight', columns: 2}
 			];
+
 		frm.events.set_box_filter(frm)
+		frm.events.set_roll_filter(frm)
 	},
 	set_box_filter: function(frm) {
 		frm.set_query("box_desc", function(doc) {
@@ -22,6 +24,18 @@ frappe.ui.form.on('CM Corrugation Order', {
 				}
 			} else msgprint(__("Please select the Box first"));
 		});
+	},
+	set_roll_filter: function(frm) {
+		frm.fields_dict.paper_rolls.grid.get_field('paper_roll').get_query = function(doc, cdt, cdn) {
+			row = locals[cdt][cdn]
+			return {
+				query: "corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order.filter_rolls",
+				filters: {
+									'box_desc': doc.box_desc,
+									'layer_type': row.rm_type,
+								},
+			};
+		}
 	},
 	refresh: function(frm) {
 
@@ -38,7 +52,31 @@ frappe.ui.form.on('CM Corrugation Order', {
 			}
 		});
 	},
+	manual_entry: function(frm) {
+		frm.events.mfg_qty(frm)
+	},
 	layer_type: function(frm) {
 		frm.events.mfg_qty(frm)
 	},
+});
+
+frappe.ui.form.on("CM Production Roll Detail", "paper_roll", function(frm, cdt, cdn) {
+	frappe.call({
+		doc: frm.doc,
+		method: "update_box_roll_qty",
+		callback: function(r) {
+			if(!r.exe) {
+				refresh_field("paper_rolls");
+			}
+		}
+	});
+});
+frappe.ui.form.on("CM Production Roll Detail", "rm_type", function(frm, cdt, cdn) {
+	row = locals[cdt][cdn]
+	if (frm.layer_type == "Top" && row.rm_type != "Top") {
+		msgprint("Roll type doesn't match the layer type")
+	}
+	if (frm.layer_type == "Flute" && row.rm_type == "Top") {
+		msgprint("Roll type doesn't match the layer type")
+	}
 });

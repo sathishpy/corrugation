@@ -245,6 +245,14 @@ def get_production_details(month):
 	return (total_boxes, total_production)
 
 @frappe.whitelist()
+def get_planned_paper_quantity(box_desc, rmtype, mfg_qty):
+	box_details = frappe.get_doc("CM Box Description", box_desc)
+	for paper in box_details.item_papers:
+		if paper.rm_type == rmtype:
+			return paper.rm_weight * mfg_qty
+	return 0
+
+@frappe.whitelist()
 def filter_papers(doctype, txt, searchfield, start, page_len, filters):
 	sheet_length = filters["sheet_length"]
 	sheet_width = filters["sheet_width"]

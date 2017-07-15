@@ -6,6 +6,8 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from erpnext.manufacturing.doctype.production_order.production_order import make_stock_entry
+from erpnext.stock.utils import get_latest_stock_qty
+from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_planned_paper_quantity
 
 class CMProductionOrder(Document):
 	def autoname(self):
@@ -15,17 +17,23 @@ class CMProductionOrder(Document):
 		else:
 			self.name = "PO-{0}-{1}-{2}".format(self.box, self.sales_order, len(orders))
 
-	def get_planned_paper_quantity(self, rmtype):
-		box_details = frappe.get_doc("CM Box Description", self.box_desc)
-		for paper in box_details.item_papers:
-			if paper.rm_type == rmtype: return paper.rm_weight * self.mfg_qty
-		return 0
+	def populate_order_items(self):
+		if (self.sales_order is None): return
+		order_items = self.get_all_order_items();
+		if (len(order_items) > 0):
+			selected_item = order_items[0]
+			self.box = selected_item.item_code
+			self.sales_order_qty = self.mfg_qty = selected_item.qty
+			self.stock_qty = get_latest_stock_qty(self.box)
+			box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
+			self.box_desc = box_boms[0].name
+		return order_items
 
 	def update_box_roll_qty(self):
 		added_rolls = []
 		for roll_item in self.paper_rolls:
 			rm_type = roll_item.rm_type
-			planned_qty = self.get_planned_paper_quantity(rm_type)
+			planned_qty = get_planned_paper_quantity(self.box_desc, rm_type, self.mfg_qty)
 			used_roll = get_prod_used_roll(added_rolls, roll_item.paper_roll, rm_type)
 			print ("Amount of {0} paper {1} needed is {2}".format(rm_type, roll_item.paper_roll, planned_qty))
 			if used_roll is None:
@@ -41,8 +49,8 @@ class CMProductionOrder(Document):
 			added_rolls += [roll_item]
 
 	def populate_box_source(self):
-		self.paper_rolls = []
-		self.paper_boards = []
+		if (self.box_desc is None): return
+		self.paper_rolls, self.paper_boards = [], []
 		print ("Populating {3} for {0} items of {1} having bom {2}".format(self.mfg_qty, self.box, self.box_desc, self.source_type))
 		if (self.source_type == "Roll"):
 			self.populate_box_rolls()
@@ -101,17 +109,6 @@ class CMProductionOrder(Document):
 								where parent='{0}'""".format(self.sales_order), as_dict=1);
 		return items
 
-	def populate_order_items(self):
-		if (self.sales_order is None): return
-		order_items = self.get_all_order_items();
-		if (len(order_items) > 0):
-			selected_item = order_items[0]
-			self.box = selected_item.item_code
-			self.mfg_qty = selected_item.qty
-			box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
-			self.box_desc = box_boms[0].name
-		return order_items
-
 	def update_paper_from_boards(self, se):
 		other_items = [item for item in se.items if "Paper" not in item.item_code]
 		se.items = []
@@ -142,6 +139,7 @@ class CMProductionOrder(Document):
 
 	def on_submit(self):
 		check_material_availability(self)
+		submit_sales_order(self.sales_order)
 		submit_production_order(self)
 		create_new_stock_entry(self)
 
@@ -186,31 +184,6 @@ def select_rolls_for_box(paper_items):
 			available_rolls = [rl for rl in available_rolls if rl.name != roll.name]
 	return added_rolls
 
-def get_prod_used_roll(rolls, paper, rm_type):
-	reuse_roll = None
-	for p_roll in rolls:
-		roll = frappe.get_doc("CM Paper Roll", p_roll.paper_roll)
-		if roll.paper != paper: continue
-		#Flute and bottom paper used simultaneosuly, so can't be shared
-		sharing_conflict = False
-		if (p_roll.rm_type == "Flute" and rm_type == "Liner"): sharing_conflict = True
-		# Handle duplicate entries of shared rolls
-		if (sharing_conflict):
-			if (reuse_roll != None and reuse_roll.name == roll.name):
-				reuse_roll = None
-			continue
-
-		print("Found roll {0} of weight {1} for {2}".format(p_roll.paper_roll, p_roll.est_final_weight, rm_type))
-		if (reuse_roll != None and reuse_roll.name == roll.name):
-			if p_roll.est_final_weight < 10:
-				reuse_roll = None
-				continue
-		if p_roll.est_final_weight > 10:
-			reuse_roll = roll
-			reuse_roll.weight = p_roll.est_final_weight
-	# Update the weight, but don't save it
-	return reuse_roll
-
 def get_smallest_roll(paper, rolls):
 	weight = 100000
 	small_roll = None
@@ -243,6 +216,32 @@ def get_suitable_roll(paper, paper_type, weight, added_rolls, available_rolls):
 		roll = get_smallest_roll(paper, available_rolls)
 	return roll
 
+@frappe.whitelist()
+def get_prod_used_roll(rolls, paper, rm_type):
+	reuse_roll = None
+	for p_roll in rolls:
+		roll = frappe.get_doc("CM Paper Roll", p_roll.paper_roll)
+		if roll.paper != paper: continue
+		#Flute and bottom paper used simultaneosuly, so can't be shared
+		sharing_conflict = False
+		if (p_roll.rm_type == "Flute" and rm_type == "Liner"): sharing_conflict = True
+		# Handle duplicate entries of shared rolls
+		if (sharing_conflict):
+			if (reuse_roll != None and reuse_roll.name == roll.name):
+				reuse_roll = None
+			continue
+
+	 	print("Found roll {0} of weight {1} for {2}".format(p_roll.paper_roll, p_roll.est_final_weight, rm_type))
+		if (reuse_roll != None and reuse_roll.name == roll.name):
+			if p_roll.est_final_weight < 10:
+				reuse_roll = None
+				continue
+		if p_roll.est_final_weight > 10:
+			reuse_roll = roll
+			reuse_roll.weight = p_roll.est_final_weight
+	# Update the weight, but don't save it
+	return reuse_roll
+
 def update_rm_quantity(po, se):
 	for item in se.items:
 		bom = frappe.get_doc("BOM", po.bom)
@@ -266,6 +265,11 @@ def submit_production_order(cm_po):
 	po.fg_warehouse = cm_po.target_warehouse
 	po.submit()
 	print "Created production order {0} for {1} of quantity {2}".format(po.name, po.production_item, po.qty)
+
+def submit_sales_order(sales_order):
+	order_doc = frappe.get_doc("Sales Order", sales_order)
+	if (order_doc.status == 'Draft'):
+		order_doc.submit()
 
 @frappe.whitelist()
 def update_production_roll_qty(cm_po):

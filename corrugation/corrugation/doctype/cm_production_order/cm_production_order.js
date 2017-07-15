@@ -19,7 +19,7 @@ frappe.ui.form.on('CM Production Order', {
 		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
 			return {
 				filters:[
-					['Sales Order', 'status', '=', 'To Deliver and Bill']
+					["Sales Order", "status", "in", ["Draft", "To Deliver and Bill"]]
 				]
 			}
 		};
@@ -35,9 +35,11 @@ frappe.ui.form.on('CM Production Order', {
 		frm.add_custom_button(__('Create Purhcase Order'), function() {
 				frm.events.make_po(frm)
 		});
-		frm.add_custom_button(__('Create Stock Based BOM'), function() {
-				msgprint("Not implemented yet")
-		});
+		if (frm.doc.docstatus == 1) {
+			frm.add_custom_button(__('Create Sales Invoice'), function() {
+					msgprint("Not implemented yet")
+			});
+		}
 		if (frm.doc.__islocal) return;
 	},
 	set_default_warehouse: function(frm) {
@@ -55,19 +57,6 @@ frappe.ui.form.on('CM Production Order', {
 		}
 	},
 
-	setup_company_filter: function(frm) {
-		var company_filter = function(doc) {
-			return {
-				filters: {
-					'company': frm.doc.company,
-					'is_group': 0
-				}
-			}
-		}
-
-		frm.fields_dict.source_warehouse.get_query = company_filter;
-		frm.fields_dict.target_warehouse.get_query = company_filter;
-	},
 	sales_order: function(frm) {
 		frappe.call({
 			doc: frm.doc,
@@ -77,6 +66,8 @@ frappe.ui.form.on('CM Production Order', {
 					refresh_field("box")
 					refresh_field("mfg_qty")
 					refresh_field("box_desc")
+					refresh_field("sales_order_qty")
+					refresh_field("stock_qty")
 					frm.events.box_desc(frm)
 				}
 			}
