@@ -9,10 +9,10 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from corrugation.corrugation.doctype.cm_production_order.cm_production_order import select_rolls_for_box
-from corrugation.corrugation.doctype.cm_production_order.cm_production_order import update_production_roll_qty
+from corrugation.corrugation.roll_selection import select_rolls_for_box
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_planned_paper_quantity
 from frappe import _
+import copy
 
 class CMCorrugationOrder(Document):
 	def autoname(self):
@@ -20,6 +20,18 @@ class CMCorrugationOrder(Document):
 		if items: idx = len(items) + 1
 		else: idx = 1
 		self.name = "CORR-ORDER-" + self.box + ('-%.3i' % idx)
+
+	def populate_order_items(self):
+		if (self.sales_order is None): return
+		order_items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
+										where parent='{0}'""".format(self.sales_order), as_dict=1);
+		if (len(order_items) > 0):
+			selected_item = order_items[0]
+			self.box = selected_item.item_code
+			self.mfg_qty = selected_item.qty
+			box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
+			self.box_desc = box_boms[0].name
+		return order_items
 
 	def populate_rolls(self):
 		paper_items, self.paper_rolls = [], []
@@ -93,14 +105,12 @@ def get_used_paper_qunatity_from_rolls(paper_rolls, paper):
 	for roll_item in paper_rolls:
 		ri = box_rolls.get(roll_item.paper_roll)
 		if (ri == None):
-			box_rolls[roll_item.paper_roll] = roll_item
+			box_rolls[roll_item.paper_roll] = copy.deepcopy(roll_item)
 		else:
-			if (roll_item.final_weight > ri.final_weight):
-				ri.start_weight = roll_item.start_weight
-				box_rolls[ri.paper] = ri
+			if (ri.final_weight > roll_item.final_weight):
+				ri.final_weight = roll_item.final_weight
 			else:
-				box_rolls[ri.paper] = roll_item
-				roll_item.start_weight = ri.start_weight
+				ri.start_weight = roll_item.start_weight
 
 	qty = 0
 	for (key, roll_item) in box_rolls.items():
@@ -119,8 +129,9 @@ def get_matching_last_used_roll(rolls, matching_roll, rm_type):
 		idx = idx - 1
 		roll = frappe.get_doc("CM Paper Roll", rolls[idx].paper_roll)
 		if roll.paper != paper: continue
-		if (potential_conflict and rolls[idx].rm_type == "Flute" and rm_type == "Liner"):
+		if (potential_conflict and rolls[idx].paper_roll == matching_roll and rolls[idx].rm_type == "Flute" and rm_type == "Liner"):
 			potential_conflict = False
+			frappe.throw("Cannot use same roll for flute and liner")
 			continue
 		return rolls[idx]
 
@@ -129,22 +140,29 @@ def update_roll_qty(co):
 	planned_qty, added_rolls = 0, []
 	for roll_item in co.paper_rolls:
 		roll, rm_type = frappe.get_doc("CM Paper Roll", roll_item.paper_roll), roll_item.rm_type
+		roll_item.start_weight = roll.weight
 		if (planned_qty == 0): planned_qty = get_planned_paper_quantity(co.box_desc, rm_type, co.mfg_qty)
 		print ("Amount of {0} paper {1} needed is {2}".format(rm_type, roll_item.paper_roll, planned_qty))
 		used_roll = get_matching_last_used_roll(added_rolls, roll_item.paper_roll, rm_type)
-		print "Used roll is {0}".format(used_roll)
-		if used_roll is None:
-			roll_item.start_weight = roll.weight
-		elif used_roll.est_final_weight < 0:
-			used_roll.est_final_weight = 0
-			roll_item.start_weight = roll.weight
-		else:
-			roll_item.start_weight = used_roll.final_weight
+		if used_roll is not None:
+			print "Used roll is {0} final weight is {1}".format(used_roll.paper_roll, used_roll.final_weight)
+			if used_roll.est_final_weight < 0:
+				used_roll.est_final_weight = 0
+			elif used_roll.paper_roll == roll_item.paper_roll:
+				roll_item.start_weight = used_roll.final_weight
 
 		roll_item.est_final_weight = (roll_item.start_weight - planned_qty)
 		if (roll_item.final_weight is None ): roll_item.final_weight = max(0, roll_item.est_final_weight)
 		planned_qty = planned_qty - roll_item.start_weight + roll_item.final_weight
 		added_rolls += [roll_item]
+
+@frappe.whitelist()
+def update_production_roll_qty(cm_po):
+	for roll_item in cm_po.paper_rolls:
+		roll = frappe.get_doc("CM Paper Roll", roll_item.paper_roll)
+		roll.status = "Ready"
+		roll.weight = roll_item.final_weight
+		roll.save()
 
 @frappe.whitelist()
 def filter_rolls(doctype, txt, searchfield, start, page_len, filters):

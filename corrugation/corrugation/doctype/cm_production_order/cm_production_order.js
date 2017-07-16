@@ -13,7 +13,7 @@ frappe.ui.form.on('CM Production Order', {
 		frm.get_field('paper_boards').grid.editable_fields = [
 			  {fieldname: 'layer_type', columns: 2},
 				{fieldname: 'layer', columns: 4},
-				{fieldname: 'est_qty', columns: 2},
+				{fieldname: 'stock_qty', columns: 2},
 				{fieldname: 'used_qty', columns: 2},
 			];
 		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
@@ -24,10 +24,13 @@ frappe.ui.form.on('CM Production Order', {
 			}
 		};
 		frm.events.set_box_filter(frm)
+		frm.events.set_roll_filter(frm)
 	},
+
 	onload: function(frm) {
 		frm.events.set_default_warehouse(frm);
 	},
+
 	refresh: function(frm) {
 		frm.add_custom_button(__('Check Production Capacity'), function() {
 				msgprint("Implementation in progress")
@@ -42,6 +45,32 @@ frappe.ui.form.on('CM Production Order', {
 		}
 		if (frm.doc.__islocal) return;
 	},
+
+	set_box_filter: function(frm) {
+		frm.set_query("box_desc", function(doc) {
+			if (doc.box) {
+				return {
+					filters:[
+						['CM Box Description', 'item', '=', doc.box]
+					]
+				}
+			} else msgprint(__("Please select the Item first"));
+		});
+	},
+
+	set_roll_filter: function(frm) {
+		frm.fields_dict.paper_rolls.grid.get_field('paper_roll').get_query = function(doc, cdt, cdn) {
+			row = locals[cdt][cdn]
+			return {
+				query: "corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order.filter_rolls",
+				filters: {
+									'box_desc': doc.box_desc,
+									'layer_type': row.rm_type,
+								},
+			};
+		}
+	},
+
 	set_default_warehouse: function(frm) {
 		if (!(frm.doc.source_warehouse || frm.doc.target_warehouse)) {
 			frappe.call({
@@ -63,27 +92,13 @@ frappe.ui.form.on('CM Production Order', {
 			method: "populate_order_items",
 			callback: function(r) {
 				if(!r.exe) {
-					refresh_field("box")
-					refresh_field("mfg_qty")
-					refresh_field("box_desc")
-					refresh_field("sales_order_qty")
-					refresh_field("stock_qty")
-					frm.events.box_desc(frm)
+					frm.refresh_fields()
+					frm.events.use_boards(frm)
 				}
 			}
 		});
 	},
-	set_box_filter: function(frm) {
-		frm.set_query("box_desc", function(doc) {
-			if (doc.box) {
-				return {
-					filters:[
-						['CM Box Description', 'item', '=', doc.box]
-					]
-				}
-			} else msgprint(__("Please select the Item first"));
-		});
-	},
+
 	box_desc: function(frm) {
 		frappe.call({
 			doc: frm.doc,
@@ -96,12 +111,22 @@ frappe.ui.form.on('CM Production Order', {
 			}
 		});
 	},
+
 	mfg_qty: function(frm) {
 		frm.events.box_desc(frm)
 	},
-	source_type: function(frm) {
+
+	use_boards: function(frm) {
+		frm.toggle_display("manual_entry", !frm.doc.use_boards)
+		frm.toggle_display("paper_rolls", !frm.doc.use_boards)
+		frm.toggle_display("paper_boards", frm.doc.use_boards)
 		frm.events.box_desc(frm)
 	},
+
+	manual_entry: function(frm) {
+		frm.events.box_desc(frm)
+	},
+
 	make_po: function(frm) {
 		frappe.model.open_mapped_doc({
 			method: "corrugation.corrugation.doctype.cm_production_order.cm_production_order.make_new_purchase_order",

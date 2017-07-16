@@ -40,6 +40,18 @@ frappe.ui.form.on('CM Corrugation Order', {
 	refresh: function(frm) {
 
 	},
+	sales_order: function(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: "populate_order_items",
+			callback: function(r) {
+				if(!r.exe) {
+					frm.refresh_fields()
+					frm.events.mfg_qty(frm)
+				}
+			}
+		});
+	},
 	mfg_qty: function(frm) {
 		frappe.call({
 			doc: frm.doc,
