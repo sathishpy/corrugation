@@ -92,3 +92,15 @@ frappe.ui.form.on("CM Production Roll Detail", "rm_type", function(frm, cdt, cdn
 		msgprint("Roll type doesn't match the layer type")
 	}
 });
+
+frappe.ui.form.on("CM Production Roll Detail", "paper_rolls_add", function(frm, cdt, cdn) {
+	frappe.call({
+		doc: frm.doc,
+		method: "update_layer_type",
+		callback: function(r) {
+			if(!r.exe) {
+				refresh_field("paper_rolls");
+			}
+		}
+	});
+});

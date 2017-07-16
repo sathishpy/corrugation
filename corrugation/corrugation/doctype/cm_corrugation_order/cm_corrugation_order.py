@@ -54,6 +54,23 @@ class CMCorrugationOrder(Document):
 
 		self.board_name = box_details.get_board_name(self.get_layer_number())
 
+	def get_next_layer(self, layer):
+		layers = ["Top", "Flute", "Liner"]
+		for count in range(0, len(layers)):
+			if (layer == layers[count]):
+				return layers[max(count+1, len(layers)-1)]
+
+	def update_layer_type(self):
+		rolls_count, layer = len(self.paper_rolls), self.layer_type
+		last_row = self.paper_rolls[rolls_count-1]
+		previous_roll = None
+		if (rolls_count > 1): previous_roll = self.paper_rolls[rolls_count-2]
+		if (previous_roll != None):
+			layer = previous_roll.rm_type
+			if (previous_roll.est_final_weight > 0):
+				layer = self.get_next_layer(layer)
+		last_row.rm_type = layer
+
 	def update_box_roll_qty(self):
 		update_roll_qty(self)
 
