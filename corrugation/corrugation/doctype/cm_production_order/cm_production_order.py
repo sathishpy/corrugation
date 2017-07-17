@@ -12,7 +12,6 @@ from corrugation.corrugation.doctype.cm_box_description.cm_box_description impor
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import update_production_roll_qty
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import update_roll_qty
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import get_used_paper_qunatity_from_rolls
-import copy
 
 class CMProductionOrder(Document):
 	def autoname(self):
@@ -53,7 +52,6 @@ class CMProductionOrder(Document):
 		if (self.manual_entry): return
 
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
-		self.bom = box_details.item_bom
 		#Build a new paper item list for this production
 		paper_items = []
 		for paper_item in box_details.item_papers:
@@ -82,6 +80,10 @@ class CMProductionOrder(Document):
 			new_item.stock_qty = get_latest_stock_qty(board_item.name)
 			new_item.used_qty = self.mfg_qty/box_details.item_per_sheet
 			self.append("paper_boards", new_item)
+
+	def on_update(self):
+		box_details = frappe.get_doc("CM Box Description", self.box_desc)
+		self.bom = box_details.item_bom
 
 	def replace_paper_with_boards(self, se):
 		other_items = [item for item in se.items if "Paper" not in item.item_code]
