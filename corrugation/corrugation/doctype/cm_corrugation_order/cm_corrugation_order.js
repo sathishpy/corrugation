@@ -10,7 +10,13 @@ frappe.ui.form.on('CM Corrugation Order', {
 				{fieldname: 'est_final_weight', columns: 1},
 				{fieldname: 'final_weight', columns: 2}
 			];
-
+		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
+			return {
+				filters:[
+					["Sales Order", "status", "in", ["Draft", "To Deliver and Bill"]]
+				]
+			}
+		};
 		frm.events.set_box_filter(frm)
 		frm.events.set_roll_filter(frm)
 	},
@@ -71,7 +77,6 @@ frappe.ui.form.on('CM Corrugation Order', {
 		frm.events.mfg_qty(frm)
 	},
 });
-
 frappe.ui.form.on("CM Production Roll Detail", "paper_roll", function(frm, cdt, cdn) {
 	frappe.call({
 		doc: frm.doc,
@@ -96,7 +101,7 @@ frappe.ui.form.on("CM Production Roll Detail", "rm_type", function(frm, cdt, cdn
 frappe.ui.form.on("CM Production Roll Detail", "paper_rolls_add", function(frm, cdt, cdn) {
 	frappe.call({
 		doc: frm.doc,
-		method: "update_layer_type",
+		method: "set_new_layer_defaults",
 		callback: function(r) {
 			if(!r.exe) {
 				refresh_field("paper_rolls");

@@ -54,25 +54,11 @@ class CMCorrugationOrder(Document):
 
 		self.board_name = box_details.get_board_name(self.get_layer_number())
 
-	def get_next_layer(self, layer):
-		layers = ["Top", "Flute", "Liner"]
-		for count in range(0, len(layers)):
-			if (layer == layers[count]):
-				return layers[max(count+1, len(layers)-1)]
-
-	def update_layer_type(self):
-		rolls_count, layer = len(self.paper_rolls), self.layer_type
-		last_row = self.paper_rolls[rolls_count-1]
-		previous_roll = None
-		if (rolls_count > 1): previous_roll = self.paper_rolls[rolls_count-2]
-		if (previous_roll != None):
-			layer = previous_roll.rm_type
-			if (previous_roll.est_final_weight > 0):
-				layer = self.get_next_layer(layer)
-		last_row.rm_type = layer
-
 	def update_box_roll_qty(self):
 		update_roll_qty(self)
+
+	def set_new_layer_defaults(self):
+		set_new_layer_defaults(self, self.layer_type)
 
 	def get_layer_number(self):
 		roll_item = next((roll_item for roll_item in self.paper_rolls if roll_item.rm_type != "Flute"), None)
@@ -154,23 +140,24 @@ def get_matching_last_used_roll(rolls, matching_roll, rm_type):
 
 @frappe.whitelist()
 def update_roll_qty(co):
-	planned_qty, added_rolls = 0, []
+	planned_qty, added_rolls = {"Top": -1, "Flute": -1, "Liner": -1}, []
 	for roll_item in co.paper_rolls:
 		roll, rm_type = frappe.get_doc("CM Paper Roll", roll_item.paper_roll), roll_item.rm_type
 		roll_item.start_weight = roll.weight
-		if (planned_qty == 0): planned_qty = get_planned_paper_quantity(co.box_desc, rm_type, co.mfg_qty)
-		print ("Amount of {0} paper {1} needed is {2}".format(rm_type, roll_item.paper_roll, planned_qty))
+		if (planned_qty[rm_type] == -1):
+			planned_qty[rm_type] = get_planned_paper_quantity(co.box_desc, rm_type, roll.paper, co.mfg_qty)
+		print ("Amount of {0} paper {1} needed is {2}".format(rm_type, roll.paper, planned_qty[rm_type]))
 		used_roll = get_matching_last_used_roll(added_rolls, roll_item.paper_roll, rm_type)
 		if used_roll is not None:
-			print "Used roll is {0} final weight is {1}".format(used_roll.paper_roll, used_roll.final_weight)
+			print "Used roll is {0} having final weight {1}".format(used_roll.paper_roll, used_roll.final_weight)
 			if used_roll.est_final_weight < 0:
 				used_roll.est_final_weight = 0
 			elif used_roll.paper_roll == roll_item.paper_roll:
 				roll_item.start_weight = used_roll.final_weight
 
-		roll_item.est_final_weight = (roll_item.start_weight - planned_qty)
-		if (roll_item.final_weight is None ): roll_item.final_weight = max(0, roll_item.est_final_weight)
-		planned_qty = planned_qty - roll_item.start_weight + roll_item.final_weight
+		roll_item.est_final_weight = (roll_item.start_weight - planned_qty[rm_type])
+		if (roll_item.final_weight == -1): roll_item.final_weight = max(0, roll_item.est_final_weight)
+		planned_qty[rm_type] = planned_qty[rm_type] - roll_item.start_weight + roll_item.final_weight
 		added_rolls += [roll_item]
 
 @frappe.whitelist()
@@ -180,6 +167,26 @@ def update_production_roll_qty(cm_po):
 		roll.status = "Ready"
 		roll.weight = roll_item.final_weight
 		roll.save()
+
+@frappe.whitelist()
+def get_next_layer(layer):
+	layers = ["Top", "Flute", "Liner", "Flute"]
+	for idx in range(0, len(layers)):
+		if (layer == layers[idx]):
+			return layers[idx + 1]
+
+@frappe.whitelist()
+def set_new_layer_defaults(prod_order, first_layer):
+	rolls_count, layer = len(prod_order.paper_rolls), first_layer
+	last_row = prod_order.paper_rolls[rolls_count-1]
+	previous_roll = None
+	if (rolls_count > 1): previous_roll = prod_order.paper_rolls[rolls_count-2]
+	if (previous_roll != None):
+		layer = previous_roll.rm_type
+		if (previous_roll.est_final_weight > 0):
+			layer = get_next_layer(layer)
+	last_row.rm_type = layer
+	last_row.final_weight = -1
 
 @frappe.whitelist()
 def filter_rolls(doctype, txt, searchfield, start, page_len, filters):

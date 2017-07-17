@@ -245,11 +245,11 @@ def get_production_details(month):
 	return (total_boxes, total_production)
 
 @frappe.whitelist()
-def get_planned_paper_quantity(box_desc, rmtype, mfg_qty):
+def get_planned_paper_quantity(box_desc, rmtype, paper, mfg_qty):
 	box_details = frappe.get_doc("CM Box Description", box_desc)
-	for paper in box_details.item_papers:
-		if paper.rm_type == rmtype:
-			return paper.rm_weight * mfg_qty
+	for paper_item in box_details.item_papers:
+		if paper_item.rm_type == rmtype and paper_item.rm == paper:
+			return paper_item.rm_weight * mfg_qty
 	return 0
 
 @frappe.whitelist()

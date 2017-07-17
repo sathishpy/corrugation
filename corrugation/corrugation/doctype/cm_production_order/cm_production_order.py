@@ -12,6 +12,7 @@ from corrugation.corrugation.doctype.cm_box_description.cm_box_description impor
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import update_production_roll_qty
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import update_roll_qty
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import get_used_paper_qunatity_from_rolls
+from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import set_new_layer_defaults
 
 class CMProductionOrder(Document):
 	def autoname(self):
@@ -80,6 +81,9 @@ class CMProductionOrder(Document):
 			new_item.stock_qty = get_latest_stock_qty(board_item.name)
 			new_item.used_qty = self.mfg_qty/box_details.item_per_sheet
 			self.append("paper_boards", new_item)
+
+	def set_new_layer_defaults(self):
+		set_new_layer_defaults(self, "Top")
 
 	def on_update(self):
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)

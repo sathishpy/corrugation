@@ -36,14 +36,8 @@ frappe.ui.form.on('CM Production Order', {
 				msgprint("Implementation in progress")
 		});
 		frm.add_custom_button(__('Create Purhcase Order'), function() {
-				frm.events.make_po(frm)
+				frm.events.make_purchase_order(frm)
 		});
-		if (frm.doc.docstatus == 1) {
-			frm.add_custom_button(__('Create Sales Invoice'), function() {
-					msgprint("Not implemented yet")
-			});
-		}
-		if (frm.doc.__islocal) return;
 	},
 
 	set_box_filter: function(frm) {
@@ -127,18 +121,35 @@ frappe.ui.form.on('CM Production Order', {
 		frm.events.box_desc(frm)
 	},
 
-	make_po: function(frm) {
+	make_purchase_order: function(frm) {
 		frappe.model.open_mapped_doc({
 			method: "corrugation.corrugation.doctype.cm_production_order.cm_production_order.make_new_purchase_order",
 			frm: frm
 		})
-	}
+	},
+	make_sales_invoice: function(frm) {
+		frappe.model.open_mapped_doc({
+			method: "erpnext.selling.doctype.sales_order.sales_order.make_sales_invoice",
+			frm: frm.doc.sales_order,
+		})
+	},
 });
 
 frappe.ui.form.on("CM Production Roll Detail", "paper_roll", function(frm, cdt, cdn) {
 	frappe.call({
 		doc: frm.doc,
 		method: "update_box_roll_qty",
+		callback: function(r) {
+			if(!r.exe) {
+				refresh_field("paper_rolls");
+			}
+		}
+	});
+});
+frappe.ui.form.on("CM Production Roll Detail", "paper_rolls_add", function(frm, cdt, cdn) {
+	frappe.call({
+		doc: frm.doc,
+		method: "set_new_layer_defaults",
 		callback: function(r) {
 			if(!r.exe) {
 				refresh_field("paper_rolls");
