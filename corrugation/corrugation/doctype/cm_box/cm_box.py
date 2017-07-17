@@ -41,6 +41,9 @@ class CMBox(Document):
 		item = frappe.get_doc("Item", self.box_item)
 		for box_bom in self.get_item_descriptions():
 			print "Updating box bom {0}".format(box_bom)
+			if (box_bom.docstatus == 1):
+				box_bom.update_cost_after_submit()
+				continue
 			box_bom.box = self.name
 			box_bom.item = item.name
 			box_bom.item_name = item.item_name

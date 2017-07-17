@@ -62,7 +62,11 @@ frappe.ui.form.on('CM Box Description', {
 		});
 	},
 	refresh: function(frm) {
-		frm.events.refresh_fields(frm);
+		frm.add_custom_button(__('Update Costs'), function() {
+				frm.events.update_cost(frm);
+		});
+
+		frm.refresh_fields();
 	},
 	update_cost: function(frm) {
 		frappe.call({
@@ -70,7 +74,7 @@ frappe.ui.form.on('CM Box Description', {
 			method: "update_cost",
 			callback: function(r) {
 				if(!r.exe) {
-					frm.events.refresh_fields(frm);
+					frm.refresh_fields();
 				}
 			}
 		});
@@ -98,14 +102,6 @@ frappe.ui.form.on('CM Box Description', {
 		let sheet_width = frm.doc.item_per_sheet * (frm.doc.item_width + frm.doc.item_height + frm.doc.item_fold_lap)
 		frm.set_value("sheet_length", sheet_length);
 		frm.set_value("sheet_width", sheet_width);
-	},
-	refresh_fields : function(frm) {
-		refresh_field("item_papers");
-		refresh_field("item_others");
-		refresh_field("item_rm_cost");
-		refresh_field("item__cost");
-		refresh_field("item_total_cost");
-		refresh_field("item_profit");
 	},
 });
 frappe.ui.form.on("CM Paper Item", "rm", function(frm, cdt, cdn) {

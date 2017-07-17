@@ -108,8 +108,9 @@ class CMBoxDescription(Document):
 		(boxes, production) = get_production_details(0)
 		print("Boxes = {0} production={1} expense={2}".format(boxes, production, total_expense))
 		if (boxes != 0 and self.item_prod_cost == 0): self.item_prod_cost = total_expense/boxes
+		self.item_rate = get_item_rate(self.item)
 		self.item_total_cost = float(self.item_rm_cost + self.item_prod_cost)
-		self.item_profit = float((get_item_rate(self.item) - self.item_total_cost)*100/self.item_total_cost)
+		self.item_profit = float((self.item_rate - self.item_total_cost)*100/self.item_total_cost)
 		print("RM cost={0} OP Cost={1} Rate={2}".format(self.item_rm_cost, self.item_prod_cost, get_item_rate(self.item)))
 
 	def get_board_name(self, layer_no):
@@ -201,6 +202,10 @@ class CMBoxDescription(Document):
 	def on_submit(self):
 		boards = self.make_board_items()
 		print("Created item decsription {0} with bom {1}".format(self.name, self.item_bom))
+
+	def update_cost_after_submit(self):
+		self.update_cost();
+		self.save(ignore_permissions=True)
 
 def get_paper_measurements(paper):
 	(gsm, bf, deck) = (0, 0, 0)
