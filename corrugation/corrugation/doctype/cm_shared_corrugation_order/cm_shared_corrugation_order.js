@@ -1,7 +1,7 @@
 // Copyright (c) 2017, sathishpy@gmail.com and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('CM Shared Production Order', {
+frappe.ui.form.on('CM Shared Corrugation Order', {
 	setup: function(frm) {
 		frm.get_field('paper_rolls').grid.editable_fields = [
 				{fieldname: 'rm_type', columns: 1},
@@ -16,6 +16,13 @@ frappe.ui.form.on('CM Shared Production Order', {
 			{fieldname: 'box_desc', columns:4},
 			{fieldname: 'mfg_qty', columns:2},
 		];
+		frm.set_query("sales_order", "box_details", function(doc, cdt, cdn) {
+			return {
+				filters:[
+					["Sales Order", "status", "in", ["Draft", "To Deliver and Bill"]]
+				]
+			}
+		});
 		frm.set_query("box_desc", "box_details", function(doc, cdt, cdn) {
 			row = locals[cdt][cdn]
 			if (row.box) {
@@ -27,25 +34,11 @@ frappe.ui.form.on('CM Shared Production Order', {
 			} else frappe.msgprint(__("Please select the Item first"));
 		});
 	},
+	onload: function(frm) {
+		frm.set_value("mfg_date", frappe.datetime.nowdate())
+	},
 	refresh: function(frm) {
 
-	},
-	onload: function(frm) {
-		frm.events.set_default_warehouse(frm);
-	},
-	set_default_warehouse: function(frm) {
-		if (!(frm.doc.source_warehouse || frm.doc.target_warehouse)) {
-			frappe.call({
-				method: "erpnext.manufacturing.doctype.production_order.production_order.get_default_warehouse",
-
-				callback: function(r) {
-					if(!r.exe) {
-						frm.set_value("source_warehouse", r.message.wip_warehouse);
-						frm.set_value("target_warehouse", r.message.fg_warehouse)
-					}
-				}
-			});
-		}
 	},
 	populate_rolls: function(frm) {
 		frappe.call({
@@ -57,6 +50,9 @@ frappe.ui.form.on('CM Shared Production Order', {
 				}
 			}
 		});
+	},
+	manual_entry: function(frm) {
+		frm.events.populate_rolls(frm);
 	},
 	check_and_populate_rolls: function(frm) {
 		frappe.call({
@@ -75,7 +71,7 @@ frappe.ui.form.on('CM Shared Production Order', {
 		});
 	}
 });
-frappe.ui.form.on('CM Shared Production Item', {
+frappe.ui.form.on('CM Shared Corrugation Item', {
 	sales_order: function(frm, cdt, cdn) {
 		row = locals[cdt][cdn];
 		frappe.call({
@@ -96,4 +92,27 @@ frappe.ui.form.on('CM Shared Production Item', {
 	mfg_qty: function(frm, cdt, cdn) {
 		frm.events.populate_rolls(frm)
 	},
+});
+
+frappe.ui.form.on("CM Production Roll Detail", "paper_roll", function(frm, cdt, cdn) {
+	frappe.call({
+		doc: frm.doc,
+		method: "update_box_roll_qty",
+		callback: function(r) {
+			if(!r.exe) {
+				refresh_field("paper_rolls");
+			}
+		}
+	});
+});
+frappe.ui.form.on("CM Production Roll Detail", "paper_rolls_add", function(frm, cdt, cdn) {
+	frappe.call({
+		doc: frm.doc,
+		method: "set_new_layer_defaults",
+		callback: function(r) {
+			if(!r.exe) {
+				refresh_field("paper_rolls");
+			}
+		}
+	});
 });

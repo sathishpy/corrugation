@@ -20,15 +20,15 @@ def get_data():
 				},
 				{
 					"type": "doctype",
-					"name": "CM Shared Production Order",
-					"description": _("Shared Production Orders."),
-                    "label": _("Shared Production Order")
+					"name": "CM Shared Corrugation Order",
+					"description": _("Shared Corrugation Orders."),
+                    "label": _("Shared Corrugation Order")
 				},
 				{
 					"type": "doctype",
 					"name": "CM Box Description",
 					"description": _("Bill of Materials (BOM)"),
-					"label": _("Box Manufacturing Details")
+					"label": _("Box Production Details")
 				},
             ]
         },

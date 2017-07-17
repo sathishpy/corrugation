@@ -32,7 +32,7 @@ frappe.ui.form.on('CM Production Order', {
 	},
 
 	refresh: function(frm) {
-		frm.add_custom_button(__('Check Production Capacity'), function() {
+		frm.add_custom_button(__('Production Capacity'), function() {
 				msgprint("Implementation in progress")
 		});
 		frm.add_custom_button(__('Create Purhcase Order'), function() {

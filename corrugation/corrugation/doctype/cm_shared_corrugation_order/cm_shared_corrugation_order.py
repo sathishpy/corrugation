@@ -5,10 +5,13 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from corrugation.corrugation.doctype.cm_production_order.cm_production_order import select_rolls_for_box
+from corrugation.corrugation.roll_selection import select_rolls_for_box
+from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import update_roll_qty
+from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import set_new_layer_defaults
+
 import copy
 
-class CMSharedProductionOrder(Document):
+class CMSharedCorrugationOrder(Document):
 	def get_item_name(self, item_type):
 		if len(self.paper_rolls) == 0: return None
 		for roll_item in self.paper_rolls:
@@ -31,6 +34,8 @@ class CMSharedProductionOrder(Document):
 		return {"Result": True}
 
 	def populate_order_items(self, item_info):
+		if "sales_order" not in item_info: return
+
 		order_items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
 								where parent='{0}'""".format(item_info["sales_order"]), as_dict=1);
 		box_item = next((bi for bi in self.box_details if bi.sales_order == item_info["sales_order"]), None)
@@ -44,15 +49,15 @@ class CMSharedProductionOrder(Document):
 
 	def populate_rolls(self):
 		self.paper_rolls = []
+		if (self.manual_entry): return
+
 		paper_items = []
 		for paper_box in self.box_details:
 			box_details = frappe.get_doc("CM Box Description", paper_box.box_desc)
 			for paper_item in box_details.item_papers:
-				new_item = None
-				for pi in paper_items:
-					if pi.rm_type == paper_item.rm_type:
-						new_item = pi
-						break
+				if ("Top" in self.layer_type and paper_item.rm_type != "Top"): continue
+				if ("Flute" in self.layer_type and paper_item.rm_type == "Top"): continue
+				new_item = next((pi for pi in paper_items if pi.rm_type == paper_item.rm_type), None)
 				if (new_item == None):
 					new_item = frappe.new_doc("CM Paper Item")
 					new_item.rm_type = paper_item.rm_type
@@ -62,12 +67,17 @@ class CMSharedProductionOrder(Document):
 				else:
 					new_item.rm_weight += paper_item.rm_weight * paper_box.mfg_qty
 
-
 		#populate_rolls_for_box(self, item_info.box_desc, item_info.mfg_qty)
 		selected_rolls = select_rolls_for_box(paper_items)
 		for roll_item in selected_rolls:
 			print("Selected roll " + roll_item.paper_roll)
 			self.append("paper_rolls", roll_item)
+
+	def update_box_roll_qty(self):
+		update_roll_qty(self)
+
+	def set_new_layer_defaults(self):
+		set_new_layer_defaults(self, self.layer_type)
 
 	def create_used_paper_weight_map(self):
 		weight_map = {}
@@ -111,16 +121,15 @@ class CMSharedProductionOrder(Document):
 
 		for paper_box in self.box_details:
 			weights = weight_map[paper_box.box]
-			prod_order = frappe.new_doc("CM Production Order")
-			prod_order.sales_order = paper_box.sales_order
-			prod_order.box = paper_box.box
-			prod_order.box_desc = paper_box.box_desc
-			prod_order.mfg_qty = paper_box.mfg_qty
-			prod_order.mfg_qty = paper_box.mfg_qty
+			crg_order = frappe.new_doc("CM Corrugation Order")
+			crg_order.sales_order = paper_box.sales_order
+			crg_order.box = paper_box.box
+			crg_order.box_desc = paper_box.box_desc
+			crg_order.mfg_qty = paper_box.mfg_qty
+			crg_order.layer_type = self.layer_type
+
 			box_desc = frappe.get_doc("CM Box Description", paper_box.box_desc)
-			prod_order.bom = box_desc.item_bom
-			prod_order.source_warehouse = self.source_warehouse
-			prod_order.target_warehouse = self.target_warehouse
+			crg_order.bom = box_desc.item_bom
 
 			for ptype, weight in weights.items():
 				while weight > 0:
@@ -133,13 +142,13 @@ class CMSharedProductionOrder(Document):
 						weight = weight - roll.start_weight
 					planned_weight = next((rm.rm_weight for rm in box_desc.item_papers if rm.rm_type == ptype), None)
 					roll.est_final_weight = roll.start_weight - (planned_weight * paper_box.mfg_qty)
-					prod_order.append("paper_rolls", copy.copy(roll))
+					crg_order.append("paper_rolls", copy.copy(roll))
 					roll.start_weight = roll.final_weight
 
-			prod_order.submit()
+			crg_order.submit()
 
 		for roll in available_rolls:
 			print("Roll {0} start={1} Final={2}".format(roll.paper_roll, roll.start_weight, roll.final_weight))
 
 	def before_submit(self):
-		self.create_individual_production_orders()
+		self.create_individual_corrugation_orders()
