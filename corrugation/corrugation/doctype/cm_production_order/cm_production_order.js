@@ -29,6 +29,7 @@ frappe.ui.form.on('CM Production Order', {
 
 	onload: function(frm) {
 		frm.events.set_default_warehouse(frm);
+		frm.set_value("mfg_date", frappe.datetime.nowdate())
 	},
 
 	refresh: function(frm) {

@@ -11,6 +11,8 @@ import frappe
 from frappe.model.document import Document
 from corrugation.corrugation.roll_selection import select_rolls_for_box
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_planned_paper_quantity
+from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boards_for_box
+from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boxes_from_board
 from frappe import _
 import copy
 
@@ -28,23 +30,37 @@ class CMCorrugationOrder(Document):
 		if (len(order_items) > 0):
 			selected_item = order_items[0]
 			self.box = selected_item.item_code
-			self.mfg_qty = selected_item.qty
+			self.order_qty = selected_item.qty
 			box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
 			self.box_desc = box_boms[0].name
+			self.update_board_count()
 		return order_items
+
+	def update_board_count(self):
+		self.mfg_qty = get_no_of_boards_for_box(self.box_desc, self.layer_type, self.order_qty)
+
+	def update_layer(self):
+		self.update_board_count()
+		self.populate_rolls()
 
 	def populate_rolls(self):
 		paper_items, self.paper_rolls = [], []
 		if (self.manual_entry): return
 
+		box_count = get_no_of_boxes_from_board(self.box_desc, self.layer_type, self.mfg_qty)
+		print("Getting {0} paper for {1} boxes".format(self.layer_type, box_count))
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
 		for paper_item in box_details.item_papers:
 			if ("Top" in self.layer_type and paper_item.rm_type != "Top"): continue
 			if ("Flute" in self.layer_type and paper_item.rm_type == "Top"): continue
+			new_item = next((item for item in paper_items if item.rm == paper_item.rm and item.rm_type == paper_item.rm_type), None)
+			if (new_item != None):
+				new_item.rm_weight += float(paper_item.rm_weight * box_count)
+				continue
 			new_item = frappe.new_doc("CM Paper Item")
 			new_item.rm_type = paper_item.rm_type
 			new_item.rm = paper_item.rm
-			new_item.rm_weight = float(paper_item.rm_weight * self.mfg_qty)
+			new_item.rm_weight = float(paper_item.rm_weight * box_count)
 			paper_items += [new_item]
 
 		selected_rolls = select_rolls_for_box(paper_items)
@@ -96,7 +112,7 @@ class CMCorrugationOrder(Document):
 		board_item = frappe.new_doc("Stock Entry Detail")
 		board_item.item_code = self.board_name
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
-		board_item.qty = self.mfg_qty/box_details.item_per_sheet
+		board_item.qty = self.mfg_qty
 		board_item.t_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Stores")})
 		se.append("items", board_item)
 		se.calculate_rate_and_amount()

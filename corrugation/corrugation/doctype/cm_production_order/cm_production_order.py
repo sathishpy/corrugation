@@ -30,7 +30,7 @@ class CMProductionOrder(Document):
 		if (len(order_items) > 0):
 			selected_item = order_items[0]
 			self.box = selected_item.item_code
-			self.sales_order_qty = self.mfg_qty = selected_item.qty
+			self.order_qty = self.mfg_qty = selected_item.qty
 			self.stock_qty = get_latest_stock_qty(self.box)
 			box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
 			self.box_desc = box_boms[0].name
@@ -56,6 +56,10 @@ class CMProductionOrder(Document):
 		#Build a new paper item list for this production
 		paper_items = []
 		for paper_item in box_details.item_papers:
+			new_item = next((item for item in paper_items if item.rm == paper_item.rm and item.rm_type == paper_item.rm_type), None)
+			if (new_item != None):
+				new_item.rm_weight += float(paper_item.rm_weight * self.mfg_qty)
+				continue
 			new_item = frappe.new_doc("CM Paper Item")
 			new_item.rm_type = paper_item.rm_type
 			new_item.rm = paper_item.rm
@@ -84,10 +88,6 @@ class CMProductionOrder(Document):
 
 	def set_new_layer_defaults(self):
 		set_new_layer_defaults(self, "Top")
-
-	def on_update(self):
-		box_details = frappe.get_doc("CM Box Description", self.box_desc)
-		self.bom = box_details.item_bom
 
 	def replace_paper_with_boards(self, se):
 		other_items = [item for item in se.items if "Paper" not in item.item_code]
@@ -118,8 +118,9 @@ class CMProductionOrder(Document):
 		return se
 
 	def update_rm_quantity(self, se):
+		box_details = frappe.get_doc("CM Box Description", self.box_desc)
 		for item in se.items:
-			bom = frappe.get_doc("BOM", self.bom)
+			bom = frappe.get_doc("BOM", box_details.item_bom)
 			bom_item = next((bi for bi in bom.items if bi.item_code == item.item_code), None)
 			if (bom_item == None): continue
 			print ("Updating RM {0} for quantity {1}".format(item.item_code, self.mfg_qty))
@@ -138,7 +139,8 @@ class CMProductionOrder(Document):
 def submit_production_order(cm_po):
 	po = frappe.new_doc("Production Order")
 	po.production_item = cm_po.box
-	po.bom_no = cm_po.bom
+	box_details = frappe.get_doc("CM Box Description", cm_po.box_desc)
+	po.bom_no = box_details.item_bom
 	po.sales_order = cm_po.sales_order
 	po.skip_transfer = True
 	po.qty = cm_po.mfg_qty
@@ -182,7 +184,8 @@ def check_material_availability(cm_po):
 @frappe.whitelist()
 def make_new_purchase_order(source_name):
 	po = frappe.get_doc("CM Production Order", source_name)
-	bom = frappe.get_doc("BOM", po.bom)
+	box_details = frappe.get_doc("CM Box Description", po.box_desc)
+	bom = frappe.get_doc("BOM", box_details.item_bom)
 	print("Creating PO for CM Order {0}".format(po.name))
 
 	po = frappe.new_doc("Purchase Order")

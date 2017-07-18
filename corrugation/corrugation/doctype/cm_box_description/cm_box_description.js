@@ -3,8 +3,9 @@
 frappe.ui.form.on('CM Box Description', {
 	setup: function(frm) {
 		frm.get_field('item_papers').grid.editable_fields = [
-				{fieldname: 'rm_type', columns: 3},
-				{fieldname: 'rm', columns: 5},
+				{fieldname: 'rm_type', columns: 2},
+				{fieldname: 'rm', columns: 4},
+				{fieldname: 'rm_weight', columns: 2},
 				{fieldname: 'rm_cost', columns: 2}
 			];
 		frm.get_field('item_others').grid.editable_fields = [

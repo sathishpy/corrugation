@@ -250,6 +250,22 @@ def get_production_details(month):
 	return (total_boxes, total_production)
 
 @frappe.whitelist()
+def get_no_of_boards_for_box(box_desc_name, layer, box_count):
+	box_desc = frappe.get_doc("CM Box Description", box_desc_name)
+	boards = box_count/box_desc.item_per_sheet
+	if (layer != "Top"):
+		boards = boards * int(int(box_desc.item_ply_count)/2)
+	return boards
+
+@frappe.whitelist()
+def get_no_of_boxes_from_board(box_desc_name, layer, boards):
+	box_desc = frappe.get_doc("CM Box Description", box_desc_name)
+	if (layer != "Top"):
+		boards = boards/int(int(box_desc.item_ply_count)/2)
+	box_count = boards * box_desc.item_per_sheet
+	return box_count
+
+@frappe.whitelist()
 def get_planned_paper_quantity(box_desc, rmtype, paper, mfg_qty):
 	box_details = frappe.get_doc("CM Box Description", box_desc)
 	for paper_item in box_details.item_papers:

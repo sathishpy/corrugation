@@ -20,6 +20,11 @@ frappe.ui.form.on('CM Corrugation Order', {
 		frm.events.set_box_filter(frm)
 		frm.events.set_roll_filter(frm)
 	},
+
+	onload: function(frm) {
+		frm.set_value("mfg_date", frappe.datetime.nowdate())
+	},
+
 	set_box_filter: function(frm) {
 		frm.set_query("box_desc", function(doc) {
 			if (doc.box) {
@@ -64,8 +69,7 @@ frappe.ui.form.on('CM Corrugation Order', {
 			method: "populate_rolls",
 			callback: function(r) {
 				if(!r.exe) {
-					refresh_field("paper_rolls");
-					refresh_field("board_name")
+					frm.refresh_fields()
 				}
 			}
 		});
@@ -74,7 +78,15 @@ frappe.ui.form.on('CM Corrugation Order', {
 		frm.events.mfg_qty(frm)
 	},
 	layer_type: function(frm) {
-		frm.events.mfg_qty(frm)
+		frappe.call({
+			doc: frm.doc,
+			method: "update_layer",
+			callback: function(r) {
+				if(!r.exe) {
+					frm.refresh_fields()
+				}
+			}
+		});
 	},
 });
 frappe.ui.form.on("CM Production Roll Detail", "paper_roll", function(frm, cdt, cdn) {

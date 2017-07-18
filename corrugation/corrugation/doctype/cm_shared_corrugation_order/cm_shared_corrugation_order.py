@@ -57,7 +57,7 @@ class CMSharedCorrugationOrder(Document):
 			for paper_item in box_details.item_papers:
 				if ("Top" in self.layer_type and paper_item.rm_type != "Top"): continue
 				if ("Flute" in self.layer_type and paper_item.rm_type == "Top"): continue
-				new_item = next((pi for pi in paper_items if pi.rm_type == paper_item.rm_type), None)
+				new_item = next((pi for pi in paper_items if pi.rm_type == paper_item.rm_type and pi.rm == paper_item.rm), None)
 				if (new_item == None):
 					new_item = frappe.new_doc("CM Paper Item")
 					new_item.rm_type = paper_item.rm_type
