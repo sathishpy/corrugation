@@ -106,7 +106,17 @@ frappe.ui.form.on('CM Box Description', {
 	},
 });
 frappe.ui.form.on("CM Paper Item", "rm", function(frm, cdt, cdn) {
-	frm.events.update_cost(frm);
+	row = locals[cdt][cdn]
+	frappe.call({
+		doc: frm.doc,
+		method: "update_layers",
+		args: {"rm_type": row.rm_type, "rm": row.rm},
+		callback: function(r) {
+			if(!r.exe) {
+				frm.refresh_fields();
+			}
+		}
+	});
 });
 frappe.ui.form.on("CM Misc Item", "rm", function(frm, cdt, cdn) {
 	frm.events.update_cost(frm);

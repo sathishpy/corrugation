@@ -75,6 +75,14 @@ class CMBoxDescription(Document):
 		print("Paper {0} weight={1} rate={2} cost={3}".format(paper, weight, get_item_rate(paper), cost))
 		return (weight, cost)
 
+	def update_layers(self, rm_type, rm):
+		if (self.same_layers):
+			print("Updating all {0} layers to {1}".format(rm_type, rm))
+			for item in self.item_papers:
+				if item.rm_type == rm_type:
+					item.rm = rm
+		self.update_cost()
+
 	def update_cost(self):
 		self.item_rm_cost = 0
 		paper_weight = 0
