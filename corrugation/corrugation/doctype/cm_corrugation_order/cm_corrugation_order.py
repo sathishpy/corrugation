@@ -221,14 +221,19 @@ def make_other_layer(source_name):
 def filter_rolls(doctype, txt, searchfield, start, page_len, filters):
 	box_desc = frappe.get_doc("CM Box Description", filters["box_desc"])
 	layer_type = filters["layer_type"]
+	ignore_bom = filters["ignore_bom"]
+
+	paper_filter = ""
 	papers = ["'" + paper_item.rm + "'" for paper_item in box_desc.item_papers if paper_item.rm_type == layer_type]
+	if not ignore_bom:
+		paper_filter = "and roll.paper in ({0})".format(",".join(paper for paper in papers))
 
 	filter_query =	"""select roll.name, roll.weight
 	 					from `tabCM Paper Roll` roll
 						where roll.weight > 10
-							and roll.paper in ({0})
+							{0}
 							and roll.name LIKE %(txt)s
 						order by roll.weight * 1 asc
-					""".format(",".join(paper for paper in papers))
+					""".format(paper_filter)
 	#print "Searching rolls matching paper {0} with query {1}".format(",".join(paper for paper in papers), filter_query)
 	return frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})

@@ -44,6 +44,7 @@ frappe.ui.form.on('CM Corrugation Order', {
 				filters: {
 									'box_desc': doc.box_desc,
 									'layer_type': row.rm_type,
+									'ignore_bom': frm.doc.ignore_bom,
 								},
 			};
 		}
@@ -79,6 +80,8 @@ frappe.ui.form.on('CM Corrugation Order', {
 		});
 	},
 	manual_entry: function(frm) {
+		frm.toggle_display("ignore_bom", frm.doc.manual_entry)
+		frm.set_value("ignore_bom", 0)
 		frm.events.mfg_qty(frm)
 	},
 	layer_type: function(frm) {
