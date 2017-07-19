@@ -85,7 +85,11 @@ after_install = "corrugation.install.after_install"
 # 		"on_trash": "method"
 #	}
 # }
-
+doc_events = {
+    "Purchase Receipt": {
+        "on_submit": "corrugation.corrugation.doctype.cm_paper_roll_register.cm_paper_roll_register.create_new_rolls",
+    }
+}
 # Scheduled Tasks
 # ---------------
 

@@ -11,21 +11,19 @@ class CMPaperRollRegister(Document):
 		self.name = self.purchase_receipt + "-roll-register"
 
 	def populate_rolls(self):
-		self.purchase_weight = self.get_purchase_weight()
-		self.total_weight = 0
-
+		self.total_weight, self.purchase_weight = 0, self.get_purchase_weight()
 		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
-		print("Populating {0} CM Paper Rolls for receipt {1}".format(len(receipt.items), self.purchase_receipt))
-		self.paper_rolls = []
-		for item in receipt.items:
-			if not is_paper_item(item): continue
-			weight = item.qty
 
-			rolls = frappe.db.sql_list("""select name from `tabCM Paper Roll` where paper=%s""", item.item_code)
-			if rolls:
-				idx = len(rolls) + 1
-			else:
-				idx = 1
+		last_idx = frappe.db.count("CM Paper Roll")
+		idx = last_idx + 1
+		print("Populating {0} Paper items for receipt {1} starting {2}".format(len(receipt.items), self.purchase_receipt, idx))
+		self.paper_rolls = []
+
+		for item in receipt.items:
+			item_doc = frappe.get_doc("Item", item.item_name)
+			if item_doc.item_group != "Paper": continue
+
+			weight = item.qty
 			while (weight > 0):
 				paper_roll = frappe.new_doc("CM Paper Roll Detail")
 				paper_roll.paper = item.item_code
@@ -45,6 +43,7 @@ class CMPaperRollRegister(Document):
 		for roll in self.paper_rolls:
 			paper_roll = frappe.new_doc("CM Paper Roll")
 			paper_roll.paper = roll.paper
+			paper_roll.number = roll.number
 			paper_roll.weight = roll.weight
 			paper_roll.status = "Ready"
 			paper_roll.save()
@@ -70,7 +69,9 @@ class CMPaperRollRegister(Document):
 		self.register_rolls()
 
 @frappe.whitelist()
-def is_paper_item(rm):
-	if "paper" in rm.item_name or "Paper" in rm.item_name:
-		return True
-	return False
+def create_new_rolls(doc, method):
+	print("Creating new roll register for doc {0}".format(doc.name))
+	new_register = frappe.new_doc("CM Paper Roll Register")
+	new_register.purchase_receipt = doc.name
+	new_register.populate_rolls()
+	new_register.save(ignore_permissions=True)

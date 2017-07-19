@@ -8,10 +8,8 @@ from frappe.model.document import Document
 
 class CMPaperRoll(Document):
 	def autoname(self):
-		rolls = frappe.db.sql_list("""select name from `tabCM Paper Roll` where paper=%s""", self.paper)
+		roll_name = "{0}-RL-{1}".format(self.paper, self.number)
+		rolls = frappe.db.sql_list("""select name from `tabCM Paper Roll` where name=%s""", roll_name)
 		if rolls:
-			idx = len(rolls) + 1
-		else:
-			idx = 1
-
-		self.name = self.paper + "-Roll" + ('-%.3i' % idx)
+			roll_name = roll_name + ('-%.2i' % len(rolls))
+		self.name = roll_name
