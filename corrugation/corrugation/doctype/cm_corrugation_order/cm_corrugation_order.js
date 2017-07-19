@@ -49,7 +49,11 @@ frappe.ui.form.on('CM Corrugation Order', {
 		}
 	},
 	refresh: function(frm) {
-
+		if (frm.doc.docstatus == 1) {
+			frm.add_custom_button(__('Make Other Layer'), function() {
+					frm.events.make_other_layer(frm)
+			});
+		}
 	},
 	sales_order: function(frm) {
 		frappe.call({
@@ -87,6 +91,12 @@ frappe.ui.form.on('CM Corrugation Order', {
 				}
 			}
 		});
+	},
+	make_other_layer: function(frm) {
+		frappe.model.open_mapped_doc({
+			method: "corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order.make_other_layer",
+			frm: frm,
+		})
 	},
 });
 frappe.ui.form.on("CM Production Roll Detail", "paper_roll", function(frm, cdt, cdn) {

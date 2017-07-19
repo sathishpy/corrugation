@@ -18,10 +18,11 @@ import copy
 
 class CMCorrugationOrder(Document):
 	def autoname(self):
-		items = frappe.db.sql_list("""select name from `tabCM Corrugation Order` where box=%s""", self.box)
+		items = frappe.db.sql_list("""select name from `tabCM Corrugation Order`
+										where box='{0}' and layer_type='{1}'""".format(self.box, self.layer_type))
 		if items: idx = len(items) + 1
 		else: idx = 1
-		self.name = "CORR-ORDER-" + self.box + ('-%.3i' % idx)
+		self.name = "Crg-" + self.layer_type + "-" + self.box + ('-%.3i' % idx)
 
 	def populate_order_items(self):
 		if (self.sales_order is None): return
@@ -203,6 +204,18 @@ def set_new_layer_defaults(prod_order, first_layer):
 			layer = get_next_layer(layer)
 	last_row.rm_type = layer
 	last_row.final_weight = -1
+
+@frappe.whitelist()
+def make_other_layer(source_name):
+	crg_order = frappe.get_doc("CM Corrugation Order", source_name)
+	other_order = frappe.new_doc("CM Corrugation Order")
+	other_order.sales_order = crg_order.sales_order
+	other_order.layer_type = "Flute"
+	if (crg_order.layer_type == "Flute"):
+		other_order.layer_type = "Top"
+	other_order.populate_order_items()
+	other_order.populate_rolls()
+	return other_order.as_dict()
 
 @frappe.whitelist()
 def filter_rolls(doctype, txt, searchfield, start, page_len, filters):

@@ -130,6 +130,8 @@ class CMDataImportTool(Document):
 				self.append("roll_items", roll_item)
 
 	def export_rolls(self):
+		last_idx = frappe.db.count("CM Paper Roll")
+		idx = last_idx + 1
 		for roll in self.roll_items:
 			variant_args = {"Colour": roll.paper_color, "BF": roll.paper_bf, "GSM": roll.paper_gsm, "Deck": roll.paper_deck}
 			paper = find_variant("Paper-RM", variant_args)
@@ -152,6 +154,8 @@ class CMDataImportTool(Document):
 
 			paper_roll = frappe.new_doc("CM Paper Roll")
 			paper_roll.paper = paper
+			paper_roll.number = idx
+			idx = idx + 1
 			paper_roll.weight = roll.roll_weight
 			paper_roll.status = "Ready"
 			paper_roll.insert()
