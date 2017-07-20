@@ -84,7 +84,7 @@ frappe.ui.form.on('CM Box Description', {
 		frm.events.update_sheet_values(frm)
 		frm.events.update_cost(frm);
 	},
-	item_fold_lap : function(frm, cdt, cdn) {
+	item_cutting_margin : function(frm, cdt, cdn) {
 		frm.events.update_sheet_values(frm)
 		frm.events.update_cost(frm);
 	},
@@ -99,8 +99,8 @@ frappe.ui.form.on('CM Box Description', {
 		frm.events.update_cost(frm);
 	},
 	update_sheet_values : function(frm) {
-		let sheet_length = 2 * (frm.doc.item_width + frm.doc.item_length) + frm.doc.item_pin_lap
-		let sheet_width = frm.doc.item_per_sheet * (frm.doc.item_width + frm.doc.item_height + frm.doc.item_fold_lap)
+		let sheet_length = 2 * (frm.doc.item_width + frm.doc.item_length + frm.doc.item_cutting_margin) + frm.doc.item_pin_lap
+		let sheet_width = frm.doc.item_per_sheet * (frm.doc.item_width + frm.doc.item_height) + 2 * frm.doc.item_cutting_margin
 		frm.set_value("sheet_length", sheet_length);
 		frm.set_value("sheet_width", sheet_width);
 	},

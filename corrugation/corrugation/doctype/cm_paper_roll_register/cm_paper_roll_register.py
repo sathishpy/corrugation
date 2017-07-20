@@ -45,6 +45,7 @@ class CMPaperRollRegister(Document):
 			paper_roll.paper = roll.paper
 			paper_roll.number = roll.number
 			paper_roll.weight = roll.weight
+			paper_roll.purchase_receipt = self.purchase_receipt
 			paper_roll.status = "Ready"
 			paper_roll.save()
 

@@ -30,8 +30,8 @@ class CMBoxDescription(Document):
 		self.append("item_papers", rm_item)
 
 	def populate_paper_materials(self):
-		self.sheet_length = 2 * (self.item_width + self.item_length) + self.item_pin_lap
-		self.sheet_width = self.item_per_sheet * (self.item_width + self.item_height + self.item_fold_lap)
+		self.sheet_length = 2 * (self.item_width + self.item_length + self.item_cutting_margin) + self.item_pin_lap
+		self.sheet_width = self.item_per_sheet * (self.item_width + self.item_height) + 2 * self.item_cutting_margin
 
 		count, self.item_papers = 1, []
 		self.add_paper_item("Top")
