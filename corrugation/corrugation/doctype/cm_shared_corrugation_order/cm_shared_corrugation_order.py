@@ -8,29 +8,24 @@ from frappe.model.document import Document
 from corrugation.corrugation.roll_selection import select_rolls_for_box
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import update_roll_qty
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import set_new_layer_defaults
+from corrugation.corrugation.doctype.cm_box_description.cm_box_description import is_layer_compatible
+from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_planned_paper_quantity
 
 import copy
 
 class CMSharedCorrugationOrder(Document):
-	def get_item_name(self, item_type):
-		if len(self.paper_rolls) == 0: return None
-		for roll_item in self.paper_rolls:
-			if roll_item.rm_type == item_type:
-				if (roll_item.paper_roll == None): continue
-				print "Trying get the roll {0}".format(roll_item.paper_roll)
-				roll = frappe.get_doc("CM Paper Roll", roll_item.paper_roll)
-				return roll.paper
-		return None
-
 	def is_compatible_bom(self):
 		count = len(self.box_details)
 		if (count == 1): return {"Result": True}
+		layers = ["Top"]
+		if (self.layer_type == "Flute"):
+			layers = ["Flute", "Liner"]
 
-		for box in self.box_details:
-			box_desc = frappe.get_doc("CM Box Description", box.box_desc)
-			for item in box_desc.item_papers:
-				matching_item = self.get_item_name(item.rm_type)
-				if (matching_item != item.rm): return {"Result": False}
+		box_desc1 = self.box_details[0].box_desc
+		for idx in range(1, len(self.box_details)):
+			box_desc2 = self.box_details[idx].box_desc
+			if (not is_layer_compatible(box_desc1, box_desc2, layers)):
+				return {"Result": False}
 		return {"Result": True}
 
 	def populate_order_items(self, item_info):
@@ -38,7 +33,7 @@ class CMSharedCorrugationOrder(Document):
 
 		order_items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
 								where parent='{0}'""".format(item_info["sales_order"]), as_dict=1);
-		box_item = next((bi for bi in self.box_details if bi.sales_order == item_info["sales_order"]), None)
+		box_item = next((bi for bi in self.box_details if bi.sales_order == item_info["sales_order"] and bi.box is None), None)
 		print("Sales order {0} matches row {1}".format(item_info["sales_order"], box_item.sales_order))
 		if (len(order_items) > 0 and box_item is not None):
 			selected_item = order_items[0]
@@ -79,6 +74,12 @@ class CMSharedCorrugationOrder(Document):
 	def set_new_layer_defaults(self):
 		set_new_layer_defaults(self, self.layer_type)
 
+	def get_planned_paper_qty(self, rm_type, paper):
+		qty = 0
+		for box in self.box_details:
+			qty += get_planned_paper_quantity(box.box_desc, rm_type, paper, box.mfg_qty)
+		return qty
+
 	def create_used_paper_weight_map(self):
 		weight_map = {}
 		# Find the total paper use dfor each layer
@@ -105,7 +106,7 @@ class CMSharedCorrugationOrder(Document):
 		return weight_map
 
 
-	def create_individual_production_orders(self):
+	def create_individual_corrugation_orders(self):
 		weight_map = self.create_used_paper_weight_map()
 		print ("Box          Top         Flute     Liner")
 		for key, value in weight_map.items():
@@ -152,3 +153,15 @@ class CMSharedCorrugationOrder(Document):
 
 	def before_submit(self):
 		self.create_individual_corrugation_orders()
+
+@frappe.whitelist()
+def make_other_layer(source_name):
+	crg_order = frappe.get_doc("CM Shared Corrugation Order", source_name)
+	other_order = frappe.new_doc("CM Shared Corrugation Order")
+	other_order.layer_type = "Flute"
+	if (crg_order.layer_type == "Flute"):
+		other_order.layer_type = "Top"
+	for box_item in crg_order.box_details:
+		other_order.append("box_details", copy.copy(box_item))
+	other_order.populate_rolls()
+	return other_order.as_dict()

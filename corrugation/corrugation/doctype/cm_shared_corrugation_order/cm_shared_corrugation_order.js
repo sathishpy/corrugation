@@ -23,6 +23,11 @@ frappe.ui.form.on('CM Shared Corrugation Order', {
 				]
 			}
 		});
+		frm.events.set_box_filter(frm)
+		frm.events.set_roll_filter(frm)
+	},
+
+	set_box_filter: function(frm) {
 		frm.set_query("box_desc", "box_details", function(doc, cdt, cdn) {
 			row = locals[cdt][cdn]
 			if (row.box) {
@@ -34,12 +39,40 @@ frappe.ui.form.on('CM Shared Corrugation Order', {
 			} else frappe.msgprint(__("Please select the Item first"));
 		});
 	},
+
+	set_roll_filter: function(frm) {
+		frm.fields_dict.paper_rolls.grid.get_field('paper_roll').get_query = function(doc, cdt, cdn) {
+			row = locals[cdt][cdn]
+			return {
+				query: "corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order.filter_rolls",
+				filters: {
+									'box_desc': doc.box_details[0].box_desc,
+									'layer_type': row.rm_type,
+									'ignore_bom': 0,
+								},
+			};
+		}
+	},
+
 	onload: function(frm) {
 		frm.set_value("mfg_date", frappe.datetime.nowdate())
 	},
-	refresh: function(frm) {
 
+	refresh: function(frm) {
+		if (frm.doc.docstatus == 1) {
+			frm.add_custom_button(__('Make Other Layer'), function() {
+					frm.events.make_other_layer(frm)
+			});
+		}
 	},
+
+	make_other_layer: function(frm) {
+		frappe.model.open_mapped_doc({
+			method: "corrugation.corrugation.doctype.cm_shared_corrugation_order.cm_shared_corrugation_order.make_other_layer",
+			frm: frm,
+		})
+	},
+
 	populate_rolls: function(frm) {
 		frappe.call({
 			doc: frm.doc,
@@ -51,9 +84,11 @@ frappe.ui.form.on('CM Shared Corrugation Order', {
 			}
 		});
 	},
+
 	manual_entry: function(frm) {
 		frm.events.populate_rolls(frm);
 	},
+
 	check_and_populate_rolls: function(frm) {
 		frappe.call({
 			doc: frm.doc,

@@ -282,6 +282,18 @@ def get_planned_paper_quantity(box_desc, rmtype, paper, mfg_qty):
 	return 0
 
 @frappe.whitelist()
+def is_layer_compatible(box_desc1, box_desc2, layers):
+	print ("Comparing desc {0} with {1} for layer {2}".format(box_desc1, box_desc2, layers))
+	papers1 = frappe.get_doc("CM Box Description", box_desc1).item_papers
+	papers2 = frappe.get_doc("CM Box Description", box_desc2).item_papers
+	for idx in range(0, len(papers1)):
+		if papers1[idx].rm_type in layers:
+			if (papers1[idx].rm != papers2[idx].rm):
+				print ("Paper {0} for {1} doesn't match {2}".format(papers1[idx].rm, papers1[idx].rm_type, papers2[idx].rm))
+				return False
+	return True
+
+@frappe.whitelist()
 def filter_papers(doctype, txt, searchfield, start, page_len, filters):
 	sheet_length = filters["sheet_length"]
 	sheet_width = filters["sheet_width"]

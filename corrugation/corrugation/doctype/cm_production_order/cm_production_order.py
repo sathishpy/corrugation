@@ -130,6 +130,9 @@ class CMProductionOrder(Document):
 				item.qty = qty
 		return se
 
+	def get_planned_paper_qty(self, rm_type, paper):
+		return get_planned_paper_quantity(self.box_desc, rm_type, paper, self.mfg_qty)
+
 	def on_submit(self):
 		check_material_availability(self)
 		submit_sales_order(self.sales_order)

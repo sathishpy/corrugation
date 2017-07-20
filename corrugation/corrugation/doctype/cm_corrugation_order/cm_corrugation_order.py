@@ -87,6 +87,9 @@ class CMCorrugationOrder(Document):
 			layer += 1
 		frappe.throw("Failed to find the layer number")
 
+	def get_planned_paper_qty(self, rm_type, paper):
+		return get_planned_paper_quantity(self.box_desc, rm_type, paper, self.mfg_qty)
+
 	def get_layer_papers(self):
 		papers = [frappe.get_doc("CM Paper Roll", roll_item.paper_roll).paper for roll_item in self.paper_rolls]
 		papers = list(set(papers))
@@ -162,7 +165,7 @@ def update_roll_qty(co):
 		roll, rm_type = frappe.get_doc("CM Paper Roll", roll_item.paper_roll), roll_item.rm_type
 		roll_item.start_weight = roll.weight
 		if (planned_qty[rm_type] == -1):
-			planned_qty[rm_type] = get_planned_paper_quantity(co.box_desc, rm_type, roll.paper, co.mfg_qty)
+			planned_qty[rm_type] = co.get_planned_paper_qty(rm_type, roll.paper)
 		print ("Amount of {0} paper {1} needed is {2}".format(rm_type, roll.paper, planned_qty[rm_type]))
 		used_roll = get_matching_last_used_roll(added_rolls, roll_item.paper_roll, rm_type)
 		if used_roll is not None:
