@@ -37,6 +37,7 @@ class CMProductionOrder(Document):
 		return order_items
 
 	def update_box_roll_qty(self):
+		if (self.box_desc is None): return
 		update_roll_qty(self)
 
 	def populate_box_source(self):

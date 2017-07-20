@@ -11,6 +11,7 @@ from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order i
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import is_layer_compatible
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_planned_paper_quantity
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boards_for_box
+from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boxes_from_board
 
 import copy
 
@@ -51,12 +52,13 @@ class CMSharedCorrugationOrder(Document):
 		self.populate_rolls()
 
 	def populate_rolls(self):
-		box.box_qty = get_no_of_boxes_from_board(box.box_desc, self.layer_type, box.mfg_qty)
 		self.paper_rolls = []
 		if (self.manual_entry): return
 
 		paper_items = []
 		for paper_box in self.box_details:
+			if (paper_box.box_desc is None): continue
+			paper_box.box_qty = get_no_of_boxes_from_board(paper_box.box_desc, self.layer_type, paper_box.mfg_qty)
 			box_details = frappe.get_doc("CM Box Description", paper_box.box_desc)
 			for paper_item in box_details.item_papers:
 				if ("Top" in self.layer_type and paper_item.rm_type != "Top"): continue

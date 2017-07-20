@@ -45,6 +45,7 @@ class CMCorrugationOrder(Document):
 		self.populate_rolls()
 
 	def populate_rolls(self):
+		if (self.box_desc is None): return
 		paper_items, self.paper_rolls = [], []
 		if (self.manual_entry): return
 
@@ -72,6 +73,7 @@ class CMCorrugationOrder(Document):
 		self.board_name = box_details.get_board_name(self.get_layer_number())
 
 	def update_box_roll_qty(self):
+		if (self.box_desc is None): return
 		update_roll_qty(self)
 
 	def set_new_layer_defaults(self):
