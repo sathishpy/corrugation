@@ -28,13 +28,26 @@ class CMCorrugationOrder(Document):
 		if (self.sales_order is None): return
 		order_items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
 										where parent='{0}'""".format(self.sales_order), as_dict=1);
-		if (len(order_items) > 0):
-			selected_item = order_items[0]
-			self.box = selected_item.item_code
-			self.order_qty = selected_item.qty
-			box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
-			self.box_desc = box_boms[0].name
-			self.update_board_count()
+		if (order_items is None or len(order_items) == 0):
+			frappe.throw("Can't find any boxes to manufacture in Sales Order")
+
+		items_produced = frappe.db.count("CM Corrugation Order", filters={"layer_type": self.layer_type, "sales_order": self.sales_order})
+		print ("Number of productions is {0}".format(items_produced))
+		if (items_produced >= len(order_items)):
+			frappe.throw("All the {0} boards for sales order {1} items are already produced".format(self.layer_type, self.sales_order))
+		selected_item = order_items[items_produced]
+		self.box = selected_item.item_code
+		self.order_qty = selected_item.qty
+
+		box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
+		if (box_boms is None or len(box_boms) == 0):
+			frappe.throw("Failed to find the Box Description for {0}".format(self.box))
+		box_desc = frappe.get_doc("CM Box Description", box_boms[0].name)
+		self.box_desc = box_desc.name
+		if (box_desc.docstatus == 0):
+			frappe.throw("Box Description {0} is not verified and submitted".format(self.box_desc))
+
+		self.update_board_count()
 		return order_items
 
 	def update_board_count(self):
