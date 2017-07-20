@@ -88,7 +88,8 @@ class CMCorrugationOrder(Document):
 		frappe.throw("Failed to find the layer number")
 
 	def get_planned_paper_qty(self, rm_type, paper):
-		return get_planned_paper_quantity(self.box_desc, rm_type, paper, self.mfg_qty)
+		box_count = get_no_of_boxes_from_board(self.box_desc, self.layer_type, self.mfg_qty)
+		return get_planned_paper_quantity(self.box_desc, rm_type, paper, box_count)
 
 	def get_layer_papers(self):
 		papers = [frappe.get_doc("CM Paper Roll", roll_item.paper_roll).paper for roll_item in self.paper_rolls]

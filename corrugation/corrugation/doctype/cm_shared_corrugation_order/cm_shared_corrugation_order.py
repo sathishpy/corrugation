@@ -10,6 +10,7 @@ from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order i
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import set_new_layer_defaults
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import is_layer_compatible
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_planned_paper_quantity
+from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boards_for_box
 
 import copy
 
@@ -38,11 +39,19 @@ class CMSharedCorrugationOrder(Document):
 		if (len(order_items) > 0 and box_item is not None):
 			selected_item = order_items[0]
 			box_item.box = selected_item.item_code
-			box_item.mfg_qty = selected_item.qty
+			box_item.box_qty = selected_item.qty
 			box_boms = frappe.get_all("CM Box Description", filters={'box': box_item.box})
 			box_item.box_desc = box_boms[0].name
+			self.update_board_count(box_item)
+
+	def update_board_count(self, box):
+		box.mfg_qty = get_no_of_boards_for_box(box.box_desc, self.layer_type, box.box_qty)
+
+	def update_layer(self):
+		self.populate_rolls()
 
 	def populate_rolls(self):
+		box.box_qty = get_no_of_boxes_from_board(box.box_desc, self.layer_type, box.mfg_qty)
 		self.paper_rolls = []
 		if (self.manual_entry): return
 
@@ -57,12 +66,11 @@ class CMSharedCorrugationOrder(Document):
 					new_item = frappe.new_doc("CM Paper Item")
 					new_item.rm_type = paper_item.rm_type
 					new_item.rm = paper_item.rm
-					new_item.rm_weight = paper_item.rm_weight * paper_box.mfg_qty
+					new_item.rm_weight = paper_item.rm_weight * paper_box.box_qty
 					paper_items += [new_item]
 				else:
-					new_item.rm_weight += paper_item.rm_weight * paper_box.mfg_qty
+					new_item.rm_weight += paper_item.rm_weight * paper_box.box_qty
 
-		#populate_rolls_for_box(self, item_info.box_desc, item_info.mfg_qty)
 		selected_rolls = select_rolls_for_box(paper_items)
 		for roll_item in selected_rolls:
 			print("Selected roll " + roll_item.paper_roll)
@@ -77,7 +85,7 @@ class CMSharedCorrugationOrder(Document):
 	def get_planned_paper_qty(self, rm_type, paper):
 		qty = 0
 		for box in self.box_details:
-			qty += get_planned_paper_quantity(box.box_desc, rm_type, paper, box.mfg_qty)
+			qty += get_planned_paper_quantity(box.box_desc, rm_type, paper, box.box_qty)
 		return qty
 
 	def create_used_paper_weight_map(self):
@@ -92,13 +100,13 @@ class CMSharedCorrugationOrder(Document):
 		for cbbox in self.box_details:
 			box_desc = frappe.get_doc("CM Box Description", cbbox.box_desc)
 			for paper_item in box_desc.item_papers:
-				planned_total_paper_weight[paper_item.rm_type] += (paper_item.rm_weight * cbbox.mfg_qty)
+				planned_total_paper_weight[paper_item.rm_type] += (paper_item.rm_weight * cbbox.box_qty)
 
 		for cbbox in self.box_details:
 			box_desc = frappe.get_doc("CM Box Description", cbbox.box_desc)
 			actual_paper_used = {"Top": 0, "Flute": 0, "Liner": 0}
 			for paper_item in box_desc.item_papers:
-				paper_weight_ratio = float((paper_item.rm_weight * cbbox.mfg_qty)/planned_total_paper_weight[paper_item.rm_type])
+				paper_weight_ratio = float((paper_item.rm_weight * cbbox.box_qty)/planned_total_paper_weight[paper_item.rm_type])
 				actual_paper_used[paper_item.rm_type] = paper_weight_ratio * total_paper_used[paper_item.rm_type]
 				print("Box:{0}     Type:{1}   Ratio:{2}".format(cbbox.box, paper_item.rm_type, paper_weight_ratio))
 			weight_map[cbbox.box] = actual_paper_used
@@ -142,7 +150,7 @@ class CMSharedCorrugationOrder(Document):
 						roll.final_weight = 0
 						weight = weight - roll.start_weight
 					planned_weight = next((rm.rm_weight for rm in box_desc.item_papers if rm.rm_type == ptype), None)
-					roll.est_final_weight = roll.start_weight - (planned_weight * paper_box.mfg_qty)
+					roll.est_final_weight = roll.start_weight - (planned_weight * paper_box.box_qty)
 					crg_order.append("paper_rolls", copy.copy(roll))
 					roll.start_weight = roll.final_weight
 
