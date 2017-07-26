@@ -24,6 +24,25 @@ def add_paper_item_groups(raw_material_group):
     print("Adding new categories to Raw Material")
     add_records(records)
 
+def add_raw_materials():
+    gum = frappe.db.get_value("Item", "CRG-GUM")
+    if (gum is not None): return
+    
+    records = [
+        {"doctype": "Item", "item_code": "CRG-GUM", "item_name": "Corrugation Gum", "item_group": "Gum", "stock_uom": "Kg",
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_fixed_asset": False},
+        {"doctype": "Item", "item_code": "PST-GUM", "item_name": "Pasting Gum", "item_group": "Gum", "stock_uom": "Kg",
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_fixed_asset": False},
+        {"doctype": "Item", "item_code": "GLU-GUM", "item_name": "Gluing Gum", "item_group": "Gum", "stock_uom": "Kg",
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_fixed_asset": False},
+        {"doctype": "Item", "item_code": "INK-RED", "item_name": "Red Ink", "item_group": "Ink", "stock_uom": "Kg",
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_fixed_asset": False},
+        {"doctype": "Item", "item_code": "INK-BLUE", "item_name": "Blue Ink", "item_group": "Ink", "stock_uom": "Kg",
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_fixed_asset": False},
+    ]
+    print("Adding Gum and Ink Items")
+    add_records(records)
+
 def add_paper_template(name):
     frappe.db.sql("""delete from `tabItem Attribute` where name='Colour'""")
     frappe.db.sql("""delete from `tabItem Attribute Value` where parent='Colour'""")
@@ -74,7 +93,7 @@ def before_install():
     raw_material_group = frappe.get_doc("Item Group", rm_group)
     if (raw_material_group.is_group == False):
         add_paper_item_groups(raw_material_group)
-
+    add_raw_materials()
     paper_rm = frappe.db.sql_list("""select name from `tabItem` where item_name=%s""", paper_template)
     if not paper_rm:
         add_paper_template(paper_template)

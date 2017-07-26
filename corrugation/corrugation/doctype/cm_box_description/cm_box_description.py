@@ -40,9 +40,10 @@ class CMBoxDescription(Document):
 			self.add_paper_item("Liner")
 			count += 2
 
-	def populate_misc_materials(self, rm_type, percent):
+	def populate_misc_materials(self, rm_type, rm, percent):
 		rm_item = frappe.new_doc("CM Misc Item")
 		rm_item.rm_type = rm_type
+		rm_item.rm = rm
 		rm_item.rm_percent = percent
 		self.append("item_others", rm_item)
 
@@ -50,8 +51,9 @@ class CMBoxDescription(Document):
 		self.populate_paper_materials()
 
 		self.item_others = []
-		for (rm_type, percent) in [("Corrugation Gum", 3), ("Pasting Gum", 2), ("Printing Ink", 0.3)]:
-			self.populate_misc_materials(rm_type, percent)
+		for (rm_type, rm, percent) in [("Corrugation Gum", "CRG-GUM", 3), ("Pasting Gum", "PST-GUM", 2), ("Printing Ink", "INK-BLUE", 0.3)]:
+			self.populate_misc_materials(rm_type, rm, percent)
+		self.update_cost()
 
 	def validate(self):
 		if (int(self.item_ply_count) != len(self.item_papers)):
@@ -102,13 +104,16 @@ class CMBoxDescription(Document):
 				paper_weight += item.rm_weight
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
+		misc_weight = 0
 		for item in self.item_others:
 			if item.rm is None: continue
 			item.rm_weight = paper_weight * item.rm_percent / 100
+			misc_weight += item.rm_weight
 			item.rm_cost = item.rm_weight * get_item_rate(item.rm)
 			self.item_rm_cost += item.rm_cost
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
-
+		#Assume about 60% of GUM/Ink will be dried/wasted
+		self.item_weight = paper_weight + misc_weight*0.3
 		print("Raw Material cost={0} items={1}".format(self.item_rm_cost, self.item_per_sheet))
 		if (self.item_rm_cost == 0): return
 
@@ -118,6 +123,7 @@ class CMBoxDescription(Document):
 		if (boxes != 0 and self.item_prod_cost == 0): self.item_prod_cost = total_expense/boxes
 		self.item_rate = get_item_rate(self.item)
 		self.item_total_cost = float(self.item_rm_cost + self.item_prod_cost)
+		self.item_profit_amount = self.item_rate - self.item_total_cost
 		self.item_profit = float((self.item_rate - self.item_total_cost)*100/self.item_total_cost)
 		print("RM cost={0} OP Cost={1} Rate={2}".format(self.item_rm_cost, self.item_prod_cost, get_item_rate(self.item)))
 
