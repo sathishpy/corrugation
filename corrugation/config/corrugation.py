@@ -24,17 +24,17 @@ def get_data():
 					"description": _("Shared Corrugation Orders."),
                     "label": _("Shared Corrugation Order")
 				},
+            ]
+        },
+        {
+            "label": _("Configuration"),
+            "items": [
 				{
 					"type": "doctype",
 					"name": "CM Box Description",
 					"description": _("Bill of Materials (BOM)"),
 					"label": _("Box Production Details")
 				},
-            ]
-        },
-        {
-            "label": _("Stock"),
-            "items": [
 				{
 					"type": "doctype",
 					"name": "CM Paper Roll Register",
@@ -50,11 +50,6 @@ def get_data():
 					"name": "CM Paper",
                     "label": _("Register New Paper")
 				},
-				{
-					"type": "page",
-					"name": "stock-balance",
-					"label": _("Stock Summary")
-				}
 			]
 		},
 		{
@@ -67,8 +62,13 @@ def get_data():
 				},
 				{
 					"type": "doctype",
-					"name": "Purchase Invoice",
-					"label": _("Purchase Invoice"),
+					"name": "Purchase Order",
+					"label": _("Purchase Order"),
+				},
+				{
+					"type": "doctype",
+					"name": "Sales Invoice",
+					"label": _("Sales Invoice"),
 				},
 				{
 					"type": "doctype",
@@ -81,18 +81,23 @@ def get_data():
 			"label": _("Reports"),
 			"icon": "fa fa-list",
 			"items": [
+                {
+                    "type": "report",
+                    "name": "CM Paper Roll",
+                    "label": _("Paper Rolls"),
+					"is_query_report": True,
+                },
+				{
+					"type": "page",
+					"name": "stock-balance",
+					"label": _("Stock Summary")
+				},
 				{
 					"type": "report",
                     "name": "CM Product Costs",
 					"label": _("Production Cost Analysis"),
 					"is_query_report": True,
 				},
-                {
-                    "type": "report",
-                    "name": "CM Paper Roll",
-                    "label": _("Paper Rolls"),
-					"is_query_report": True,
-                }
 			]
 		},
 		{
@@ -106,12 +111,7 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "CM Data Import Tool",
-					"label": _("Import Master Data"),
-				},
-				{
-					"type": "report",
-                    "name": "CM Tally Export",
-					"is_query_report": True,
+					"label": _("Import Data"),
 				},
 			]
 		},

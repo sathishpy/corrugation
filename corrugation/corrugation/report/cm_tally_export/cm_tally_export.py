@@ -27,15 +27,14 @@ def get_columns(filters):
 def get_result(filters):
     group_by_condition = "group by voucher_type, voucher_no, account"
     print "Filters is {0}".format(filters)
-    print "DDDDDD->"+filters.from_date 
 
     gl_entries = frappe.db.sql("""
         	select  posting_date, account, sum(debit) as debit, sum(credit) as credit,
                     voucher_type, voucher_no, party, against_voucher,
                     remarks, against
             from `tabGL Entry`
-			where voucher_type != 'Stock Entry' AND posting_date >= '"""+ filters.from_date + 
-			"""' AND posting_date <= '""" + filters.to_date + """' 
+			where voucher_type != 'Stock Entry' AND posting_date >= '"""+ filters.from_date +
+			"""' AND posting_date <= '""" + filters.to_date + """'
             {group_by_condition}
             order by posting_date, account""".format(group_by_condition=group_by_condition), filters, as_dict=1
 	)
