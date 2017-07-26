@@ -52,10 +52,9 @@ class CMSharedCorrugationOrder(Document):
 		self.populate_rolls()
 
 	def populate_rolls(self):
-		self.paper_rolls = []
 		if (self.manual_entry): return
 
-		paper_items = []
+		self.paper_rolls, paper_items = [], []
 		for paper_box in self.box_details:
 			if (paper_box.box_desc is None): continue
 			paper_box.box_qty = get_no_of_boxes_from_board(paper_box.box_desc, self.layer_type, paper_box.mfg_qty)
@@ -145,14 +144,9 @@ class CMSharedCorrugationOrder(Document):
 			for ptype, weight in weights.items():
 				while weight > 0:
 					roll = next((rl for rl in available_rolls if rl.rm_type == ptype and rl.start_weight > 0), None)
-					if (roll.start_weight - weight) > 0:
-						roll.final_weight = roll.start_weight - weight
-						weight = 0
-					else:
-						roll.final_weight = 0
-						weight = weight - roll.start_weight
-					planned_weight = next((rm.rm_weight for rm in box_desc.item_papers if rm.rm_type == ptype), None)
-					roll.est_final_weight = roll.start_weight - (planned_weight * paper_box.box_qty)
+					roll.est_weight = weight
+					roll.final_weight = max(0, (roll.start_weight - roll.est_weight))
+					weight = weight - roll.start_weight + roll.final_weight
 					crg_order.append("paper_rolls", copy.copy(roll))
 					roll.start_weight = roll.final_weight
 

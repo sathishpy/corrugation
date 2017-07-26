@@ -7,7 +7,7 @@ frappe.ui.form.on('CM Shared Corrugation Order', {
 				{fieldname: 'rm_type', columns: 1},
 				{fieldname: 'paper_roll', columns: 4},
 				{fieldname: 'start_weight', columns: 1},
-				{fieldname: 'est_final_weight', columns: 1},
+				{fieldname: 'est_weight', columns: 1},
 				{fieldname: 'final_weight', columns: 1}
 			];
 		frm.get_field('box_details').grid.editable_fields = [
@@ -86,7 +86,12 @@ frappe.ui.form.on('CM Shared Corrugation Order', {
 	},
 
 	manual_entry: function(frm) {
-		frm.events.populate_rolls(frm);
+		if (frm.doc.manual_entry) {
+			frm.doc.paper_rolls = []
+			frm.refresh_fields()
+		} else {
+			frm.events.populate_rolls(frm);
+		}
 	},
 
 	check_and_populate_rolls: function(frm) {

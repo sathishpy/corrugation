@@ -7,7 +7,7 @@ frappe.ui.form.on('CM Production Order', {
 			  {fieldname: 'rm_type', columns: 1},
 				{fieldname: 'paper_roll', columns: 4},
 				{fieldname: 'start_weight', columns: 2},
-				{fieldname: 'est_final_weight', columns: 1},
+				{fieldname: 'est_weight', columns: 1},
 				{fieldname: 'final_weight', columns: 2}
 			];
 		frm.get_field('paper_boards').grid.editable_fields = [
@@ -122,7 +122,12 @@ frappe.ui.form.on('CM Production Order', {
 	manual_entry: function(frm) {
 		frm.toggle_display("ignore_bom", frm.doc.manual_entry)
 		frm.set_value("ignore_bom", 0)
-		frm.events.box_desc(frm)
+		if (frm.doc.manual_entry) {
+			frm.doc.paper_rolls = []
+			frm.refresh_fields()
+		} else {
+			frm.events.box_desc(frm)
+		}
 	},
 
 	make_purchase_order: function(frm) {

@@ -35,15 +35,10 @@ def select_rolls_for_box(paper_items):
 			roll_item.rm_type = paper.rm_type
 			roll_item.paper_roll = roll.name
 			roll_item.start_weight = roll.weight
+			roll_item.est_weight = planned_qty
+			roll_item.final_weight = max(0, (roll_item.start_weight - planned_qty))
+			planned_qty = planned_qty - roll_item.start_weight + roll_item.final_weight
 
-			if (roll.weight > planned_qty):
-				roll_item.est_final_weight = roll.weight - planned_qty
-				planned_qty = 0
-			else:
-				roll_item.est_final_weight = 0
-				planned_qty -= roll.weight
-
-			roll_item.final_weight = roll_item.est_final_weight
 			added_rolls += [roll_item]
 			available_rolls = [rl for rl in available_rolls if rl.name != roll.name]
 	return added_rolls
@@ -94,13 +89,13 @@ def get_prod_used_roll(rolls, paper, rm_type):
 				reuse_roll = None
 			continue
 
-	 	print("Found roll {0} of weight {1} for {2}".format(p_roll.paper_roll, p_roll.est_final_weight, rm_type))
+	 	print("Found roll {0} of weight {1} for {2}".format(p_roll.paper_roll, p_roll.final_weight, rm_type))
 		if (reuse_roll != None and reuse_roll.name == roll.name):
-			if p_roll.est_final_weight < 10:
+			if p_roll.final_weight < 10:
 				reuse_roll = None
 				continue
-		if p_roll.est_final_weight > 10:
+		if p_roll.final_weight > 10:
 			reuse_roll = roll
-			reuse_roll.weight = p_roll.est_final_weight
+			reuse_roll.weight = p_roll.final_weight
 	# Update the weight, but don't save it
 	return reuse_roll

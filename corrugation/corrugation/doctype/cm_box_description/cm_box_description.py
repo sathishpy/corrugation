@@ -283,7 +283,7 @@ def get_no_of_boxes_from_board(box_desc_name, layer, boards):
 def get_planned_paper_quantity(box_desc, rmtype, paper, mfg_qty):
 	box_details = frappe.get_doc("CM Box Description", box_desc)
 	for paper_item in box_details.item_papers:
-		if paper_item.rm_type == rmtype and paper_item.rm == paper:
+		if paper_item.rm_type == rmtype and (paper is None or paper_item.rm == paper):
 			return paper_item.rm_weight * mfg_qty
 	return 0
 

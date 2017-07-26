@@ -50,9 +50,9 @@ class CMProductionOrder(Document):
 			self.populate_box_rolls()
 
 	def populate_box_rolls(self):
-		self.paper_rolls = []
 		if (self.manual_entry): return
 
+		self.paper_rolls = []
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
 		#Build a new paper item list for this production
 		paper_items = []

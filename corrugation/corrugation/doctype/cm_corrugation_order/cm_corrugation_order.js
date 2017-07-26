@@ -7,7 +7,7 @@ frappe.ui.form.on('CM Corrugation Order', {
 				{fieldname: 'rm_type', columns: 1},
 				{fieldname: 'paper_roll', columns: 4},
 				{fieldname: 'start_weight', columns: 2},
-				{fieldname: 'est_final_weight', columns: 1},
+				{fieldname: 'est_weight', columns: 1},
 				{fieldname: 'final_weight', columns: 2}
 			];
 		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
@@ -82,7 +82,12 @@ frappe.ui.form.on('CM Corrugation Order', {
 	manual_entry: function(frm) {
 		frm.toggle_display("ignore_bom", frm.doc.manual_entry)
 		frm.set_value("ignore_bom", 0)
-		frm.events.mfg_qty(frm)
+		if (frm.doc.manual_entry) {
+			frm.doc.paper_rolls = []
+			frm.refresh_fields()
+		}	else {
+			frm.events.mfg_qty(frm)
+		}
 	},
 	layer_type: function(frm) {
 		frappe.call({
