@@ -18,6 +18,7 @@ class CMDataImportTool(Document):
 
 	def extract_data(self):
 		if self.filename is None: return
+		self.party_items = self.account_items = self.box_items = self.roll_items = self.voucher_items = []
 		print "Retrieving data from file {0}".format(self.filename)
 		filename = self.filename.split("/")[-1]
 
@@ -146,7 +147,6 @@ class CMDataImportTool(Document):
 				continue
 
 			opening_balance = get_opening_balance(ledger)
-			if (self.skip_zero_balance and opening_balance == 0): continue
 
 			account_entry = frappe.new_doc("CM Import Account Item")
 			account_entry.account_name = ledger.getAttribute("NAME")
@@ -201,8 +201,9 @@ class CMDataImportTool(Document):
 
 		dom = xml.dom.minidom.parse(filepath)
 		voucher_entries = dom.getElementsByTagName("VOUCHER")
-		count = 0
-		for voucher in voucher_entries:
+		end_idx = min(self.start_idx + 100, len(voucher_entries))
+		for idx in range(self.start_idx, end_idx):
+			voucher = voucher_entries[idx]
 			voucher_type = getText(voucher.getElementsByTagName("VOUCHERTYPENAME")[0])
 			date = datetime.strptime(getText(voucher.getElementsByTagName("DATE")[0]), '%Y%m%d').date()
 			entries = voucher.getElementsByTagName("ALLLEDGERENTRIES.LIST")
@@ -220,9 +221,8 @@ class CMDataImportTool(Document):
 				print ("Handling {0} for {1}: {2}".format(voucher_type, party, item.voucher_amount))
 				self.append("voucher_items", item)
 				(voucher_type, date) = None, None
-			#if (count > 20): break
-			#count += 1
-		print("Daybook extraction completed")
+		self.start_idx = end_idx
+		print("Daybook extraction completed for {0} items".format(end_idx))
 
 	def import_daybook(self):
 		temp_item = create_temp_item("Temp-Item", "Products")
@@ -234,24 +234,33 @@ class CMDataImportTool(Document):
 			invoice = None
 			if (voucher.voucher_type == "Purchase"):
 				purchase_item = self.voucher_items[idx]
-				tax_item = self.voucher_items[idx + 1]
-				idx = idx + 2
+				idx = idx + 1
 				purchase_amount = purchase_item.voucher_amount * -1
-				tax_amount = tax_item.voucher_amount * -1
-				if ((purchase_amount + tax_amount) != (voucher.voucher_amount)):
-					frappe.throw("Purchase amount {0} and tax {1} doesn't match the total amount for {2}".format(purchase_amount, tax_amount, voucher.party))
-				invoice = get_temp_sales_and_purchase_invoice(voucher.party, "Creditors", purchase_amount, tax_amount, tax_item.party)
+				invoice = get_temp_sales_and_purchase_invoice(voucher.party, "Creditors", purchase_amount)
 				invoice.posting_date = voucher.voucher_date
+				tax_amount = 0
+				while idx < len(self.voucher_items) and self.voucher_items[idx].voucher_type is None:
+					tax_item = self.voucher_items[idx]
+					idx = idx + 1
+					tax_amount += (tax_item.voucher_amount * -1)
+					invoice = add_tax_to_invoice(invoice, (tax_item.voucher_amount * -1), tax_item.party)
+				expected_amount = float(purchase_amount + tax_amount)
+				if (expected_amount != voucher.voucher_amount):
+					print("Purchase amount {0}({1}+{2}) doesn't match the total amount {3} for {4}".format(expected_amount, purchase_amount, tax_amount, voucher.voucher_amount, voucher.party))
 			elif (voucher.voucher_type == "Sales"):
 				sales_item = self.voucher_items[idx]
-				tax_item = self.voucher_items[idx + 1]
-				idx = idx + 2
+				idx = idx + 1
 				sale_amount = sales_item.voucher_amount
-				tax_amount = tax_item.voucher_amount
+				invoice = get_temp_sales_and_purchase_invoice(voucher.party, "Debtors", sale_amount)
+				invoice.posting_date = voucher.voucher_date
+				tax_amount = 0
+				while idx < len(self.voucher_items) and self.voucher_items[idx].voucher_type is None:
+					tax_item = self.voucher_items[idx]
+					idx = idx + 1
+					tax_amount += tax_item.voucher_amount
+					invoice = add_tax_to_invoice(invoice, tax_item.voucher_amount, tax_item.party)
 				if ((sale_amount + tax_amount) != (voucher.voucher_amount * -1)):
 					frappe.throw("Sale amount {0} and tax {1} doesn't match the total amount for {2}".format(sale_amount, tax_amount, voucher.party))
-				invoice = get_temp_sales_and_purchase_invoice(voucher.party, "Debtors", sale_amount, tax_amount, tax_item.party)
-				invoice.posting_date = voucher.voucher_date
 			elif (voucher.voucher_type == "Receipt"):
 				to_item = self.voucher_items[idx]
 				idx += 1
@@ -468,7 +477,7 @@ def create_temp_item(item, group):
 	temp_item.insert()
 	return temp_item
 
-def get_temp_sales_and_purchase_invoice(party, party_type, balance, tax_amount = 0, tax_account = None):
+def get_temp_sales_and_purchase_invoice(party, party_type, balance):
 	temp_item = create_temp_item("Temp-Item", "Products")
 	invoice = None
 	if ("Creditors" in party_type):
@@ -484,17 +493,19 @@ def get_temp_sales_and_purchase_invoice(party, party_type, balance, tax_amount =
 				"qty": 1,
 				"rate": balance
 			})
-	if (tax_amount != 0):
-		invoice.append("taxes", {
-						"charge_type": "Actual",
-						"description": "Tax Item",
-						"account_head": get_erpnext_mapped_account(tax_account),
-						"tax_amount": tax_amount
-					})
-
-	print("Saving the invoice for {0} for amount {1} tax {2}".format(party, balance, tax_amount))
 	invoice.set_missing_values()
 	return invoice
+
+def add_tax_to_invoice(invoice, tax_amount, tax_account):
+	invoice.append("taxes", {
+					"charge_type": "Actual",
+					"description": "Tax Item",
+					"account_head": get_erpnext_mapped_account(tax_account),
+					"tax_amount": tax_amount
+				})
+	invoice.set_missing_values()
+	return invoice
+
 
 def create_payment_entry(date, number, pay_type, party, account, amount):
 	pentry = frappe.new_doc("Payment Entry")
