@@ -5,12 +5,14 @@ frappe.ui.form.on('CM Box Description', {
 		frm.get_field('item_papers').grid.editable_fields = [
 				{fieldname: 'rm_type', columns: 2},
 				{fieldname: 'rm', columns: 4},
-				{fieldname: 'rm_weight', columns: 2},
+				{fieldname: 'rm_rate', columns: 1},
+				{fieldname: 'rm_weight', columns: 1},
 				{fieldname: 'rm_cost', columns: 2}
 			];
 		frm.get_field('item_others').grid.editable_fields = [
 				{fieldname: 'rm_type', columns: 2},
 				{fieldname: 'rm', columns: 4},
+				{fieldname: 'rm_rate', columns: 1},
 				{fieldname: 'rm_percent', columns: 2},
 				{fieldname: 'rm_cost', columns: 2}
 			];
@@ -48,6 +50,7 @@ frappe.ui.form.on('CM Box Description', {
 		frm.add_fetch("box", "box_ply_count", "item_ply_count")
 		frm.add_fetch("box", "box_top_type", "item_top_type")
 		frm.add_fetch("box", "box_rate", "item_rate")
+		frm.events.update_cost(frm);
 	},
 	box: function(frm) {
 		frm.events.update_sheet_values(frm)
@@ -56,8 +59,7 @@ frappe.ui.form.on('CM Box Description', {
 			method: "populate_raw_materials",
 			callback: function(r) {
 				if(!r.exe) {
-					refresh_field("item_papers");
-					refresh_field("item_others");
+					frm.refresh_fields()
 				}
 			}
 		});
@@ -96,6 +98,15 @@ frappe.ui.form.on('CM Box Description', {
 		frm.events.update_cost(frm);
 	},
 	item_prod_cost : function(frm) {
+		frm.events.update_cost(frm);
+	},
+	item_transport_cost : function(frm) {
+		frm.events.update_cost(frm);
+	},
+	credit_rate : function(frm) {
+		frm.events.update_cost(frm);
+	},
+	credit_period : function(frm) {
 		frm.events.update_cost(frm);
 	},
 	update_sheet_values : function(frm) {

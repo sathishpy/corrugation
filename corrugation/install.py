@@ -89,7 +89,7 @@ def before_install():
     update_mf_settings()
 
     rm_group = "Raw Material"
-    paper_template = "Paper-RM"
+    paper_template = "PPR"
     raw_material_group = frappe.get_doc("Item Group", rm_group)
     if (raw_material_group.is_group == False):
         add_paper_item_groups(raw_material_group)

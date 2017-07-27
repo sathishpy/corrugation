@@ -10,8 +10,8 @@ frappe.ui.form.on('CM Paper', {
 		frm.events.show_modal_for_item_attribute_selection(frm);
 	},
 	show_modal_for_item_attribute_selection: function(frm) {
-		frappe.model.with_doc("Item", "Paper-RM", function(r) {
-			var doc = frappe.model.get_doc("Item", "Paper-RM")
+		frappe.model.with_doc("Item", "PPR", function(r) {
+			var doc = frappe.model.get_doc("Item", "PPR")
 			var fields = []
 
 			for(var i=0;i< doc.attributes.length;i++){

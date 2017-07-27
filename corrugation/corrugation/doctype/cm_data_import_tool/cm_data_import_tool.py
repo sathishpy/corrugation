@@ -277,6 +277,7 @@ class CMDataImportTool(Document):
 						idx = idx + 1
 					update_journal_entry_balance(je, get_erpnext_mapped_account(from_item.party), je_amount)
 					je.save()
+					je.submit()
 				invoice = create_payment_entry(date, idx, "Pay", party, from_item.party, amount)
 			elif (voucher.voucher_type in ["Journal", "Contra"]):
 				invoice = create_new_journal_entry(date, remark, voucher.voucher_type + " Entry")
@@ -287,10 +288,13 @@ class CMDataImportTool(Document):
 					idx = idx + 1
 					account, amount = get_erpnext_mapped_account(voucher.party), voucher.voucher_amount
 				update_journal_entry_balance(invoice, account, amount * -1)
+			else:
+				print("Unsupported voucher type {0} found".format(voucher.voucher_type))
+				continue
 
-			else: continue
 			print("Saving the invoice for {0} for amount {1}".format(voucher.party, voucher.voucher_amount))
 			invoice.save()
+			invoice.submit()
 
 	def extract_roll_details(self, filepath):
 		self.party_items = []
@@ -314,10 +318,10 @@ class CMDataImportTool(Document):
 		idx = last_idx + 1
 		for roll in self.roll_items:
 			variant_args = {"Colour": roll.paper_color, "BF": roll.paper_bf, "GSM": roll.paper_gsm, "Deck": roll.paper_deck}
-			paper = find_variant("Paper-RM", variant_args)
+			paper = find_variant("PPR", variant_args)
 			if (paper == None):
 				print ("Creating Paper for args {0} weight: {1}".format(variant_args, roll.roll_weight))
-				paper_doc = create_variant("Paper-RM", variant_args)
+				paper_doc = create_variant("PPR", variant_args)
 				if (paper_doc != None):
 					paper_doc.valuation_rate = roll.paper_rate
 					paper_doc.save(ignore_permissions=True)
