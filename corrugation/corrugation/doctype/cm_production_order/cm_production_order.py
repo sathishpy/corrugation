@@ -140,14 +140,16 @@ class CMProductionOrder(Document):
 			corr_orders = frappe.db.sql("""select name from `tabCM Corrugation Order`
 											board_name='{0}}' and stock_qty > 0""".format(board.layer))
 			updated_qty = 0
-			while updated_qty < board.used_qty:
-				for crg_order in corr_orders:
-					order = frappe.get_doc("CM Corrugation Order", crg_order)
-					updated_qty += order.stock_qty
-					order.stock_qty = max(0, order.stock_qty - board.used_qty)
-					order.save()
+			for crg_order in corr_orders:
+				order = frappe.get_doc("CM Corrugation Order", crg_order)
+				updated_qty += order.stock_qty
+				order.stock_qty = max(0, order.stock_qty - board.used_qty)
+				order.save()
+			 	if updated_qty >= board.used_qty:
+					break
 
 	def before_submit(self):
+		pass
 		#self.update_production_cost()
 
 	def on_submit(self):
