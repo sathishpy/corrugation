@@ -133,11 +133,11 @@ class CMBoxDescription(Document):
 		idx = layer_no - 1
 		board_name = None
 		if (idx == 0):
-			board_name = "LYR-Top-{0:.1f}-{1:.1f}".format(self.sheet_length, self.sheet_width)
+			board_name = "Layer-Top-{0:.1f}-{1:.1f}".format(self.sheet_length, self.sheet_width)
 			paper_elements = self.item_papers[idx].rm.split("-")
 			board_name += "-" + paper_elements[2] + "-" + paper_elements[3] + "-" + paper_elements[4]
 		else:
-			board_name = "LYR-Flute-{0:.1f}-{1:.1f}".format(self.sheet_length, self.sheet_width)
+			board_name = "Layer-Flute-{0:.1f}-{1:.1f}".format(self.sheet_length, self.sheet_width)
 			paper_elements = self.item_papers[idx-1].rm.split("-")
 			board_name += "-" + paper_elements[2] + "-" + paper_elements[3] + "-" + paper_elements[4]
 			paper_elements = self.item_papers[idx].rm.split("-")
@@ -161,6 +161,7 @@ class CMBoxDescription(Document):
 		item.item_group = "Board Layer"
 		item.valuation_rate = rate
 		item.weight_uom = "Kg"
+		item.is_sales_item = False
 		item.save()
 		return item.name
 

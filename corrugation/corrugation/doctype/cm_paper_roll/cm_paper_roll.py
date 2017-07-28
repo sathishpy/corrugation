@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
+from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_item_rate
 
 class CMPaperRoll(Document):
 	def autoname(self):
@@ -13,3 +14,9 @@ class CMPaperRoll(Document):
 		if rolls:
 			roll_name = roll_name + ('-%.2i' % len(rolls))
 		self.name = roll_name
+
+	def get_unit_rate(self):
+		roll_rate = self.unit_cost
+		if (roll_rate == 0):
+			roll_rate = get_item_rate(self.paper)
+		return roll_rate

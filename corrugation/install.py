@@ -27,18 +27,18 @@ def add_paper_item_groups(raw_material_group):
 def add_raw_materials():
     gum = frappe.db.get_value("Item", "CRG-GUM")
     if (gum is not None): return
-    
+
     records = [
         {"doctype": "Item", "item_code": "CRG-GUM", "item_name": "Corrugation Gum", "item_group": "Gum", "stock_uom": "Kg",
-                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_fixed_asset": False},
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_sales_item": False},
         {"doctype": "Item", "item_code": "PST-GUM", "item_name": "Pasting Gum", "item_group": "Gum", "stock_uom": "Kg",
-                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_fixed_asset": False},
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_sales_item": False},
         {"doctype": "Item", "item_code": "GLU-GUM", "item_name": "Gluing Gum", "item_group": "Gum", "stock_uom": "Kg",
-                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_fixed_asset": False},
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_sales_item": False},
         {"doctype": "Item", "item_code": "INK-RED", "item_name": "Red Ink", "item_group": "Ink", "stock_uom": "Kg",
-                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_fixed_asset": False},
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_sales_item": False},
         {"doctype": "Item", "item_code": "INK-BLUE", "item_name": "Blue Ink", "item_group": "Ink", "stock_uom": "Kg",
-                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_fixed_asset": False},
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_sales_item": False},
     ]
     print("Adding Gum and Ink Items")
     add_records(records)
@@ -57,7 +57,7 @@ def add_paper_template(name):
                                                                         {"attribute_value": _("Brown"), "abbr": "BRW"},]
         },
         {"doctype": "Item", "item_code": name, "item_group": "Paper", "stock_uom": "Kg", "default_material_request_type": "Purchase",
-                            "is_stock_item": True, "is_fixed_asset": False, "has_variants": True, "variant_based_on": "Item Attribute",
+                            "is_stock_item": True, "is_sales_item": False, "has_variants": True, "variant_based_on": "Item Attribute",
                             "attributes": [
                                 {"attribute": _("Colour")},
                                 {"attribute": _("BF")},

@@ -114,6 +114,9 @@ class CMCorrugationOrder(Document):
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
 		self.board_name = box_details.get_board_name(self.get_layer_number())
 
+	def before_submit(self):
+		self.stock_qty = self.mfg_qty
+
 	def on_submit(self):
 		self.create_new_stock_entry()
 		update_production_roll_qty(self)

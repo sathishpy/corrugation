@@ -33,6 +33,7 @@ class CMBox(Document):
 		item.item_code = self.box_code
 		item.standard_rate = self.box_rate
 		item.item_group = "Products"
+		item.is_purchase_item = False
 		item.default_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})
 		item.save(ignore_permissions=True)
 		self.box_item = item.name

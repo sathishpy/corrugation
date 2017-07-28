@@ -134,6 +134,22 @@ class CMProductionOrder(Document):
 	def get_planned_paper_qty(self, rm_type, paper):
 		return get_planned_paper_quantity(self.box_desc, rm_type, paper, self.mfg_qty)
 
+	def update_production_cost(self):
+		self.planned_rm_cost = frappe.db.get_value("CM Box Description", self.box_desc, "item_rm_cost")
+		for board in self.paper_boards:
+			corr_orders = frappe.db.sql("""select name from `tabCM Corrugation Order`
+											board_name='{0}}' and stock_qty > 0""".format(board.layer))
+			updated_qty = 0
+			while updated_qty < board.used_qty:
+				for crg_order in corr_orders:
+					order = frappe.get_doc("CM Corrugation Order", crg_order)
+					updated_qty += order.stock_qty
+					order.stock_qty = max(0, order.stock_qty - board.used_qty)
+					order.save()
+
+	def before_submit(self):
+		#self.update_production_cost()
+
 	def on_submit(self):
 		check_material_availability(self)
 		submit_sales_order(self.sales_order)

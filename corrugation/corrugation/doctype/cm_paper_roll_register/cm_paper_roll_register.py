@@ -40,6 +40,19 @@ class CMPaperRollRegister(Document):
 				print "Creating Roll {0}-{1}".format(item.item_code, paper_roll.weight)
 
 	def register_rolls(self):
+		purchase_receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
+		item_unit_rate, charges = {}, 0
+
+		total = purchase_receipt.total
+		discount_rate = float(purchase_receipt.discount_amount/total)
+		for item in purchase_receipt.taxes:
+			account_type = frappe.db.get_value("Account", item.account_head, "account_type")
+			if (account_type == "Tax"): continue
+			charges += item.tax_amount
+		print("Additional charges excluding tax for receipt {0} is {1}".format(self.purchase_receipt, charges))
+		for item in purchase_receipt.items:
+			item_unit_rate[item.item_name] = float(item.amount * (1-discount_rate))/item.qty
+
 		for roll in self.paper_rolls:
 			paper_roll = frappe.new_doc("CM Paper Roll")
 			paper_roll.paper = roll.paper
