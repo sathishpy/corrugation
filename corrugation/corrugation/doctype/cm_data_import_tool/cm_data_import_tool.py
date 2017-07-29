@@ -152,8 +152,9 @@ class CMDataImportTool(Document):
 			account_entry.account_name = ledger.getAttribute("NAME")
 
 			account_type = get_erpnext_mapped_account_group(parent_type)
+			print("Mapping account entry for {0}:{1} in {2}".format(parent_type, account_entry.account_name, account_type))
 			mapped_parents = frappe.db.sql("""select name from `tabAccount` where name LIKE '{0}%'""".format(account_type), as_dict=1)
-			if (len(mapped_parents) > 0):
+			if (account_type and len(mapped_parents) > 0):
 				account_entry.account_type = mapped_parents[0].name
 			else:
 				print("Failed to find a mapping group for {0}".format(parent_type))
@@ -169,7 +170,6 @@ class CMDataImportTool(Document):
 				self.total_credit += opening_balance
 			account_entry.opening_balance += opening_balance
 
-			print("Creating account entry for {0}:{1}".format(parent_type, account_entry.account_name))
 			account_entry.mapped_account = get_erpnext_mapped_account(account_entry.account_name, account_entry.account_type)
 
 		for (k,v) in grouped_accounts.items():
@@ -425,8 +425,10 @@ def get_erpnext_mapped_account_group(acct_group):
 		"Accounts Payable": ["Sundry Creditors"],
 		"Accounts Receivable": ["Sundry Debtors"],
 		"Bank Overdraft Account": ["Bank OD A/c"],
-		"Direct Expenses": ["Purchase Accounts"],
+		"Direct Expenses": ["Purchase Accounts", "Direct Expenses"],
+		"Direct Income": ["Sales Accounts"],
 		"Indirect Expenses": ["Indirect Expenses", "Misc. Expenses (ASSET)"],
+		"Indirect Income": ["Indirect Incomes"],
 	}
 	for (k, v) in tally_to_erp_map.items():
 		if (acct_group in v): return k
@@ -467,7 +469,7 @@ def update_opening_balance(source):
 
 	for account_item in import_doc.account_items:
 		if (is_sales_or_purchase(account_item.account_type)): continue
-		if (account_item.mapped_account is not None):
+		if (account_item.mapped_account is not None and account_item.opening_balance != 0):
 			temp_balance += account_item.opening_balance
 			update_journal_entry_balance(je, account_item.mapped_account, account_item.opening_balance)
 			print("Setting temp balance to {0} from {1}".format(temp_balance, account_item.opening_balance))
