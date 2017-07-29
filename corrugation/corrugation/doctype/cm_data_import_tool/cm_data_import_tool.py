@@ -152,9 +152,11 @@ class CMDataImportTool(Document):
 			account_entry.account_name = ledger.getAttribute("NAME")
 
 			account_type = get_erpnext_mapped_account_group(parent_type)
-			mapped_parents = frappe.db.sql("""select name from `tabAccount` where name LIKE '%{0}%'""".format(account_type), as_dict=1)
+			mapped_parents = frappe.db.sql("""select name from `tabAccount` where name LIKE '{0}%'""".format(account_type), as_dict=1)
 			if (len(mapped_parents) > 0):
 				account_entry.account_type = mapped_parents[0].name
+			else:
+				print("Failed to find a mapping group for {0}".format(parent_type))
 
 			if (parent_type in grouped_accounts):
 				grouped_accounts[parent_type].append(account_entry)
@@ -176,7 +178,7 @@ class CMDataImportTool(Document):
 	def map_new_accounts(self):
 		for account_item in self.account_items:
 			if (is_sales_or_purchase(account_item.account_type)): continue
-			if (account_item.mapped_account is None):
+			if (not account_item.mapped_account):
 				new_account = frappe.new_doc("Account")
 				new_account.account_name = trim_account(account_item.account_name)
 				new_account.parent_account = account_item.account_type
