@@ -48,10 +48,6 @@ frappe.ui.form.on('CM Data Import Tool', {
 		}
 	},
 	refresh: function(frm) {
-		frm.add_custom_button(__('Import Data'),
-	  	function() {
-				frm.events.import_data(frm)
-			});
 		frm.add_custom_button(__('Extract Data'),
 	  	function() {
 				frm.events.call_method(frm, "extract_data")
@@ -62,6 +58,10 @@ frappe.ui.form.on('CM Data Import Tool', {
 					frm.events.call_method(frm, "map_new_accounts")
 				});
 		}
+		frm.add_custom_button(__('Import Data'),
+	  	function() {
+				frm.events.import_data(frm)
+			});
 	},
 
 	call_method: function(frm, method_name) {

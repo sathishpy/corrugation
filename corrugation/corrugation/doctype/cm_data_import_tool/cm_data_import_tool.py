@@ -55,6 +55,8 @@ class CMDataImportTool(Document):
 		print("File is {0}".format(filepath))
 		dom = xml.dom.minidom.parse(filepath)
 		self.party_items = []
+		grouped_parties = {}
+
 		ledger_entries = dom.getElementsByTagName("LEDGER")
 		for ledger in ledger_entries:
 			parent = ledger.getElementsByTagName("PARENT")[0]
@@ -73,25 +75,43 @@ class CMDataImportTool(Document):
 			if (len(addr_node) > 0):
 				party_entry.party_address = getText(addr_node[0])
 			party_entry.opening_balance = get_opening_balance(ledger)
-			self.append("party_items", party_entry)
+
+			if (parent_type in grouped_parties):
+				grouped_parties[parent_type].append(party_entry)
+			else:
+				grouped_parties[parent_type] = [party_entry]
+
+		for (k,v) in grouped_parties.items():
+			[self.append("party_items", item) for item in v]
 
 	def import_parties(self):
 		entries = 0
 		for party in self.party_items:
 			if party.party_type != "Sundry Debtors" and party.party_type != "Sundry Creditors": continue
-			print "Inserting {0} - {1}".format(party.party_type, party.party_name)
+			party_entry = None
+			print ("Inserting party {0}-{1}".format(party.party_type, party.party_name))
 			if (party.party_type == "Sundry Debtors"):
-				party_entry = frappe.new_doc("Customer")
-				party_entry.customer_name = party.party_name
-				party_entry.customer_type = "Company"
-				party_entry.customer_group = "Commercial"
-				party_entry.territory = "India"
+				customer_id = frappe.db.get_value("Customer", filters={"customer_name": party.party_name})
+				if (customer_id):
+					party_entry = frappe.get_doc("Customer", customer_id)
+				else:
+					party_entry = frappe.new_doc("Customer")
+					party_entry.customer_name = party.party_name
+					party_entry.customer_type = "Company"
+					party_entry.customer_group = "Commercial"
+					party_entry.territory = "India"
+					party_entry.insert()
 			else:
-				party_entry = frappe.new_doc("Supplier")
-				party_entry.supplier_name = party.party_name
-				party_entry.supplier_type = "Local"
+				supplier_id = frappe.db.get_value("Supplier", filters={"supplier_name": party.party_name})
+				if (supplier_id):
+					party_entry = frappe.get_doc("Supplier", supplier_id)
+				else:
+					party_entry = frappe.new_doc("Supplier")
+					party_entry.supplier_name = party.party_name
+					party_entry.supplier_type = "Local"
+					party_entry.insert()
 			party_entry.tax_id = party.party_tin
-			party_entry.insert()
+			party_entry.save()
 			self.add_party_address(party)
 
 			if (party.opening_balance != 0):
@@ -156,6 +176,10 @@ class CMDataImportTool(Document):
 			mapped_parents = frappe.db.sql("""select name from `tabAccount` where name LIKE '{0}%'""".format(account_type), as_dict=1)
 			if (account_type and len(mapped_parents) > 0):
 				account_entry.account_type = mapped_parents[0].name
+				account = frappe.get_doc("Account", account_entry.account_type)
+				if (not account.is_group):
+					account.is_group = True
+					account.save()
 			else:
 				print("Failed to find a mapping group for {0}".format(parent_type))
 
@@ -219,7 +243,8 @@ class CMDataImportTool(Document):
 				item.voucher_type = voucher_type
 				item.party = party
 				item.voucher_amount = float(getText(entry.getElementsByTagName("AMOUNT")[0]))
-				item.voucher_remark = getText(voucher.getElementsByTagName("NARRATION")[0])
+				if (voucher.getElementsByTagName("NARRATION").length > 0):
+					item.voucher_remark = getText(voucher.getElementsByTagName("NARRATION")[0])
 				print ("Handling {0} for {1}: {2}".format(voucher_type, party, item.voucher_amount))
 				self.append("voucher_items", item)
 				(voucher_type, date) = None, None
@@ -429,6 +454,7 @@ def get_erpnext_mapped_account_group(acct_group):
 		"Direct Income": ["Sales Accounts"],
 		"Indirect Expenses": ["Indirect Expenses", "Misc. Expenses (ASSET)"],
 		"Indirect Income": ["Indirect Incomes"],
+		"Loans and Advances (Assets)": ["Loans & Advances (Asset)"]
 	}
 	for (k, v) in tally_to_erp_map.items():
 		if (acct_group in v): return k
