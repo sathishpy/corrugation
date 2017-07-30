@@ -117,8 +117,7 @@ class CMBoxDescription(Document):
 
 		self.item_rm_cost += self.item_misc_cost
 		#Assume about 60% of GUM/Ink will be dried/wasted
-		if (self.docstatus != 1):
-			self.item_weight = paper_weight + misc_weight * 0.3
+		self.item_weight = paper_weight + misc_weight * 0.3
 		print("Raw Material cost={0} items={1}".format(self.item_rm_cost, self.item_per_sheet))
 		if (self.item_rm_cost == 0): return
 
@@ -244,6 +243,8 @@ def get_paper_measurements(paper):
 def get_item_rate(item_name):
 	std_rate = frappe.db.get_value("Item", item_name, "standard_rate")
 	landing_rate = frappe.db.get_value("Item", item_name, "valuation_rate")
+	if (std_rate is None and landing_rate is None): return 0
+	
 	if (std_rate == 0): std_rate = landing_rate * 0.88
 	extra_charges = max(0, (landing_rate - (std_rate * 1.12)))
 	print("Item {0} standard rate:{1} valuation rate:{2} charges:{3}".format(item_name, std_rate, landing_rate, extra_charges))
