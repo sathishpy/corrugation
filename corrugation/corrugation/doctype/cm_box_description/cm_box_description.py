@@ -85,6 +85,8 @@ class CMBoxDescription(Document):
 		self.update_cost()
 
 	def update_cost(self):
+		box = frappe.get_doc("CM Box", self.box)
+		self.item_rate = box.box_rate
 		self.item_rm_cost, self.item_misc_cost = 0, 0
 		paper_weight = 0
 		for item in self.item_papers:
@@ -115,7 +117,8 @@ class CMBoxDescription(Document):
 
 		self.item_rm_cost += self.item_misc_cost
 		#Assume about 60% of GUM/Ink will be dried/wasted
-		self.item_weight = paper_weight + misc_weight * 0.3
+		if (self.docstatus != 1):
+			self.item_weight = paper_weight + misc_weight * 0.3
 		print("Raw Material cost={0} items={1}".format(self.item_rm_cost, self.item_per_sheet))
 		if (self.item_rm_cost == 0): return
 

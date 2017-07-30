@@ -76,7 +76,7 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-   "allow_on_submit": 0, 
+   "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
    "columns": 1, 
@@ -175,7 +175,7 @@
  "issingle": 0, 
  "istable": 1, 
  "max_attachments": 0, 
- "modified": "2017-07-27 15:13:57.219715", 
+ "modified": "2017-07-30 13:52:55.584343", 
  "modified_by": "Administrator", 
  "module": "Corrugation", 
  "name": "CM Paper Item", 
