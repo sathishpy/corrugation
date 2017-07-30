@@ -101,8 +101,7 @@ frappe.ui.form.on('CM Production Order', {
 			method: "populate_box_source",
 			callback: function(r) {
 				if(!r.exe) {
-					refresh_field("paper_rolls");
-					refresh_field("paper_boards");
+					frm.refresh_fields()
 				}
 			}
 		});

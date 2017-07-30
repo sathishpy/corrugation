@@ -105,6 +105,14 @@ class CMCorrugationOrder(Document):
 		box_count = get_no_of_boxes_from_board(self.box_desc, self.layer_type, self.mfg_qty)
 		return get_planned_paper_quantity(self.box_desc, rm_type, paper, box_count)
 
+	def get_paper_cost_per_board(self):
+		paper_cost = 0
+		for roll_item in self.paper_rolls:
+			roll = frappe.get_doc("CM Paper Roll", roll_item.paper_roll)
+			paper_cost += ((roll_item.start_weight - roll_item.final_weight) * roll.get_unit_rate())
+			print("Paper cost of roll {0} with unit rate {1} is {2}".format(roll.name, roll.get_unit_rate(), paper_cost))
+		return float(paper_cost/self.mfg_qty)
+
 	def get_layer_papers(self):
 		papers = [frappe.get_doc("CM Paper Roll", roll_item.paper_roll).paper for roll_item in self.paper_rolls]
 		papers = list(set(papers))
