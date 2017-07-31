@@ -5,12 +5,14 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
+from frappe.utils import nowdate
 
 class CMPaperRollRegister(Document):
 	def autoname(self):
 		self.name = self.purchase_receipt + "-roll-register"
 
 	def populate_rolls(self):
+		if (self.purchase_receipt is None): return
 		self.total_weight, self.purchase_weight = 0, self.get_purchase_weight()
 		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
 
@@ -49,9 +51,23 @@ class CMPaperRollRegister(Document):
 			account_type = frappe.db.get_value("Account", item.account_head, "account_type")
 			if (account_type == "Tax"): continue
 			charges += item.tax_amount
+
+		jentry = None
+		if (len(self.charges) > 0):
+			jentry = frappe.new_doc("Journal Entry")
+			jentry.update({"voucher_type": "Journal Entry", "posting_date": nowdate(), "is_opening": "No", "remark": "Purchase Charges"})
+
+		for item in self.charges:
+			charges += item.amount
+			jentry.append("accounts", {"account": item.from_account, "debit_in_account_currency": item.amount})
+			jentry.append("accounts", {"account": item.to_account, "credit_in_account_currency": item.amount})
+
+		if (jentry is not None):
+			jentry.submit()
+
 		print("Additional charges excluding tax for receipt {0} is {1}".format(self.purchase_receipt, charges))
 		for item in purchase_receipt.items:
-			item_unit_rate[item.item_name] = float(item.amount * (1-discount_rate))/item.qty
+			item_unit_rate[item.item_name] = float((item.amount * (1-discount_rate)) + charges)/item.qty
 
 		for roll in self.paper_rolls:
 			paper_roll = frappe.new_doc("CM Paper Roll")

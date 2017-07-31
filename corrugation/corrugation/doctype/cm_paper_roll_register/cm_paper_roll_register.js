@@ -3,16 +3,17 @@
 
 frappe.ui.form.on('CM Paper Roll Register', {
 	setup: function(frm) {
+		frm.get_field('charges').grid.editable_fields = [
+				{fieldname: 'party', columns: 2},
+				{fieldname: 'from_account', columns: 3},
+				{fieldname: 'to_account', columns: 3},
+				{fieldname: 'amount', columns: 2},
+		];
 		frm.get_field('paper_rolls').grid.editable_fields = [
 				{fieldname: 'paper', columns: 5},
 				{fieldname: 'number', columns: 2},
 				{fieldname: 'weight', columns: 3},
-			];
-	},
-	refresh: function(frm) {
-		frm.refresh_field("paper_rolls")
-		frm.refresh_field("purchase_weight")
-		frm.refresh_field("total_weight")
+		];
 	},
 	purchase_receipt: function(frm) {
 		frappe.call({
@@ -20,7 +21,7 @@ frappe.ui.form.on('CM Paper Roll Register', {
 			method: "populate_rolls",
 			callback: function(r) {
 				if(!r.exe) {
-					frm.events.refresh(frm)
+					frm.refresh_fields()
 				}
 			}
 		});
@@ -30,6 +31,5 @@ frappe.ui.form.on("CM Paper Roll Detail", "weight", function(frm, cdt, cdn) {
 	weight = 0
 	frm.doc.paper_rolls.forEach(function(d) { weight += d.weight; });
 	frm.set_value("total_weight", weight)
-	refresh_field("purchase_weight")
-	refresh_field("total_weight")
+	frm.refresh_fields()
 });
