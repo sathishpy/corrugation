@@ -202,9 +202,10 @@ class CMDataImportTool(Document):
 	def map_new_accounts(self):
 		for account_item in self.account_items:
 			if (is_sales_or_purchase(account_item.account_type)): continue
+			import_account = trim_account(account_item.account_name)
 			if (not account_item.mapped_account):
 				new_account = frappe.new_doc("Account")
-				new_account.account_name = trim_account(account_item.account_name)
+				new_account.account_name = import_account
 				new_account.parent_account = account_item.account_type
 				if ("Bank" in new_account.parent_account):
 					new_account.account_type = "Bank"
@@ -213,11 +214,11 @@ class CMDataImportTool(Document):
 				new_account.save()
 				account_item.mapped_account = new_account.name
 
-			map_item = frappe.db.get_value("""select account from `tabCM Account Mapper` where name = '{0}'""".format(account_item.mapped_account))
-			if (map_item is not None): continue
+			if (frappe.db.get_value("CM Account Mapper", import_account) is not None): continue
 
+			print("Mapping account {0} to {1}".format(import_account, account_item.mapped_account))
 			map_item = frappe.new_doc("CM Account Mapper")
-			map_item.account = trim_account(account_item.account_name)
+			map_item.account = import_account
 			map_item.mapped_account = account_item.mapped_account
 			map_item.save()
 
@@ -253,12 +254,13 @@ class CMDataImportTool(Document):
 
 	def import_daybook(self):
 		temp_item = create_temp_item("Temp-Item", "Products")
-
-		for idx in range(0, len(self.voucher_items)):
+		idx = 0
+		while idx < len(self.voucher_items):
 			voucher = self.voucher_items[idx]
 			idx += 1
 			date, party, amount, remark = voucher.voucher_date, voucher.party, voucher.voucher_amount, voucher.voucher_remark
 			invoice = None
+			print("{0}: Importing the invoice for {1} of amount {2}".format(idx, voucher.party, voucher.voucher_amount))
 			if (voucher.voucher_type == "Purchase"):
 				purchase_item = self.voucher_items[idx]
 				idx = idx + 1
@@ -319,7 +321,6 @@ class CMDataImportTool(Document):
 				print("Unsupported voucher type {0} found".format(voucher.voucher_type))
 				continue
 
-			print("Saving the invoice for {0} for amount {1}".format(voucher.party, voucher.voucher_amount))
 			invoice.save()
 			invoice.submit()
 
@@ -445,8 +446,10 @@ def get_erpnext_mapped_account_group(acct_group):
 		"Bank Accounts": ["Bank Accounts"],
 		"Duties and Taxes": ["Duties & Taxes"],
 		"Unsecured Loans": ["Unsecured Loans"],
-		"Fixed Assets": ["Fixed Assets"],
+		"Fixed Assets": ["Fixed Assets", "Capital Account"],
+		"Current Assets": ["Current Assets"],
 		"Loans (Liabilities)": ["Loans (Liability)"],
+		"Current Liabilities": ["Current Liabilities"],
 		"Accounts Payable": ["Sundry Creditors"],
 		"Accounts Receivable": ["Sundry Debtors"],
 		"Bank Overdraft Account": ["Bank OD A/c"],
@@ -531,10 +534,12 @@ def get_temp_sales_and_purchase_invoice(party, party_type, balance):
 	return invoice
 
 def add_tax_to_invoice(invoice, tax_amount, tax_account):
+	mapped_account = get_erpnext_mapped_account(tax_account)
+	print("Adding tax amount of {0} to {1}".format(tax_amount, mapped_account))
 	invoice.append("taxes", {
 					"charge_type": "Actual",
 					"description": "Tax Item",
-					"account_head": get_erpnext_mapped_account(tax_account),
+					"account_head": mapped_account,
 					"tax_amount": tax_amount
 				})
 	invoice.set_missing_values()
