@@ -74,7 +74,8 @@ class CMDataImportTool(Document):
 			addr_node = ledger.getElementsByTagName("ADDRESS.LIST")
 			if (len(addr_node) > 0):
 				party_entry.party_address = getText(addr_node[0])
-			party_entry.opening_balance = get_opening_balance(ledger)
+			if (not self.ignore_balance):
+				party_entry.opening_balance = get_opening_balance(ledger)
 
 			if (parent_type in grouped_parties):
 				grouped_parties[parent_type].append(party_entry)
@@ -242,7 +243,15 @@ class CMDataImportTool(Document):
 					invoice_count = entry.getElementsByTagName("BILLALLOCATIONS.LIST").length
 					if (invoice_count == 0): voucher_type = "Journal"
 				item.voucher_type = voucher_type
-				item.party = party
+				item.source_party = item.party = party
+				if (voucher_type == "Sales"):
+					item.party_type = "Customer"
+				elif (voucher_type == "Purchase"):
+					item.party_type = "Supplier"
+				else:
+					item.party_type = "Account"
+					item.party = get_erpnext_mapped_account(party)
+
 				item.voucher_amount = float(getText(entry.getElementsByTagName("AMOUNT")[0]))
 				if (voucher.getElementsByTagName("NARRATION").length > 0):
 					item.voucher_remark = getText(voucher.getElementsByTagName("NARRATION")[0])
