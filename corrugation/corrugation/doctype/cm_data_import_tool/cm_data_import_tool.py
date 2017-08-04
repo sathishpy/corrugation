@@ -343,6 +343,10 @@ class CMDataImportTool(Document):
 			for roll in rolls:
 				roll_item = frappe.new_doc("CM Import Roll Item")
 				roll_item.roll_no = roll["Roll No"]
+				roll_name = frappe.db.get_value("CM Paper Roll", filters={"number": roll_item.roll_no})
+				if (roll_name is not None):
+					print("Ignoring the paper roll {0} which is already added".format(roll_name))
+					continue
 				roll_item.paper_color = roll["Colour"]
 				roll_item.paper_bf_gsm = roll["BF"] + "-" + roll["GSM"]
 				roll_item.paper_deck = roll["Deck"]

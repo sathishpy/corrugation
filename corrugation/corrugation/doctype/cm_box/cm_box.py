@@ -32,6 +32,12 @@ class CMBox(Document):
 		item.item_name = self.box_name
 		item.item_code = self.box_code
 		item.standard_rate = self.box_rate
+		item.item_group = "Products"
+		item.is_purchase_item = False
+		item.default_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})
+		item.save(ignore_permissions=True)
+		self.box_item = item.name
+
 		item_price = frappe.db.get_value("Item Price", filters={"item_code": self.box_code, "price_list": "Standard Selling"})
 		if (not item_price):
 			price_doc = frappe.new_doc("Item Price")
@@ -39,11 +45,6 @@ class CMBox(Document):
 			price_doc.save()
 		else:
 			frappe.db.set_value("Item Price", item_price, "price_list_rate", self.box_rate)
-		item.item_group = "Products"
-		item.is_purchase_item = False
-		item.default_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})
-		item.save(ignore_permissions=True)
-		self.box_item = item.name
 
 	def on_update(self):
 		item = frappe.get_doc("Item", self.box_item)
