@@ -52,7 +52,10 @@ class CMBoxDescription(Document):
 		self.populate_paper_materials()
 
 		self.item_others = []
-		for (rm_type, rm, percent) in [("Corrugation Gum", "CRG-GUM", 3), ("Pasting Gum", "PST-GUM", 2), ("Printing Ink", "INK-BLUE", 0.3)]:
+		other_items = [("Corrugation Gum", "CRG-GUM", 2), ("Pasting Gum", "PST-GUM", 3)]
+		if ("Print" in self.item_top_type):
+			other_items.append(("Printing Ink", "INK-BLUE", 0.3))
+		for (rm_type, rm, percent) in other_items:
 			self.populate_misc_materials(rm_type, rm, percent)
 		self.update_cost()
 
@@ -76,6 +79,14 @@ class CMBoxDescription(Document):
 		print ("Weight of length:{0} deck:{1} gsm:{2} is {3}".format(self.sheet_length, deck, gsm, weight))
 		return weight
 
+	def get_box_layer_weight(self, paper):
+		if paper is None: return 0
+		(gsm, bf, deck) = get_paper_measurements(paper)
+		box_length = self.sheet_length - (2 * self.item_cutting_margin)
+		box_width = self.sheet_width - (2 * self.item_cutting_margin)
+		weight = float((box_length * box_width) * gsm/1000)/10000
+		return weight
+
 	def update_layers(self, rm_type, rm):
 		if (self.same_layers):
 			print("Updating all {0} layers to {1}".format(rm_type, rm))
@@ -87,50 +98,51 @@ class CMBoxDescription(Document):
 	def update_cost(self):
 		box = frappe.get_doc("CM Box", self.box)
 		self.item_rate = box.box_rate
-		self.item_rm_cost, self.item_misc_cost = 0, 0
+		self.item_paper_cost, self.item_misc_cost = 0, 0
 		paper_weight = 0
 		for item in self.item_papers:
 			if item.rm is None: continue
 			if (item.rm_type == 'Top' or item.rm_type == 'Liner'):
-				item.rm_rate = get_item_rate(item.rm)
+				item.rm_rate = get_item_rate(item.rm, self.exclude_tax)
 				item.rm_weight = float(self.get_paper_weight(item.rm)/self.item_per_sheet)
+				item.rm_weight += (item.rm_weight * self.scrap_ratio)/100
 				item.rm_cost = item.rm_rate * item.rm_weight
-				self.item_rm_cost += item.rm_cost
-				paper_weight += item.rm_weight
+				self.item_paper_cost += item.rm_cost
+				paper_weight += float(self.get_box_layer_weight(item.rm)/self.item_per_sheet)
 			elif (item.rm_type == 'Flute'):
-				item.rm_rate = get_item_rate(item.rm)
+				item.rm_rate = get_item_rate(item.rm, self.exclude_tax)
 				item.rm_weight = float((self.get_paper_weight(item.rm) * self.item_flute)/self.item_per_sheet)
+				item.rm_weight += (item.rm_weight * self.scrap_ratio)/100
 				item.rm_cost = item.rm_rate * item.rm_weight
-				self.item_rm_cost += item.rm_cost
-				paper_weight += item.rm_weight
+				self.item_paper_cost += item.rm_cost
+				paper_weight += float(self.get_box_layer_weight(item.rm)/self.item_per_sheet)
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
 		misc_weight = 0
 		for item in self.item_others:
 			if item.rm is None: continue
-			item.rm_rate = get_item_rate(item.rm)
+			item.rm_rate = get_item_rate(item.rm, self.exclude_tax)
 			item.rm_weight = paper_weight * item.rm_percent / 100
+			item.rm_weight += (item.rm_weight * self.scrap_ratio)/100
 			item.rm_cost = item.rm_weight * item.rm_rate
 			misc_weight += item.rm_weight
 			self.item_misc_cost += item.rm_cost
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
-		self.item_rm_cost += self.item_misc_cost
-		#Assume about 60% of GUM/Ink will be dried/wasted
+		#Assume about 70% of GUM/Ink will be dried/wasted
 		self.item_weight = paper_weight + misc_weight * 0.3
-		print("Raw Material cost={0} items={1}".format(self.item_rm_cost, self.item_per_sheet))
-		if (self.item_rm_cost == 0): return
+		print("Paper cost={0} Misc cost={1} items={2}".format(self.item_paper_cost, self.item_misc_cost, self.item_per_sheet))
+		if (self.item_paper_cost == 0): return
 
 		total_expense = get_total_expenses(0)
 		(boxes, production) = get_production_details(0)
 		print("Boxes = {0} production={1} expense={2}".format(boxes, production, total_expense))
 		if (boxes != 0 and self.item_prod_cost == 0): self.item_prod_cost = total_expense/boxes
 		#self.item_rate = get_item_rate(self.item)
-		self.item_total_cost = float(self.item_rm_cost + self.item_prod_cost + self.item_transport_cost)
+		self.item_total_cost = float(self.item_paper_cost + self.item_misc_cost + self.item_prod_cost + self.item_transport_cost)
 		interest_loss = float(self.item_rate * self.credit_rate * self.credit_period)/1200
 		self.item_profit_amount = self.item_rate - (self.item_total_cost + interest_loss)
 		self.item_profit = float(self.item_profit_amount*100/self.item_total_cost)
-		print("RM cost={0} OP Cost={1} Rate={2}".format(self.item_rm_cost, self.item_prod_cost, get_item_rate(self.item)))
 
 	def get_board_name(self, layer_no):
 		idx = layer_no - 1
@@ -240,11 +252,11 @@ def get_paper_measurements(paper):
 	return (gsm, bf, deck)
 
 @frappe.whitelist()
-def get_item_rate(item_name):
+def get_item_rate(item_name, exclude_tax=True):
 	std_rate = frappe.db.get_value("Item", item_name, "standard_rate")
 	landing_rate = frappe.db.get_value("Item", item_name, "valuation_rate")
 	if (std_rate is None and landing_rate is None): return 0
-	
+	if (not exclude_tax): return max(std_rate, landing_rate)
 	if (std_rate == 0): std_rate = landing_rate * 0.88
 	extra_charges = max(0, (landing_rate - (std_rate * 1.12)))
 	print("Item {0} standard rate:{1} valuation rate:{2} charges:{3}".format(item_name, std_rate, landing_rate, extra_charges))

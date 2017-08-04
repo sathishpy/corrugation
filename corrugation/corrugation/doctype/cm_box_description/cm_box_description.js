@@ -109,6 +109,12 @@ frappe.ui.form.on('CM Box Description', {
 	credit_period : function(frm) {
 		frm.events.update_cost(frm);
 	},
+	exclude_tax : function(frm) {
+		frm.events.update_cost(frm);
+	},
+	scrap_ratio : function(frm) {
+		frm.events.update_cost(frm);
+	},
 	update_sheet_values : function(frm) {
 		let sheet_length = 2 * (frm.doc.item_width + frm.doc.item_length + frm.doc.item_cutting_margin) + frm.doc.item_pin_lap
 		let sheet_width = frm.doc.item_per_sheet * (frm.doc.item_width + frm.doc.item_height) + 2 * frm.doc.item_cutting_margin
