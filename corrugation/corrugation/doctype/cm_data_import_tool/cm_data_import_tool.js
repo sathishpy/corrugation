@@ -22,9 +22,9 @@ frappe.ui.form.on('CM Data Import Tool', {
 			{fieldname: 'voucher_amount', columns: 2},
 		];
 		frm.get_field('roll_items').grid.editable_fields = [
+			{fieldname: 'roll_no', columns: 2},
 			{fieldname: 'paper_color', columns: 2},
-			{fieldname: 'paper_bf', columns: 2},
-			{fieldname: 'paper_gsm', columns: 2},
+			{fieldname: 'paper_bf_gsm', columns: 2},
 			{fieldname: 'paper_deck', columns:2},
 			{fieldname: 'roll_weight', columns:2},
 		];

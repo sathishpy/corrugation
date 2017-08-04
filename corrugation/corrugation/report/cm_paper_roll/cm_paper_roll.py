@@ -19,9 +19,9 @@ def execute(filters=None):
 		item = frappe.get_doc("Item", roll.paper)
 		for attribute in item.attributes:
 			lt.append(attribute.attribute_value)
+		lt.append (item.standard_rate)
+		lt.append (item.valuation_rate)
 		lt.append ("")
-		lt.append (roll.location)
-		lt.append (roll.status)
 		data.append (lt)
 	return columns, data
 
@@ -29,6 +29,6 @@ def get_columns():
 	columns = [
 			_("Roll Name") + ":Link/CM Paper Roll:300",  _("Weight") + ":Float:70",	_("Colour") + ":Data:100",
 			_("BF") + ":Float:70",  _("GSM") + ":Float:70", _("Deck") + ":Float:70",
-			_("Supplier") + ":Data:100", _("Location") + ":Data:100", _("Status") + ":Data:100"
+			_("Rate") + ":Currency:70", _("Landing Rate") + ":Currency:130", _("Supplier") + ":Data:100"
 			]
 	return columns

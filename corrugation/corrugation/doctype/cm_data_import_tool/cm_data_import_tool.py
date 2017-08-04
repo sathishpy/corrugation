@@ -269,7 +269,7 @@ class CMDataImportTool(Document):
 			idx += 1
 			date, party, amount, remark = voucher.voucher_date, voucher.party, voucher.voucher_amount, voucher.voucher_remark
 			invoice = None
-			print("{0}: Importing the invoice for {1} of amount {2}".format(idx, voucher.party, voucher.voucher_amount))
+			print("{0}: Importing the {1} invoice for {2} of amount {3}".format(idx, voucher.voucher_type, voucher.party, voucher.voucher_amount))
 			if (voucher.voucher_type == "Purchase"):
 				purchase_item = self.voucher_items[idx]
 				idx = idx + 1
@@ -337,30 +337,33 @@ class CMDataImportTool(Document):
 		self.party_items = []
 		self.roll_items = []
 
-		validate_headers(filepath, ["Colour", "BF", "GSM", "Deck", "Rate", "Weight"])
+		validate_headers(filepath, ["Roll No", "Colour", "BF", "GSM", "Deck", "Rate", "Weight"])
 		with open(filepath) as csvfile:
 			rolls = csv.DictReader(csvfile)
 			for roll in rolls:
 				roll_item = frappe.new_doc("CM Import Roll Item")
+				roll_item.roll_no = roll["Roll No"]
 				roll_item.paper_color = roll["Colour"]
-				roll_item.paper_bf = roll["BF"]
-				roll_item.paper_gsm = roll["GSM"]
+				roll_item.paper_bf_gsm = roll["BF"] + "-" + roll["GSM"]
 				roll_item.paper_deck = roll["Deck"]
-				roll_item.paper_rate = roll["Rate"]
 				roll_item.roll_weight = roll["Weight"]
+				roll_item.paper_std_rate = roll["Rate"]
+				roll_item.paper_val_rate = roll["Landing"]
 				self.append("roll_items", roll_item)
 
 	def import_rolls(self):
-		last_idx = frappe.db.count("CM Paper Roll")
-		idx = last_idx + 1
 		for roll in self.roll_items:
-			variant_args = {"Colour": roll.paper_color, "BF": roll.paper_bf, "GSM": roll.paper_gsm, "Deck": roll.paper_deck}
+			bf_gsm_vals = roll.paper_bf_gsm.split("-")
+			if (len(bf_gsm_vals) != 2):
+				frappe.throw("BF-GSM value {0} is not in the prescribed format".format(roll.paper_bf_gsm))
+			variant_args = {"Colour": roll.paper_color, "BF": int(bf_gsm_vals[0]), "GSM": int(bf_gsm_vals[1]), "Deck": roll.paper_deck}
 			paper = find_variant("PPR", variant_args)
 			if (paper == None):
 				print ("Creating Paper for args {0} weight: {1}".format(variant_args, roll.roll_weight))
 				paper_doc = create_variant("PPR", variant_args)
 				if (paper_doc != None):
-					paper_doc.valuation_rate = roll.paper_rate
+					paper_doc.valuation_rate = roll.paper_val_rate
+					paper_doc.standard_rate = roll.paper_std_rate
 					paper_doc.save(ignore_permissions=True)
 					paper = paper_doc.name
 				else:
@@ -375,8 +378,7 @@ class CMDataImportTool(Document):
 
 			paper_roll = frappe.new_doc("CM Paper Roll")
 			paper_roll.paper = paper
-			paper_roll.number = idx
-			idx = idx + 1
+			paper_roll.number = roll.roll_no
 			paper_roll.weight = roll.roll_weight
 			paper_roll.status = "Ready"
 			paper_roll.insert()
