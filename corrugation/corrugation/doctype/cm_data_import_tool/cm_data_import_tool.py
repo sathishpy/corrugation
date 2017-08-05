@@ -127,8 +127,15 @@ class CMDataImportTool(Document):
 		if (addr_size < 1): return
 
 		address = frappe.new_doc("Address")
-		address.address_title = party.party_name
-		address.address_type = "Billing"
+		new_address = True
+		addr_name = frappe.db.get_value("Address", filters={"address_title": party.party_name, "address_type": "Billing"})
+		if (addr_name is not None):
+			print("Party {0} already has a billing address".format(addr_name))
+			address = frappe.get_doc("Address", addr_name)
+			new_address = False
+		else:
+			address.address_title = party.party_name
+			address.address_type = "Billing"
 
 		last_line = str(addr_list[addr_size-1].strip().rstrip(',').rstrip('.'))
 		pincode = filter(str.isdigit, last_line)
@@ -139,6 +146,10 @@ class CMDataImportTool(Document):
 		address.address_line1 = addr_list[0].strip().rstrip(',')
 		if (addr_size > 2):
 			address.address_line2 = addr_list[1].strip().rstrip(',')
+
+		if (not new_address):
+			address.save()
+			return
 
 		link  = frappe.new_doc("Dynamic Link")
 		if (party.party_type == "Sundry Debtors"):
