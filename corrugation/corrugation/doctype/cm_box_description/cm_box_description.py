@@ -115,7 +115,7 @@ class CMBoxDescription(Document):
 				item.rm_weight += (item.rm_weight * self.scrap_ratio)/100
 				item.rm_cost = item.rm_rate * item.rm_weight
 				self.item_paper_cost += item.rm_cost
-				paper_weight += float(self.get_box_layer_weight(item.rm)/self.item_per_sheet)
+				paper_weight += float((self.get_box_layer_weight(item.rm) * self.item_flute)/self.item_per_sheet)
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
 		misc_weight = 0
