@@ -13,6 +13,7 @@ from corrugation.corrugation.roll_selection import select_rolls_for_box
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_planned_paper_quantity
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boards_for_box
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boxes_from_board
+from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_paper_measurements
 from frappe import _
 import copy
 
@@ -44,6 +45,8 @@ class CMCorrugationOrder(Document):
 			frappe.throw("Failed to find the Box Description for {0}".format(self.box))
 		box_desc = frappe.get_doc("CM Box Description", box_boms[0].name)
 		self.box_desc = box_desc.name
+		self.sheet_length = box_desc.sheet_length
+		self.sheet_width = box_desc.sheet_width
 		if (box_desc.docstatus == 0):
 			frappe.throw("Box Description {0} is not verified and submitted".format(self.box_desc))
 
@@ -55,6 +58,7 @@ class CMCorrugationOrder(Document):
 
 	def update_layer(self):
 		self.board_name = ""
+		if (self.box is None): return
 		self.update_board_count()
 		self.populate_rolls()
 
@@ -93,10 +97,13 @@ class CMCorrugationOrder(Document):
 		set_new_layer_defaults(self, self.layer_type)
 
 	def get_layer_number(self):
+		layer = 1
+		if (self.layer_type == "Flute"): layer = 3
+		return layer
+		# We use identical_layers by default
 		roll_item = next((roll_item for roll_item in self.paper_rolls if roll_item.rm_type != "Flute"), None)
 		roll = frappe.get_doc("CM Paper Roll", roll_item.paper_roll)
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
-		layer = 1
 		for paper_item in box_details.item_papers:
 			if (paper_item.rm_type == roll_item.rm_type and roll.paper == paper_item.rm): return layer
 			layer += 1
@@ -125,6 +132,19 @@ class CMCorrugationOrder(Document):
 
 	def before_submit(self):
 		self.stock_qty = self.mfg_qty
+		layers = []
+		for roll in self.paper_rolls:
+			roll_item = frappe.get_doc("CM Paper Roll", roll.paper_roll)
+			self.actual_cost += (roll.start_weight - roll.final_weight) * roll_item.get_unit_rate()
+			layers.append(roll.rm_type)
+		self.actual_cost = self.actual_cost/self.mfg_qty
+
+		layers = list(set(layers))
+		box_desc = frappe.get_doc("CM Box Description", self.box_desc)
+		for layer in layers:
+			paper_cost = next((item.rm_cost for item in box_desc.item_papers if item.rm_type == layer), None)
+			if (paper_cost != None):
+				self.planned_cost += (paper_cost * box_desc.item_per_sheet)
 
 	def on_submit(self):
 		self.create_new_stock_entry()
@@ -239,6 +259,7 @@ def make_other_layer(source_name):
 	crg_order = frappe.get_doc("CM Corrugation Order", source_name)
 	other_order = frappe.new_doc("CM Corrugation Order")
 	other_order.sales_order = crg_order.sales_order
+	other_order.manual_entry = crg_order.manual_entry
 	other_order.layer_type = "Flute"
 	if (crg_order.layer_type == "Flute"):
 		other_order.layer_type = "Top"
@@ -265,4 +286,16 @@ def filter_rolls(doctype, txt, searchfield, start, page_len, filters):
 						order by roll.weight * 1 asc
 					""".format(paper_filter)
 	#print "Searching rolls matching paper {0} with query {1}".format(",".join(paper for paper in papers), filter_query)
-	return frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})
+	rolls = frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})
+	if (ignore_bom):
+		rolls = filter_rolls_for_sheet(rolls, box_desc.sheet_length, box_desc.sheet_width)
+	return rolls
+
+def filter_rolls_for_sheet(rolls, length, width):
+	filtered_rolls = []
+	for (roll, weight) in rolls:
+		paper = frappe.db.get_value("CM Paper Roll", roll, "paper")
+		(gsm, bf, deck) = get_paper_measurements(paper)
+		if ((deck > length and deck < (length + 10)) or (deck > width and deck < (width + 10))):
+			filtered_rolls.append((roll, weight))
+	return filtered_rolls

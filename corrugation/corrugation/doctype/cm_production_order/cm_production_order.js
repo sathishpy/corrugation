@@ -23,6 +23,7 @@ frappe.ui.form.on('CM Production Order', {
 				]
 			}
 		};
+
 		frm.events.set_box_filter(frm)
 		frm.events.set_roll_filter(frm)
 	},
@@ -62,6 +63,17 @@ frappe.ui.form.on('CM Production Order', {
 									'box_desc': doc.box_desc,
 									'layer_type': row.rm_type,
 									'ignore_bom': frm.doc.ignore_bom,
+								},
+			};
+		};
+		frm.fields_dict.paper_boards.grid.get_field('layer').get_query = function(doc, cdt, cdn) {
+			row = locals[cdt][cdn]
+			return {
+				query: "corrugation.corrugation.doctype.cm_production_order.cm_production_order.filter_boards",
+				filters: {
+									'box_desc': doc.box_desc,
+									'layer_type': row.layer_type,
+									'ignore_bom': doc.ignore_bom,
 								},
 			};
 		}
@@ -141,6 +153,18 @@ frappe.ui.form.on('CM Production Order', {
 			frm: frm.doc.sales_order,
 		})
 	},
+});
+
+frappe.ui.form.on("CM Production Board Detail", "layer", function(frm, cdt, cdn) {
+	frappe.call({
+		doc: frm.doc,
+		method: "update_board_qty",
+		callback: function(r) {
+			if(!r.exe) {
+				refresh_field("paper_boards");
+			}
+		}
+	});
 });
 
 frappe.ui.form.on("CM Production Roll Detail", "paper_roll", function(frm, cdt, cdn) {

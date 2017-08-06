@@ -87,11 +87,16 @@ class CMProductionOrder(Document):
 			new_item.used_qty = self.mfg_qty/box_details.item_per_sheet
 			self.append("paper_boards", new_item)
 
+	def update_board_qty(self):
+		for board in self.paper_boards:
+			board_item = frappe.get_doc("Item", board.layer)
+			board.stock_qty = get_latest_stock_qty(board.layer)
+
 	def set_new_layer_defaults(self):
 		set_new_layer_defaults(self, "Top")
 
 	def replace_paper_with_boards(self, se):
-		other_items = [item for item in se.items if "Paper" not in item.item_code]
+		other_items = [item for item in se.items if "PPR" not in item.item_code]
 		se.items = []
 		for board in self.paper_boards:
 			board_item = frappe.new_doc("Stock Entry Detail")
@@ -135,7 +140,8 @@ class CMProductionOrder(Document):
 		return get_planned_paper_quantity(self.box_desc, rm_type, paper, self.mfg_qty)
 
 	def update_production_cost(self):
-		self.planned_rm_cost = frappe.db.get_value("CM Box Description", self.box_desc, "item_rm_cost")
+		self.planned_rm_cost = frappe.db.get_value("CM Box Description", self.box_desc, "item_paper_cost")
+		self.planned_rm_cost += frappe.db.get_value("CM Box Description", self.box_desc, "item_misc_cost")
 		self.act_rm_cost = 0
 		for board_item in self.paper_boards:
 			corr_orders = frappe.db.sql("""select name from `tabCM Corrugation Order`
@@ -226,3 +232,23 @@ def make_new_purchase_order(source_name):
 		po.append("items", po_item)
 
 	return po.as_dict()
+
+@frappe.whitelist()
+def filter_boards(doctype, txt, searchfield, start, page_len, filters):
+	box_desc = frappe.get_doc("CM Box Description", filters["box_desc"])
+	layer_type = filters["layer_type"]
+	ignore_bom = filters["ignore_bom"]
+
+	filter_query =	"""select name from `tabItem`
+						where item_group='Board Layer'
+						and item_code LIKE '{0}%%'
+						and name LIKE %(txt)s
+					""".format(box_desc.get_board_prefix(layer_type))
+	#print "Searching boards matching {0} with query {1}".format(box_desc.get_board_prefix(layer_type), filter_query)
+	boards = frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})
+	filtered_boards = []
+	for (board, ) in boards:
+		qty = get_latest_stock_qty(board)
+		if (qty > 0):
+			filtered_boards.append((board, qty))
+	return filtered_boards

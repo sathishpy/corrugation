@@ -72,19 +72,23 @@ class CMBoxDescription(Document):
 			else:
 				expected_type = "Liner"
 
-	def get_paper_weight(self, paper):
+	def get_paper_weight(self, paper, rm_type):
 		if paper is None: return 0
 		(gsm, bf, deck) = get_paper_measurements(paper)
 		weight = float((self.sheet_length * deck) * gsm/1000)/10000
+		if ("Flute" in rm_type):
+			weight = float(weight * self.item_flute)
 		print ("Weight of length:{0} deck:{1} gsm:{2} is {3}".format(self.sheet_length, deck, gsm, weight))
 		return weight
 
-	def get_box_layer_weight(self, paper):
+	def get_box_layer_weight(self, paper, rm_type):
 		if paper is None: return 0
 		(gsm, bf, deck) = get_paper_measurements(paper)
 		box_length = self.sheet_length - (2 * self.item_cutting_margin)
 		box_width = self.sheet_width - (2 * self.item_cutting_margin)
 		weight = float((box_length * box_width) * gsm/1000)/10000
+		if ("Flute" in rm_type):
+			weight = float(weight * self.item_flute)
 		return weight
 
 	def update_layers(self, rm_type, rm):
@@ -102,20 +106,12 @@ class CMBoxDescription(Document):
 		paper_weight = 0
 		for item in self.item_papers:
 			if item.rm is None: continue
-			if (item.rm_type == 'Top' or item.rm_type == 'Liner'):
-				item.rm_rate = get_item_rate(item.rm, self.exclude_tax)
-				item.rm_weight = float(self.get_paper_weight(item.rm)/self.item_per_sheet)
-				item.rm_weight += (item.rm_weight * self.scrap_ratio)/100
-				item.rm_cost = item.rm_rate * item.rm_weight
-				self.item_paper_cost += item.rm_cost
-				paper_weight += float(self.get_box_layer_weight(item.rm)/self.item_per_sheet)
-			elif (item.rm_type == 'Flute'):
-				item.rm_rate = get_item_rate(item.rm, self.exclude_tax)
-				item.rm_weight = float((self.get_paper_weight(item.rm) * self.item_flute)/self.item_per_sheet)
-				item.rm_weight += (item.rm_weight * self.scrap_ratio)/100
-				item.rm_cost = item.rm_rate * item.rm_weight
-				self.item_paper_cost += item.rm_cost
-				paper_weight += float((self.get_box_layer_weight(item.rm) * self.item_flute)/self.item_per_sheet)
+			item.rm_rate = get_item_rate(item.rm, self.exclude_tax)
+			item.rm_weight = float(self.get_paper_weight(item.rm, item.rm_type)/self.item_per_sheet)
+			item.rm_weight += (item.rm_weight * self.scrap_ratio)/100
+			item.rm_cost = item.rm_rate * item.rm_weight
+			self.item_paper_cost += item.rm_cost
+			paper_weight += float(self.get_box_layer_weight(item.rm, item.rm_type)/self.item_per_sheet)
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
 		misc_weight = 0
@@ -144,15 +140,18 @@ class CMBoxDescription(Document):
 		self.item_profit_amount = self.item_rate - (self.item_total_cost + interest_loss)
 		self.item_profit = float(self.item_profit_amount*100/self.item_total_cost)
 
+	def get_board_prefix(self, rmtype):
+		return "Layer-{0}-{1:.1f}-{2:.1f}".format(rmtype, self.sheet_length, self.sheet_width)
+
 	def get_board_name(self, layer_no):
 		idx = layer_no - 1
 		board_name = None
 		if (idx == 0):
-			board_name = "Layer-Top-{0:.1f}-{1:.1f}".format(self.sheet_length, self.sheet_width)
+			board_name = self.get_board_prefix("Top")
 			paper_elements = self.item_papers[idx].rm.split("-")
 			board_name += "-" + paper_elements[2] + "-" + paper_elements[3] + "-" + paper_elements[4]
 		else:
-			board_name = "Layer-Flute-{0:.1f}-{1:.1f}".format(self.sheet_length, self.sheet_width)
+			board_name = self.get_board_prefix("Flute")
 			paper_elements = self.item_papers[idx-1].rm.split("-")
 			board_name += "-" + paper_elements[2] + "-" + paper_elements[3] + "-" + paper_elements[4]
 			paper_elements = self.item_papers[idx].rm.split("-")
@@ -239,6 +238,7 @@ class CMBoxDescription(Document):
 		self.update_cost();
 		self.save(ignore_permissions=True)
 
+@frappe.whitelist()
 def get_paper_measurements(paper):
 	(gsm, bf, deck) = (0, 0, 0)
 	item = frappe.get_doc("Item", paper)
@@ -307,7 +307,7 @@ def get_planned_paper_quantity(box_desc, rmtype, paper, mfg_qty):
 	for paper_item in box_details.item_papers:
 		if paper_item.rm_type == rmtype and (paper is None or paper_item.rm == paper):
 			return paper_item.rm_weight * mfg_qty
-	return 0
+	return box_details.get_paper_weight(paper, rmtype) * mfg_qty
 
 @frappe.whitelist()
 def is_layer_compatible(box_desc1, box_desc2, layers):
