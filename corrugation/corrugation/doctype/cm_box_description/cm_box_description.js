@@ -25,6 +25,7 @@ frappe.ui.form.on('CM Box Description', {
 									'sheet_width': doc.sheet_width,
 									'top_type': doc.item_top_type,
 									'layer_type': row.rm_type,
+									'stock_based': doc.stock_based,
 								},
 			};
 		}
@@ -63,6 +64,9 @@ frappe.ui.form.on('CM Box Description', {
 				}
 			}
 		});
+	},
+	stock_based: function(frm) {
+		frm.events.box(frm)
 	},
 	refresh: function(frm) {
 		frm.add_custom_button(__('Update Costs'), function() {

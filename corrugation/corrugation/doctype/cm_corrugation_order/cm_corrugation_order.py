@@ -54,6 +54,7 @@ class CMCorrugationOrder(Document):
 		self.mfg_qty = get_no_of_boards_for_box(self.box_desc, self.layer_type, self.order_qty)
 
 	def update_layer(self):
+		self.board_name = ""
 		self.update_board_count()
 		self.populate_rolls()
 

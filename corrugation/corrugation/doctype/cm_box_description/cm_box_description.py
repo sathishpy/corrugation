@@ -22,7 +22,7 @@ class CMBoxDescription(Document):
 
 		rm_item = frappe.new_doc("CM Paper Item")
 		rm_item.rm_type = layer
-		papers = get_layer_papers(self.sheet_length, self.sheet_width, colour)
+		papers = get_layer_papers(self.sheet_length, self.sheet_width, colour, "", self.stock_based)
 		if (len(papers) > 0):
 			print "Assigning paper {0} for {1}".format(papers[0], layer)
 			paper, deck = papers[0]
@@ -326,11 +326,12 @@ def filter_papers(doctype, txt, searchfield, start, page_len, filters):
 	sheet_length = filters["sheet_length"]
 	sheet_width = filters["sheet_width"]
 	layer_type = filters["layer_type"]
+	stock_based = filters["stock_based"]
 	colour = 'Brown'
 	if layer_type == "Top" and "White" in filters["top_type"]:	colour = 'White'
-	return get_layer_papers(sheet_length, sheet_width, colour, txt)
+	return get_layer_papers(sheet_length, sheet_width, colour, txt, stock_based)
 
-def get_layer_papers(sheet_length, sheet_width, colour, txt=""):
+def get_layer_papers(sheet_length, sheet_width, colour, txt, stock_based):
 	filter_query =	"""select item.name, attr.attribute_value
 						from tabItem item left join `tabItem Variant Attribute` attr
 						on (item.name=attr.parent)
@@ -351,4 +352,15 @@ def get_layer_papers(sheet_length, sheet_width, colour, txt=""):
 						order by attr.attribute_value * 1 asc
 					""".format(sheet_length, sheet_length+10, sheet_width, sheet_width+10, colour)
 	#print "Searching papers matching deck {0} with query {1}".format(sheet_length, filter_query)
-	return frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})
+	papers = frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})
+	if (stock_based):
+		papers = filter_papers_based_on_stock(papers)
+	return papers
+
+def filter_papers_based_on_stock(papers):
+	stock_based_papers = []
+	for (paper, deck) in papers:
+		rolls = frappe.db.sql("""select name from `tabCM Paper Roll` where paper='{0}' and weight > 50""".format(paper))
+		if (len(rolls) > 0):
+			stock_based_papers.append((paper, deck))
+	return stock_based_papers

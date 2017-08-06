@@ -85,6 +85,11 @@ def update_mf_settings():
     stock_settings.tolerance = 50
     stock_settings.save()
 
+    buy_settings = frappe.get_doc({"doctype": "Buying Settings", "maintain_same_rate": 1})
+    if (buy_settings is not None):
+        buy_settings.maintain_same_rate = 0
+        buy_settings.save()
+
 def before_install():
     update_mf_settings()
 

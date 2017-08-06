@@ -18,6 +18,11 @@ class CMPaperRollRegister(Document):
 
 		last_idx = frappe.db.count("CM Paper Roll")
 		idx = last_idx + 1
+		roll_name = frappe.db.get_value("CM Paper Roll", filters={"number": idx})
+		while (roll_name is not None):
+			idx = idx + 1
+			roll_name = frappe.db.get_value("CM Paper Roll", filters={"number": idx})
+
 		print("Populating {0} Paper items for receipt {1} starting {2}".format(len(receipt.items), self.purchase_receipt, idx))
 		self.paper_rolls = []
 
