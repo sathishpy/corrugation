@@ -15,8 +15,8 @@ class CMPaperRoll(Document):
 			roll_name = roll_name + ('-%.2i' % len(rolls))
 		self.name = roll_name
 
-	def get_unit_rate(self):
+	def get_unit_rate(self, exclude_tax=True):
 		roll_rate = self.unit_cost
 		if (roll_rate == 0):
-			roll_rate = get_item_rate(self.paper)
+			roll_rate = get_item_rate(self.paper, exclude_tax)
 		return roll_rate

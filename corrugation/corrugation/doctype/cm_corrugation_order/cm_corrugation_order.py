@@ -115,10 +115,11 @@ class CMCorrugationOrder(Document):
 
 	def get_paper_cost_per_board(self):
 		paper_cost = 0
+		exclude_tax = frappe.db.get_value("CM Box Description", self.box_desc, "exclude_tax")
 		for roll_item in self.paper_rolls:
 			roll = frappe.get_doc("CM Paper Roll", roll_item.paper_roll)
-			paper_cost += ((roll_item.start_weight - roll_item.final_weight) * roll.get_unit_rate())
-			print("Paper cost of roll {0} with unit rate {1} is {2}".format(roll.name, roll.get_unit_rate(), paper_cost))
+			paper_cost += ((roll_item.start_weight - roll_item.final_weight) * roll.get_unit_rate(exclude_tax))
+			print("Paper cost of roll {0} with unit rate {1} is {2}".format(roll.name, roll.get_unit_rate(exclude_tax), paper_cost))
 		return float(paper_cost/self.mfg_qty)
 
 	def get_layer_papers(self):
@@ -133,9 +134,10 @@ class CMCorrugationOrder(Document):
 	def before_submit(self):
 		self.stock_qty = self.mfg_qty
 		layers = []
+		exclude_tax = frappe.db.get_value("CM Box Description", self.box_desc, "exclude_tax")
 		for roll in self.paper_rolls:
 			roll_item = frappe.get_doc("CM Paper Roll", roll.paper_roll)
-			self.actual_cost += (roll.start_weight - roll.final_weight) * roll_item.get_unit_rate()
+			self.actual_cost += (roll.start_weight - roll.final_weight) * roll_item.get_unit_rate(exclude_tax)
 			layers.append(roll.rm_type)
 		self.actual_cost = self.actual_cost/self.mfg_qty
 
