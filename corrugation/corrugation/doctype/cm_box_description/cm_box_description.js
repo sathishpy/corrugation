@@ -70,21 +70,27 @@ frappe.ui.form.on('CM Box Description', {
 	},
 	refresh: function(frm) {
 		frm.add_custom_button(__('Update Costs'), function() {
-				frm.events.update_cost(frm);
+				frm.events.update_rate_and_cost(frm);
 		});
 
 		frm.refresh_fields();
 	},
-	update_cost: function(frm) {
+	update_cost_common(frm, method) {
 		frappe.call({
 			doc: frm.doc,
-			method: "update_cost",
+			method: method,
 			callback: function(r) {
 				if(!r.exe) {
 					frm.refresh_fields();
 				}
 			}
 		});
+	},
+	update_rate_and_cost(frm) {
+		frm.events.update_cost_common(frm, "update_rate_and_cost")
+	},
+	update_cost: function(frm) {
+		frm.events.update_cost_common(frm, "update_cost")
 	},
 	item_pin_lap : function(frm, cdt, cdn) {
 		frm.events.update_sheet_values(frm)
@@ -139,6 +145,15 @@ frappe.ui.form.on("CM Paper Item", "rm", function(frm, cdt, cdn) {
 		}
 	});
 });
+frappe.ui.form.on("CM Paper Item", "rm_rate", function(frm, cdt, cdn) {
+	frm.events.update_cost(frm);
+});
 frappe.ui.form.on("CM Misc Item", "rm", function(frm, cdt, cdn) {
+	frm.events.update_cost(frm);
+});
+frappe.ui.form.on("CM Misc Item", "rm_rate", function(frm, cdt, cdn) {
+	frm.events.update_cost(frm);
+});
+frappe.ui.form.on("CM Misc Item", "rm_percent", function(frm, cdt, cdn) {
 	frm.events.update_cost(frm);
 });

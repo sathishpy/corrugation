@@ -57,7 +57,7 @@ class CMBoxDescription(Document):
 			other_items.append(("Printing Ink", "INK-BLUE", 0.3))
 		for (rm_type, rm, percent) in other_items:
 			self.populate_misc_materials(rm_type, rm, percent)
-		self.update_cost()
+		self.update_rate_and_cost()
 
 	def validate(self):
 		if (int(self.item_ply_count) != len(self.item_papers)):
@@ -99,14 +99,19 @@ class CMBoxDescription(Document):
 					item.rm = rm
 		self.update_cost()
 
-	def update_cost(self):
+	def update_rate_and_cost(self):
 		box = frappe.get_doc("CM Box", self.box)
 		self.item_rate = box.box_rate
+		for item in (self.item_papers + self.item_others):
+			if item.rm is None: continue
+			item.rm_rate = get_item_rate(item.rm, self.exclude_tax)
+		self.update_cost()
+
+	def update_cost(self):
 		self.item_paper_cost, self.item_misc_cost = 0, 0
 		paper_weight = 0
 		for item in self.item_papers:
 			if item.rm is None: continue
-			item.rm_rate = get_item_rate(item.rm, self.exclude_tax)
 			item.rm_weight = float(self.get_paper_weight(item.rm, item.rm_type)/self.item_per_sheet)
 			item.rm_weight += (item.rm_weight * self.scrap_ratio)/100
 			item.rm_cost = item.rm_rate * item.rm_weight
@@ -117,7 +122,6 @@ class CMBoxDescription(Document):
 		misc_weight = 0
 		for item in self.item_others:
 			if item.rm is None: continue
-			item.rm_rate = get_item_rate(item.rm, self.exclude_tax)
 			item.rm_weight = paper_weight * item.rm_percent / 100
 			item.rm_weight += (item.rm_weight * self.scrap_ratio)/100
 			item.rm_cost = item.rm_weight * item.rm_rate
@@ -229,7 +233,7 @@ class CMBoxDescription(Document):
 		print("Created item decsription {0} with bom {1}".format(self.name, self.item_bom))
 
 	def update_cost_after_submit(self):
-		self.update_cost();
+		self.update_rate_and_cost();
 		self.save(ignore_permissions=True)
 
 @frappe.whitelist()
