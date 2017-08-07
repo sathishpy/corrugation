@@ -87,7 +87,7 @@ class CMCorrugationOrder(Document):
 			print("Selected roll " + roll_item.paper_roll)
 			self.append("paper_rolls", roll_item)
 
-		self.board_name = box_details.get_board_name(self.get_layer_number())
+		self.update_board_name()
 
 	def update_box_roll_qty(self):
 		if (self.box_desc is None): return
@@ -128,8 +128,13 @@ class CMCorrugationOrder(Document):
 		return papers
 
 	def on_update(self):
+		self.update_board_name()
+
+	def update_board_name(self):
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
-		self.board_name = box_details.get_board_name(self.get_layer_number())
+		papers = [(roll.rm_type, roll.paper_roll) for roll in self.paper_rolls]
+		self.board_name = box_details.get_board_name_from_papers(self.layer_type, papers)
+		box_details.create_board_item(self.board_name)
 
 	def before_submit(self):
 		self.stock_qty = self.mfg_qty
@@ -262,6 +267,7 @@ def make_other_layer(source_name):
 	other_order = frappe.new_doc("CM Corrugation Order")
 	other_order.sales_order = crg_order.sales_order
 	other_order.manual_entry = crg_order.manual_entry
+	other_order.ignore_bom = crg_order.ignore_bom
 	other_order.layer_type = "Flute"
 	if (crg_order.layer_type == "Flute"):
 		other_order.layer_type = "Top"

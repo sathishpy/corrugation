@@ -143,54 +143,48 @@ class CMBoxDescription(Document):
 	def get_board_prefix(self, rmtype):
 		return "Layer-{0}-{1:.1f}-{2:.1f}".format(rmtype, self.sheet_length, self.sheet_width)
 
-	def get_board_name(self, layer_no):
-		idx = layer_no - 1
-		board_name = None
-		if (idx == 0):
-			board_name = self.get_board_prefix("Top")
-			paper_elements = self.item_papers[idx].rm.split("-")
-			board_name += "-" + paper_elements[2] + "-" + paper_elements[3] + "-" + paper_elements[4]
-		else:
-			board_name = self.get_board_prefix("Flute")
-			paper_elements = self.item_papers[idx-1].rm.split("-")
-			board_name += "-" + paper_elements[2] + "-" + paper_elements[3] + "-" + paper_elements[4]
-			paper_elements = self.item_papers[idx].rm.split("-")
+	def get_board_name_from_papers(self, layer, papers):
+		layers = ["Top"]
+		if (layer != "Top"):
+			layers = ["Flute", "Liner"]
+
+		board_name = self.get_board_prefix(layer)
+		for layer_type in layers:
+			paper = next((paper for (rmtype, paper) in papers if layer_type == rmtype), None)
+			if (paper == None):
+				frappe.throw("Cannot find layer type {0} in rolls".format(rmtype))
+			paper_elements = paper.split("-")
 			board_name += "-" + paper_elements[2] + "-" + paper_elements[3] + "-" + paper_elements[4]
 		return board_name
 
 	def get_all_boards(self):
-		layer, boards = 1, []
+		papers = [(paper.rm_type, paper.rm) for paper in self.item_papers]
+		boards = [self.get_board_name_from_papers("Top", papers)]
+		layer = 3
 		while layer <= int(self.item_ply_count):
-			boards += [self.get_board_name(layer)]
+			boards += [self.get_board_name_from_papers("Flute", papers)]
 			layer += 2
 		return boards
 
-	def create_board_item(self, layer_no, rate):
-		boardname = self.get_board_name(layer_no)
+	def create_board_item(self, boardname):
 		board = frappe.db.get_value("Item", filters={"name": boardname})
 		if board is not None: return board
 
 		item = frappe.new_doc("Item")
 		item.item_code = item.item_name = boardname
 		item.item_group = "Board Layer"
-		item.valuation_rate = rate
 		item.weight_uom = "Kg"
 		item.is_sales_item = False
+		print("Creating new board {0}".format(boardname))
 		item.save()
 		return item.name
 
 	def make_board_items(self):
-		layer, boards = 1, []
-		while layer <= int(self.item_ply_count):
-			item = self.item_papers[layer-1]
-			valuation_rate = item.rm_cost
-			if (item.rm_type == 'Flute'):
-				layer += 1
-				item = self.item_papers[layer-1]
-				valuation_rate += item.rm_cost
-			boards += [self.create_board_item(layer, valuation_rate)]
-			layer += 1
-		return boards
+		papers = [(paper.rm_type, paper.rm) for paper in self.item_papers]
+		boardname = self.get_board_name_from_papers("Top", papers)
+		self.create_board_item(boardname)
+		boardname = self.get_board_name_from_papers("Flute", papers)
+		self.create_board_item(boardname)
 
 	def make_new_bom(self):
 		bom = frappe.new_doc("BOM")
@@ -231,7 +225,7 @@ class CMBoxDescription(Document):
 		self.make_new_bom()
 
 	def on_submit(self):
-		boards = self.make_board_items()
+		self.make_board_items()
 		print("Created item decsription {0} with bom {1}".format(self.name, self.item_bom))
 
 	def update_cost_after_submit(self):

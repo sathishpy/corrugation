@@ -25,6 +25,7 @@ frappe.ui.form.on('CM Corrugation Order', {
 		frm.set_value("mfg_date", frappe.datetime.nowdate())
 		frm.add_fetch("box_desc", "sheet_length", "sheet_length")
 		frm.add_fetch("box_desc", "sheet_width", "sheet_width")
+		frm.toggle_display("ignore_bom", frm.doc.ignore_bom)
 	},
 
 	set_box_filter: function(frm) {

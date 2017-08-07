@@ -82,8 +82,9 @@ class CMProductionOrder(Document):
 			else:
 				new_item.layer_type = "Flute"
 			board_item = frappe.get_doc("Item", board)
+			qty = get_latest_stock_qty(board_item.name)
 			new_item.layer = board_item.name
-			new_item.stock_qty = get_latest_stock_qty(board_item.name)
+			new_item.stock_qty = qty
 			new_item.used_qty = self.mfg_qty/box_details.item_per_sheet
 			self.append("paper_boards", new_item)
 
@@ -161,6 +162,8 @@ class CMProductionOrder(Document):
 					break
 			self.act_rm_cost += (board_cost/self.mfg_qty)
 		self.act_rm_cost += frappe.db.get_value("CM Box Description", self.box_desc, "item_misc_cost")
+		profit = frappe.db.get_value("CM Box Description", self.box_desc, "item_profit_amount")
+		self.profit = profit + self.planned_rm_cost - self.act_rm_cost
 
 	def on_submit(self):
 		check_material_availability(self)
