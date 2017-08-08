@@ -39,17 +39,19 @@ class CMBoxDescription(Document):
 			self.sheet_width = self.item_per_sheet * (self.item_length + 2 * self.item_height) + 2 * self.item_cutting_margin
 		elif (box_type == "UniversalOpen"):
 			self.sheet_length = 2 * (self.item_width + self.item_length + self.item_cutting_margin) + self.item_pin_lap
-			self.sheet_width = self.item_per_sheet * (2 * self.item_pin_lap + self.item_height) + 2 * self.item_cutting_margin		
+			self.sheet_width = self.item_per_sheet * (2 * self.item_pin_lap + self.item_height) + 2 * self.item_cutting_margin
 		elif (box_type == "TopBottom"):
 			self.sheet_length = self.item_length + 2 * (self.item_height + self.item_cutting_margin)
 			self.sheet_width = self.item_per_sheet * (self.item_width + self.item_height) + 2 * self.item_cutting_margin
+		elif (box_type == "Top Plate" or box_type == "Flute Plate"):
+			self.sheet_length = self.item_length + 2 * self.item_cutting_margin
+			self.sheet_width = self.item_per_sheet * self.item_width + 2 * self.item_cutting_margin
 		else:
 			frappe.throw("Box Type {0} isn;t supported yet".format(box_type))
 		print("Sheet length and width for {0} boxes is {1}-{2}".format(self.item_per_sheet, self.sheet_length, self.sheet_width))
 		self.update_cost()
 
 	def populate_paper_materials(self):
-		self.update_sheet_values()
 		count = 1
 		self.add_paper_item("Top")
 		while count < int(self.item_ply_count):
@@ -57,24 +59,34 @@ class CMBoxDescription(Document):
 			self.add_paper_item("Liner")
 			count += 2
 
-	def populate_misc_materials(self, rm_type, rm, percent):
-		rm_item = frappe.new_doc("CM Misc Item")
-		rm_item.rm_type = rm_type
-		rm_item.rm = rm
-		rm_item.rm_percent = percent
-		self.append("item_others", rm_item)
+	def populate_misc_materials(self):
+		other_items = [("Corrugation Gum", "CRG-GUM", 2), ("Pasting Gum", "PST-GUM", 3)]
+		if ("Print" in self.item_top_type):
+			other_items.append(("Printing Ink", "INK-BLUE", 0.3))
+
+		for (rm_type, rm, percent) in other_items:
+			rm_item = frappe.new_doc("CM Misc Item")
+			rm_item.rm_type = rm_type
+			rm_item.rm = rm
+			rm_item.rm_percent = percent
+			self.append("item_others", rm_item)
 
 	def populate_raw_materials(self):
 		if (self.box is None): return
 		self.item_others, self.item_papers = [], []
 		self.update_sheet_values()
-		self.populate_paper_materials()
 
-		other_items = [("Corrugation Gum", "CRG-GUM", 2), ("Pasting Gum", "PST-GUM", 3)]
-		if ("Print" in self.item_top_type):
-			other_items.append(("Printing Ink", "INK-BLUE", 0.3))
-		for (rm_type, rm, percent) in other_items:
-			self.populate_misc_materials(rm_type, rm, percent)
+		box_type = frappe.db.get_value("CM Box", self.box, "box_type")
+		if (box_type == "Top Plate"):
+			self.add_paper_item("Top")
+		elif (box_type == "Flute Plate"):
+			self.add_paper_item("Flute")
+			self.add_paper_item("Liner")
+			self.populate_misc_materials()
+		else:
+			self.populate_paper_materials()
+			self.populate_misc_materials()
+
 		self.update_rate_and_cost()
 
 	def validate(self):
@@ -203,10 +215,13 @@ class CMBoxDescription(Document):
 
 	def make_board_items(self):
 		papers = [(paper.rm_type, paper.rm) for paper in self.item_papers]
-		boardname = self.get_board_name_from_papers("Top", papers)
-		self.create_board_item(boardname)
-		boardname = self.get_board_name_from_papers("Flute", papers)
-		self.create_board_item(boardname)
+		layers = [paper.rm_type for paper in self.item_papers]
+		if ("Top" in layers):
+			boardname = self.get_board_name_from_papers("Top", papers)
+			self.create_board_item(boardname)
+		if ("Flute" in layers):
+			boardname = self.get_board_name_from_papers("Flute", papers)
+			self.create_board_item(boardname)
 
 	def make_new_bom(self):
 		bom = frappe.new_doc("BOM")

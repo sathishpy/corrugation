@@ -146,7 +146,7 @@ class CMProductionOrder(Document):
 		self.act_rm_cost = 0
 		for board_item in self.paper_boards:
 			corr_orders = frappe.db.sql("""select name from `tabCM Corrugation Order`
-											where board_name='{0}' and stock_qty > 0""".format(board_item.layer), as_dict=1)
+											where board_name='{0}' and stock_qty > 0 and docstatus != 2""".format(board_item.layer), as_dict=1)
 			print("Corrugation orders for layer {0} are {1}".format(board_item.layer, len(corr_orders)))
 			updated_qty = 0
 			board_cost = 0
