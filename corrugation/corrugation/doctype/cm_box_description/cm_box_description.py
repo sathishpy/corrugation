@@ -47,7 +47,7 @@ class CMBoxDescription(Document):
 
 	def populate_paper_materials(self):
 		self.update_sheet_values()
-		count, self.item_papers = 1, []
+		count = 1
 		self.add_paper_item("Top")
 		while count < int(self.item_ply_count):
 			self.add_paper_item("Flute")
@@ -63,10 +63,10 @@ class CMBoxDescription(Document):
 
 	def populate_raw_materials(self):
 		if (self.box is None): return
+		self.item_others, self.item_papers = [], []
 		self.update_sheet_values()
 		self.populate_paper_materials()
 
-		self.item_others = []
 		other_items = [("Corrugation Gum", "CRG-GUM", 2), ("Pasting Gum", "PST-GUM", 3)]
 		if ("Print" in self.item_top_type):
 			other_items.append(("Printing Ink", "INK-BLUE", 0.3))

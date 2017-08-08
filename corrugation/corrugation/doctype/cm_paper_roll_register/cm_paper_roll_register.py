@@ -64,8 +64,8 @@ class CMPaperRollRegister(Document):
 
 		for item in self.charges:
 			charges += item.amount
-			jentry.append("accounts", {"account": item.from_account, "debit_in_account_currency": item.amount})
-			jentry.append("accounts", {"account": item.to_account, "credit_in_account_currency": item.amount})
+			jentry.append("accounts", {"account": item.from_account, "credit_in_account_currency": item.amount})
+			jentry.append("accounts", {"account": item.to_account, "debit_in_account_currency": item.amount})
 
 		if (jentry is not None):
 			jentry.submit()
