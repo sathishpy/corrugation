@@ -37,6 +37,9 @@ class CMBoxDescription(Document):
 		elif (box_type == "MatchBox"):
 			self.sheet_length = 2 * (self.item_width + self.item_height + self.item_cutting_margin) + self.item_pin_lap
 			self.sheet_width = self.item_per_sheet * (self.item_length + 2 * self.item_height) + 2 * self.item_cutting_margin
+		elif (box_type == "UniversalOpen"):
+			self.sheet_length = 2 * (self.item_width + self.item_length + self.item_cutting_margin) + self.item_pin_lap
+			self.sheet_width = self.item_per_sheet * (2 * self.item_pin_lap + self.item_height) + 2 * self.item_cutting_margin		
 		elif (box_type == "TopBottom"):
 			self.sheet_length = self.item_length + 2 * (self.item_height + self.item_cutting_margin)
 			self.sheet_width = self.item_per_sheet * (self.item_width + self.item_height) + 2 * self.item_cutting_margin
