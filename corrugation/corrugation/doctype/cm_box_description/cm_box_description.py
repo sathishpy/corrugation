@@ -22,7 +22,7 @@ class CMBoxDescription(Document):
 
 		rm_item = frappe.new_doc("CM Paper Item")
 		rm_item.rm_type = layer
-		papers = get_layer_papers(self.sheet_length, self.sheet_width, colour, "", self.stock_based)
+		papers = get_layer_papers(layer, self.sheet_length, self.sheet_width, colour, "", self.stock_based)
 		if (len(papers) > 0):
 			print "Assigning paper {0} for {1}".format(papers[0], layer)
 			paper, deck = papers[0]
@@ -44,7 +44,7 @@ class CMBoxDescription(Document):
 			frappe.throw("Box Type {0} isn;t supported yet".format(box_type))
 		print("Sheet length and width for {0} boxes is {1}-{2}".format(self.item_per_sheet, self.sheet_length, self.sheet_width))
 		self.update_cost()
-		
+
 	def populate_paper_materials(self):
 		self.update_sheet_values()
 		count, self.item_papers = 1, []
@@ -342,28 +342,29 @@ def filter_papers(doctype, txt, searchfield, start, page_len, filters):
 	stock_based = filters["stock_based"]
 	colour = 'Brown'
 	if layer_type == "Top" and "White" in filters["top_type"]:	colour = 'White'
-	return get_layer_papers(sheet_length, sheet_width, colour, txt, stock_based)
+	return get_layer_papers(layer_type, sheet_length, sheet_width, colour, txt, stock_based)
 
-def get_layer_papers(sheet_length, sheet_width, colour, txt, stock_based):
+def get_layer_papers(layer_type, sheet_length, sheet_width, colour, txt, stock_based):
+	deck_query = "(attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_width, sheet_width+10)
+	if (layer_type == "Top"):
+		#Flute direction doesn't matter for top cuttings
+		deck_query += "or (attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_length, sheet_length+10)
+
 	filter_query =	"""select item.name, attr.attribute_value
 						from tabItem item left join `tabItem Variant Attribute` attr
 						on (item.name=attr.parent)
 						where item.docstatus < 2
 							and item.variant_of='PPR'
 							and item.disabled=0
-							and (attr.attribute='Deck' and
-									((attr.attribute_value >= {0} and attr.attribute_value <= {1})
-										or (attr.attribute_value >= {2} and attr.attribute_value <= {3})
-									)
-								)
+							and (attr.attribute='Deck' and ({0}))
 							and exists (
 									select name from `tabItem Variant Attribute` iv_attr
 									where iv_attr.parent=item.name
-										and (iv_attr.attribute='Colour' and iv_attr.attribute_value = '{4}')
+										and (iv_attr.attribute='Colour' and iv_attr.attribute_value = '{1}')
 									)
 							and item.name LIKE %(txt)s
 						order by attr.attribute_value * 1 asc
-					""".format(sheet_length, sheet_length+10, sheet_width, sheet_width+10, colour)
+					""".format(deck_query, colour)
 	#print "Searching papers matching deck {0} with query {1}".format(sheet_length, filter_query)
 	papers = frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})
 	if (stock_based):
