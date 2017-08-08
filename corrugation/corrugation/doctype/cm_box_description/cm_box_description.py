@@ -29,10 +29,24 @@ class CMBoxDescription(Document):
 			rm_item.rm = paper
 		self.append("item_papers", rm_item)
 
+	def update_sheet_values(self):
+		box_type = frappe.db.get_value("CM Box", self.box, "box_type")
+		if (box_type == "Universal"):
+			self.sheet_length = 2 * (self.item_width + self.item_length + self.item_cutting_margin) + self.item_pin_lap
+			self.sheet_width = self.item_per_sheet * (self.item_width + self.item_height) + 2 * self.item_cutting_margin
+		elif (box_type == "MatchBox"):
+			self.sheet_length = 2 * (self.item_width + self.item_height + self.item_cutting_margin) + self.item_pin_lap
+			self.sheet_width = self.item_per_sheet * (self.item_length + 2 * self.item_height) + 2 * self.item_cutting_margin
+		elif (box_type == "TopBottom"):
+			self.sheet_length = self.item_length + 2 * (self.item_height + self.item_cutting_margin)
+			self.sheet_width = self.item_per_sheet * (self.item_width + self.item_height) + 2 * self.item_cutting_margin
+		else:
+			frappe.throw("Box Type {0} isn;t supported yet".format(box_type))
+		print("Sheet length and width for {0} boxes is {1}-{2}".format(self.item_per_sheet, self.sheet_length, self.sheet_width))
+		self.update_cost()
+		
 	def populate_paper_materials(self):
-		self.sheet_length = 2 * (self.item_width + self.item_length + self.item_cutting_margin) + self.item_pin_lap
-		self.sheet_width = self.item_per_sheet * (self.item_width + self.item_height) + 2 * self.item_cutting_margin
-
+		self.update_sheet_values()
 		count, self.item_papers = 1, []
 		self.add_paper_item("Top")
 		while count < int(self.item_ply_count):
@@ -49,6 +63,7 @@ class CMBoxDescription(Document):
 
 	def populate_raw_materials(self):
 		if (self.box is None): return
+		self.update_sheet_values()
 		self.populate_paper_materials()
 
 		self.item_others = []

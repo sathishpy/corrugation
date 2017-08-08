@@ -53,17 +53,19 @@ frappe.ui.form.on('CM Box Description', {
 		frm.add_fetch("box", "box_rate", "item_rate")
 		frm.events.update_cost(frm);
 	},
-	box: function(frm) {
-		frm.events.update_sheet_values(frm)
+	invoke_doc_function(frm, method) {
 		frappe.call({
 			doc: frm.doc,
-			method: "populate_raw_materials",
+			method: method,
 			callback: function(r) {
 				if(!r.exe) {
-					frm.refresh_fields()
+					frm.refresh_fields();
 				}
 			}
 		});
+	},
+	box: function(frm) {
+		frm.events.invoke_doc_function(frm, "populate_raw_materials")
 	},
 	stock_based: function(frm) {
 		frm.events.box(frm)
@@ -75,34 +77,20 @@ frappe.ui.form.on('CM Box Description', {
 
 		frm.refresh_fields();
 	},
-	update_cost_common(frm, method) {
-		frappe.call({
-			doc: frm.doc,
-			method: method,
-			callback: function(r) {
-				if(!r.exe) {
-					frm.refresh_fields();
-				}
-			}
-		});
-	},
 	update_rate_and_cost(frm) {
-		frm.events.update_cost_common(frm, "update_rate_and_cost")
+		frm.events.invoke_doc_function(frm, "update_rate_and_cost")
 	},
 	update_cost: function(frm) {
-		frm.events.update_cost_common(frm, "update_cost")
+		frm.events.invoke_doc_function(frm, "update_cost")
 	},
 	item_pin_lap : function(frm, cdt, cdn) {
 		frm.events.update_sheet_values(frm)
-		frm.events.update_cost(frm);
 	},
 	item_cutting_margin : function(frm, cdt, cdn) {
 		frm.events.update_sheet_values(frm)
-		frm.events.update_cost(frm);
 	},
 	item_per_sheet : function(frm, cdt, cdn) {
 		frm.events.update_sheet_values(frm)
-		frm.events.update_cost(frm);
 	},
 	item_flute : function(frm) {
 		frm.events.update_cost(frm);
@@ -126,10 +114,7 @@ frappe.ui.form.on('CM Box Description', {
 		frm.events.update_cost(frm);
 	},
 	update_sheet_values : function(frm) {
-		let sheet_length = 2 * (frm.doc.item_width + frm.doc.item_length + frm.doc.item_cutting_margin) + frm.doc.item_pin_lap
-		let sheet_width = frm.doc.item_per_sheet * (frm.doc.item_width + frm.doc.item_height) + 2 * frm.doc.item_cutting_margin
-		frm.set_value("sheet_length", sheet_length);
-		frm.set_value("sheet_width", sheet_width);
+		frm.events.invoke_doc_function(frm, "update_sheet_values")
 	},
 });
 frappe.ui.form.on("CM Paper Item", "rm", function(frm, cdt, cdn) {
