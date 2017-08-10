@@ -170,7 +170,8 @@ class CMBoxDescription(Document):
 		self.item_profit = float(self.item_profit_amount*100/self.item_total_cost)
 
 	def get_production_cost(self):
-		item_per_sheet = self.item_per_sheet * int(int(self.item_ply_count)/2)
+		layer_factor = (int(self.item_ply_count) - 1)/2
+		item_per_sheet = float(self.item_per_sheet / layer_factor)
 		board_unit = float(self.sheet_width * self.sheet_length)/10000
 		box_unit = float(self.item_length * self.item_width * self.item_height)/7000
 		if (self.sheet_length > 175):
@@ -184,10 +185,10 @@ class CMBoxDescription(Document):
 			printing_cost = board_unit * 0.25/item_per_sheet
 		punching_cost = board_unit * 0.25/item_per_sheet
 		glue_cost = box_unit * 0.15
-		other_cost = box_unit * 0.20
+		other_cost = box_unit * 0.30
 		total_cost = corrugation_cost + pasting_cost + printing_cost + punching_cost + glue_cost + other_cost
-		print("Prod Cost: crg={0} pst={1} prt={2} punch={3} glue={4} misc={5} unit={6}/{7}"
-				.format(corrugation_cost, pasting_cost, printing_cost, punching_cost, glue_cost, other_cost, board_unit, box_unit))
+		print("Prod Cost: crg={0} pst={1} prt={2} punch={3} glue={4} misc={5} unit={6}/{7}/{8}"
+				.format(corrugation_cost, pasting_cost, printing_cost, punching_cost, glue_cost, other_cost, item_per_sheet, board_unit, box_unit))
 		return (total_cost)
 
 	def get_board_prefix(self, rmtype):
