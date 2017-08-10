@@ -161,7 +161,8 @@ class CMBoxDescription(Document):
 		if (self.item_paper_cost == 0): return
 
 		if (self.item_prod_cost is None or self.item_prod_cost == 0): self.item_prod_cost = self.get_production_cost()
-		if (self.item_transport_cost == 0): self.item_transport_cost = self.item_weight * 0.9
+		box_unit = float(self.item_length * self.item_width * self.item_height)/7000
+		if (self.item_transport_cost == 0): self.item_transport_cost = box_unit * 0.1
 		#self.item_rate = get_item_rate(self.item)
 		self.item_total_cost = float(self.item_paper_cost + self.item_misc_cost + self.item_prod_cost + self.item_transport_cost)
 		interest_loss = float(self.item_rate * self.credit_rate * self.credit_period)/1200
@@ -175,7 +176,7 @@ class CMBoxDescription(Document):
 		if (self.sheet_length > 175):
 			board_unit = float(board_unit/2)
 			item_per_sheet = item_per_sheet/2
-		corrugation_cost = board_unit * 0.25/item_per_sheet
+		corrugation_cost = board_unit * 0.35/item_per_sheet
 		pasting_cost = board_unit * 0.25/item_per_sheet
 		printing_cost = 0
 		box_top_type = frappe.db.get_value("CM Box", self.box, "box_top_type")
