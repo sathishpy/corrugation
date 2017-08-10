@@ -169,7 +169,7 @@ class CMBoxDescription(Document):
 		self.item_profit = float(self.item_profit_amount*100/self.item_total_cost)
 
 	def get_production_cost(self):
-		item_per_sheet = self.item_per_sheet * (int(self.item_ply_count/2))
+		item_per_sheet = self.item_per_sheet * int(int(self.item_ply_count)/2)
 		board_unit = float(self.sheet_width * self.sheet_length)/10000
 		box_unit = float(self.item_length * self.item_width * self.item_height)/7000
 		if (self.sheet_length > 175):
