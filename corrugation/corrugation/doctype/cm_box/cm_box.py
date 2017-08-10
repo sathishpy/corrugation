@@ -27,6 +27,12 @@ class CMBox(Document):
 			box_docs = [frappe.get_doc("CM Box Description", box) for box in boxes]
 			return box_docs
 
+	def validate(self):
+		if ("Plate" in self.box_type and self.box_height != 0):
+			frappe.throw("Height should be zero for plate items")
+		if ("Plate" not in self.box_type and self.box_height == 0):
+			frappe.throw("Height should be zero only for plate items")
+
 	def before_save(self):
 		item = self.get_item_doc()
 		item.item_name = self.box_name

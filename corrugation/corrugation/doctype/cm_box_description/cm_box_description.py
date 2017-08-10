@@ -79,10 +79,6 @@ class CMBoxDescription(Document):
 		box_type = frappe.db.get_value("CM Box", self.box, "box_type")
 		if (box_type == "Top Plate"):
 			self.add_paper_item("Top")
-		elif (box_type == "Flute Plate"):
-			self.add_paper_item("Flute")
-			self.add_paper_item("Liner")
-			self.populate_misc_materials()
 		else:
 			self.populate_paper_materials()
 			self.populate_misc_materials()
@@ -164,15 +160,34 @@ class CMBoxDescription(Document):
 		print("Paper cost={0} Misc cost={1} items={2}".format(self.item_paper_cost, self.item_misc_cost, self.item_per_sheet))
 		if (self.item_paper_cost == 0): return
 
-		total_expense = get_total_expenses(0)
-		(boxes, production) = get_production_details(0)
-		print("Boxes = {0} production={1} expense={2}".format(boxes, production, total_expense))
-		if (boxes != 0 and self.item_prod_cost == 0): self.item_prod_cost = total_expense/boxes
+		if (self.item_prod_cost is None or self.item_prod_cost == 0): self.item_prod_cost = self.get_production_cost()
+		if (self.item_transport_cost == 0): self.item_transport_cost = self.item_weight * 0.9
 		#self.item_rate = get_item_rate(self.item)
 		self.item_total_cost = float(self.item_paper_cost + self.item_misc_cost + self.item_prod_cost + self.item_transport_cost)
 		interest_loss = float(self.item_rate * self.credit_rate * self.credit_period)/1200
 		self.item_profit_amount = self.item_rate - (self.item_total_cost + interest_loss)
 		self.item_profit = float(self.item_profit_amount*100/self.item_total_cost)
+
+	def get_production_cost(self):
+		item_per_sheet = self.item_per_sheet * (int(self.item_ply_count/2))
+		board_unit = float(self.sheet_width * self.sheet_length)/10000
+		box_unit = float(self.item_length * self.item_width * self.item_height)/7000
+		if (self.sheet_length > 175):
+			board_unit = float(board_unit/2)
+			item_per_sheet = item_per_sheet/2
+		corrugation_cost = board_unit * 0.25/item_per_sheet
+		pasting_cost = board_unit * 0.25/item_per_sheet
+		printing_cost = 0
+		box_top_type = frappe.db.get_value("CM Box", self.box, "box_top_type")
+		if ("Print" in box_top_type):
+			printing_cost = board_unit * 0.25/item_per_sheet
+		punching_cost = board_unit * 0.25/item_per_sheet
+		glue_cost = box_unit * 0.15
+		other_cost = box_unit * 0.20
+		total_cost = corrugation_cost + pasting_cost + printing_cost + punching_cost + glue_cost + other_cost
+		print("Prod Cost: crg={0} pst={1} prt={2} punch={3} glue={4} misc={5} unit={6}/{7}"
+				.format(corrugation_cost, pasting_cost, printing_cost, punching_cost, glue_cost, other_cost, board_unit, box_unit))
+		return (total_cost)
 
 	def get_board_prefix(self, rmtype):
 		return "Layer-{0}-{1:.1f}-{2:.1f}".format(rmtype, self.sheet_length, self.sheet_width)
