@@ -143,6 +143,9 @@ class CMPaperRollRegister(Document):
 			frappe.throw(_("Paper roll weight doesn't match the purchase weight"))
 		self.register_rolls()
 
+	def on_update_after_submit(self):
+		self.update_roll_cost()
+		
 	def on_trash(self):
 		for roll in self.paper_rolls:
 			roll_name = "{0}-RL-{1}".format(roll.paper, roll.number)
