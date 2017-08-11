@@ -18,6 +18,7 @@ def add_paper_item_groups(raw_material_group):
         {"doctype": "Item Group", "item_group_name": _("Paper"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Gum"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Ink"), "is_group": 0, "parent_item_group": raw_material_group.name },
+        {"doctype": "Item Group", "item_group_name": _("Coil"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Board"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Board Layer"), "is_group": 0, "parent_item_group": raw_material_group.name },
     ]
@@ -34,6 +35,8 @@ def add_raw_materials():
         {"doctype": "Item", "item_code": "PST-GUM", "item_name": "Pasting Gum", "item_group": "Gum", "stock_uom": "Kg",
                             "default_material_request_type": "Purchase", "is_stock_item": True, "is_sales_item": False},
         {"doctype": "Item", "item_code": "GLU-GUM", "item_name": "Gluing Gum", "item_group": "Gum", "stock_uom": "Kg",
+                            "default_material_request_type": "Purchase", "is_stock_item": True, "is_sales_item": False},
+        {"doctype": "Item", "item_code": "STCH-COIL", "item_name": "Stitching Coil", "item_group": "Coil", "stock_uom": "Kg",
                             "default_material_request_type": "Purchase", "is_stock_item": True, "is_sales_item": False},
         {"doctype": "Item", "item_code": "INK-RED", "item_name": "Red Ink", "item_group": "Ink", "stock_uom": "Kg",
                             "default_material_request_type": "Purchase", "is_stock_item": True, "is_sales_item": False},

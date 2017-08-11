@@ -34,6 +34,8 @@ frappe.ui.form.on('CM Box Description', {
 			group = 'Gum'
 			if (item.rm_type == 'Printing Ink') {
 				group = 'Ink'
+			} else if (item.rm_type == 'Stitching Coil') {
+				group = 'Coil'
 			}
 			return {
 				filters: [
