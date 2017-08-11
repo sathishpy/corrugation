@@ -9,14 +9,10 @@ from corrugation.corrugation.doctype.cm_box_description.cm_box_description impor
 
 class CMPaperRoll(Document):
 	def autoname(self):
-		roll_name = "{0}-RL-{1}".format(self.paper, self.number)
-		rolls = frappe.db.sql_list("""select name from `tabCM Paper Roll` where name=%s""", roll_name)
-		if rolls:
-			roll_name = roll_name + ('-%.2i' % len(rolls))
-		self.name = roll_name
+		self.name = "{0}-RL-{1}".format(self.paper, self.number)
 
 	def get_unit_rate(self, exclude_tax=True):
-		roll_rate = self.unit_cost
+		roll_rate = self.basic_cost + self.misc_cost
 		if (roll_rate == 0):
 			roll_rate = get_item_rate(self.paper, exclude_tax)
 		return roll_rate
