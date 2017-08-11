@@ -14,5 +14,7 @@ class CMPaperRoll(Document):
 	def get_unit_rate(self, exclude_tax=True):
 		roll_rate = self.basic_cost + self.misc_cost
 		if (roll_rate == 0):
-			roll_rate = get_item_rate(self.paper, exclude_tax)
+			return get_item_rate(self.paper, exclude_tax)
+		if (not exclude_tax):
+			roll_rate += self.tax_cost
 		return roll_rate
