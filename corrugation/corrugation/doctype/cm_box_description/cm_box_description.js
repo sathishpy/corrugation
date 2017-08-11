@@ -110,7 +110,7 @@ frappe.ui.form.on('CM Box Description', {
 		frm.events.update_cost(frm);
 	},
 	exclude_tax : function(frm) {
-		frm.events.update_cost(frm);
+		frm.events.update_rate_and_cost(frm);
 	},
 	scrap_ratio : function(frm) {
 		frm.events.update_cost(frm);
