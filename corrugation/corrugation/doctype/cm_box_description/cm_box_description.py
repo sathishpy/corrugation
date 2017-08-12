@@ -59,23 +59,30 @@ class CMBoxDescription(Document):
 			self.add_paper_item("Liner")
 			count += 2
 
-	def populate_misc_materials(self):
-		other_items = [("Corrugation Gum", "CRG-GUM", 2), ("Pasting Gum", "PST-GUM", 3)]
-		if ("Print" in self.item_top_type):
-			other_items.append(("Printing Ink", "INK-BLUE", 0.3))
-		box_type = frappe.db.get_value("CM Box", self.box, "box_type")
-		if ("Plate" not in box_type):
-			if ("Glue" in self.joint_type):
-				other_items.append(("Glue", "GLU-GUM", 0.2))
-			else:
-				other_items.append(("Stitching Coil", "STCH-COIL", 0.2))
-
-		for (rm_type, rm, percent) in other_items:
-			rm_item = frappe.new_doc("CM Misc Item")
-			rm_item.rm_type = rm_type
+	def update_misc_items(self):
+		misc_items = {"Corrugation Gum": ("CRG-GUM", 2), "Pasting Gum": ("PST-GUM", 3), "Glue": ("GLU-GUM", 0.2), "Printing Ink": ("INK-BLUE", 0.3), "Stitching Coil": ("STCH-COIL", 0.2)}
+		for rm_item in self.item_others:
+			if rm_item.rm: continue
+			(rm, percent) = misc_items[rm_item.rm_type]
 			rm_item.rm = rm
 			rm_item.rm_percent = percent
+		self.update_rate_and_cost()
+
+	def populate_misc_materials(self):
+		self.item_others = []
+		items = ["Corrugation Gum", "Pasting Gum"]
+		if ("Print" in self.item_top_type):
+			items.append("Printing Ink")
+		box_type = frappe.db.get_value("CM Box", self.box, "box_type")
+		if ("Plate" not in box_type):
+			if ("Glue" in self.joint_type): items.append("Glue")
+			else: items.append("Stitching Coil")
+
+		for rm_type in items:
+			rm_item = frappe.new_doc("CM Misc Item")
+			rm_item.rm_type = rm_type
 			self.append("item_others", rm_item)
+		self.update_misc_items()
 
 	def populate_raw_materials(self):
 		if (self.box is None): return
@@ -170,7 +177,7 @@ class CMBoxDescription(Document):
 		box_unit = float(self.item_length * self.item_width * self.item_height)/7000
 		self.item_transport_cost = box_unit * 0.1
 		#self.item_rate = get_item_rate(self.item)
-		self.item_total_cost = float(self.item_paper_cost + self.item_misc_cost + self.item_prod_cost + self.item_transport_cost + self.item_sales_cost)
+		self.item_total_cost = float(self.item_paper_cost + self.item_misc_cost + self.item_prod_cost + self.item_transport_cost + self.item_other_cost)
 		interest_loss = float(self.item_rate * self.credit_rate * self.credit_period)/1200
 		self.item_profit_amount = self.item_rate - (self.item_total_cost + interest_loss)
 		self.item_profit = float(self.item_profit_amount*100/self.item_total_cost)

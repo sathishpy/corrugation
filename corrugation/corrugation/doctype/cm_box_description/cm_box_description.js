@@ -103,7 +103,7 @@ frappe.ui.form.on('CM Box Description', {
 	item_transport_cost : function(frm) {
 		frm.events.update_cost(frm);
 	},
-	item_sales_cost : function(frm) {
+	item_other_cost : function(frm) {
 		frm.events.update_cost(frm);
 	},
 	credit_rate : function(frm) {
@@ -138,8 +138,11 @@ frappe.ui.form.on("CM Paper Item", "rm", function(frm, cdt, cdn) {
 frappe.ui.form.on("CM Paper Item", "rm_rate", function(frm, cdt, cdn) {
 	frm.events.update_cost(frm);
 });
+frappe.ui.form.on("CM Misc Item", "rm_type", function(frm, cdt, cdn) {
+	frm.events.invoke_doc_function(frm, "update_misc_items")
+});
 frappe.ui.form.on("CM Misc Item", "rm", function(frm, cdt, cdn) {
-	frm.events.update_cost(frm);
+	frm.events.update_rate_and_cost(frm);
 });
 frappe.ui.form.on("CM Misc Item", "rm_rate", function(frm, cdt, cdn) {
 	frm.events.update_cost(frm);
