@@ -103,6 +103,9 @@ frappe.ui.form.on('CM Box Description', {
 	item_transport_cost : function(frm) {
 		frm.events.update_cost(frm);
 	},
+	item_sales_cost : function(frm) {
+		frm.events.update_cost(frm);
+	},
 	credit_rate : function(frm) {
 		frm.events.update_cost(frm);
 	},

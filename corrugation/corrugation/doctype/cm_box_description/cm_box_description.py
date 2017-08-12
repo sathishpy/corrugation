@@ -170,7 +170,7 @@ class CMBoxDescription(Document):
 		box_unit = float(self.item_length * self.item_width * self.item_height)/7000
 		self.item_transport_cost = box_unit * 0.1
 		#self.item_rate = get_item_rate(self.item)
-		self.item_total_cost = float(self.item_paper_cost + self.item_misc_cost + self.item_prod_cost + self.item_transport_cost)
+		self.item_total_cost = float(self.item_paper_cost + self.item_misc_cost + self.item_prod_cost + self.item_transport_cost + self.item_sales_cost)
 		interest_loss = float(self.item_rate * self.credit_rate * self.credit_period)/1200
 		self.item_profit_amount = self.item_rate - (self.item_total_cost + interest_loss)
 		self.item_profit = float(self.item_profit_amount*100/self.item_total_cost)
