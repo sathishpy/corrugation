@@ -78,6 +78,7 @@ class CMBox(Document):
 		for box_doc in box_docs:
 			box_doc.delete()
 		item_price = frappe.db.get_value("Item Price", filters={"item_code": self.box_code, "price_list": "Standard Selling"})
-		item_price.delete()
+		price_doc = frappe.get_doc("Item Price", item_price)
+		price_doc.delete()
 		#item = frappe.get_doc("Item", self.box_code)
 		#item.delete()
