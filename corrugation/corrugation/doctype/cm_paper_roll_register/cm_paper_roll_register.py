@@ -50,35 +50,6 @@ class CMPaperRollRegister(Document):
 				self.total_weight += paper_roll.weight
 				print "Creating Roll {0}-{1}".format(item.item_code, paper_roll.weight)
 
-	def register_rolls(self):
-		jentry = None
-		if (len(self.charges) > 0):
-			jentry = frappe.new_doc("Journal Entry")
-			jentry.update({"voucher_type": "Journal Entry", "posting_date": nowdate(), "is_opening": "No", "remark": "Purchase Charges"})
-		for item in self.charges:
-			jentry.append("accounts", {"account": item.from_account, "credit_in_account_currency": item.amount})
-			jentry.append("accounts", {"account": item.to_account, "debit_in_account_currency": item.amount})
-		if (jentry is not None):
-			jentry.submit()
-			self.charge_entry = jentry.name
-
-		item_rates = self.get_actual_roll_rates()
-
-		for roll in self.paper_rolls:
-			paper_roll = frappe.new_doc("CM Paper Roll")
-			paper_roll.paper = roll.paper
-			paper_roll.number = roll.number
-			paper_roll.weight = roll.weight
-			paper_roll.roll_receipt = self.name
-			paper_roll.supplier = self.supplier
-			paper_roll.manufacturer = self.manufacturer
-			(basic, tax, charge) = item_rates[roll.paper]
-			paper_roll.basic_cost = basic
-			paper_roll.tax_cost = tax
-			paper_roll.misc_cost = charge
-			paper_roll.status = "Ready"
-			paper_roll.save()
-
 	def get_actual_roll_rates(self):
 		bill_doc = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
 		if (self.purchase_invoice):
@@ -102,26 +73,65 @@ class CMPaperRollRegister(Document):
 		print("Rate for {0}: Basic={1} Tax={2} Charges={3}".format(bill_doc.name, std_cost, taxes, charges))
 		for item in bill_doc.items:
 			unit_share = float(item.amount/bill_doc.total)/item.qty
-			item_rates[item.item_name] = (std_cost * unit_share, taxes * unit_share, charges * unit_share)
+			item_rates[item.item_name] = (round(std_cost * unit_share, 3), round(taxes * unit_share, 3), round(charges * unit_share, 3))
 			print ("Item {0}:{1}".format(item.item_name, item_rates[item.item_name]))
 		return item_rates
 
 	def update_roll_cost(self):
 		item_rates = self.get_actual_roll_rates()
 
-		for roll in self.paper_rolls:
-			roll_name = "{0}-RL-{1}".format(roll.paper, roll.number)
-			(basic, tax, charge) = item_rates[roll.paper]
-			print("New Rates-{0}: Basic={1} Tax={2} Charge={3}".format(roll_name, basic, tax, charge))
-			roll.unit_cost = (basic + charge)
-			roll.save()
+		for roll_item in self.paper_rolls:
+			roll_name = "{0}-RL-{1}".format(roll_item.paper, roll_item.number)
 			if (frappe.db.get_value("CM Paper Roll", roll_name) == None): continue
-			paper_roll = frappe.get_doc("CM Paper Roll", roll_name)
-			print("Old Rates-{0}: Basic={1} Tax={2} Charge={3}".format(paper_roll.name, paper_roll.basic_cost, paper_roll.tax_cost, paper_roll.misc_cost))
+			roll = frappe.get_doc("CM Paper Roll", roll_name)
+
+			(basic, tax, charge) = item_rates[roll_item.paper]
+			if (roll.basic_cost == basic and roll.misc_cost == charge and roll.tax_cost == tax): continue
+
+			print("Old Rates-{0}: Basic={1} Tax={2} Charge={3}".format(roll.name, roll.basic_cost, roll.tax_cost, roll.misc_cost))
+			print("New Rates-{0}: Basic={1} Tax={2} Charge={3}".format(roll_name, basic, tax, charge))
+
+			roll_item.unit_cost = (basic + charge)
+			roll_item.save()
+
+			roll.basic_cost = basic
+			roll.tax_cost = tax
+			roll.misc_cost = charge
+			roll.save()
+
+	def register_rolls(self):
+		item_rates = self.get_actual_roll_rates()
+
+		for roll in self.paper_rolls:
+			paper_roll = frappe.new_doc("CM Paper Roll")
+			paper_roll.paper = roll.paper
+			paper_roll.number = roll.number
+			paper_roll.weight = roll.weight
+			paper_roll.roll_receipt = self.name
+			paper_roll.supplier = self.supplier
+			paper_roll.manufacturer = self.manufacturer
+			(basic, tax, charge) = item_rates[roll.paper]
 			paper_roll.basic_cost = basic
 			paper_roll.tax_cost = tax
 			paper_roll.misc_cost = charge
+			paper_roll.status = "Ready"
 			paper_roll.save()
+
+	def update_invoice(self, pi):
+		if (len(self.charges) > 0):
+			jentry = frappe.new_doc("Journal Entry")
+			jentry.update({"voucher_type": "Journal Entry", "posting_date": nowdate(), "is_opening": "No", "remark": "Purchase Charges"})
+			for item in self.charges:
+				jentry.append("accounts", {"account": item.from_account, "credit_in_account_currency": item.amount})
+				jentry.append("accounts", {"account": item.to_account, "debit_in_account_currency": item.amount})
+			jentry.submit()
+			print("Sumitted journal entry {0}".format(jentry.name))
+			self.charge_entry = jentry.name
+
+		self.purchase_invoice = pi.name
+		self.save()
+		#Update the cost only after setting the invoice
+		self.update_roll_cost()
 
 	def get_purchase_weight(self):
 		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
@@ -144,8 +154,8 @@ class CMPaperRollRegister(Document):
 		self.register_rolls()
 
 	def on_update_after_submit(self):
-		self.update_roll_cost()
-		
+		pass
+
 	def on_trash(self):
 		for roll in self.paper_rolls:
 			roll_name = "{0}-RL-{1}".format(roll.paper, roll.number)
@@ -191,8 +201,4 @@ def update_invoice(pi, method):
 	if (roll_receipt == None):
 		print("Failed to find the roll receipt for invoice {0}".format(pi.name))
 		return
-
-	roll_receipt.purchase_invoice = pi.name
-	roll_receipt.save()
-
-	roll_receipt.update_roll_cost()
+	roll_receipt.update_invoice(pi)
