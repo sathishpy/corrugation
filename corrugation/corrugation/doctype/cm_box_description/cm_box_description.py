@@ -184,12 +184,12 @@ class CMBoxDescription(Document):
 
 	def get_production_cost(self):
 		layer_factor = (int(self.item_ply_count) - 1)/2
-		item_per_sheet = float(self.item_per_sheet / layer_factor)
+		item_per_sheet = float(self.item_per_sheet) / layer_factor
 		board_unit = float(self.sheet_width * self.sheet_length)/10000
 		box_unit = float(self.item_length * self.item_width * self.item_height)/7000
 		if (self.sheet_length > 175):
 			board_unit = float(board_unit/2)
-			item_per_sheet = item_per_sheet/2
+			item_per_sheet = float(item_per_sheet)/2
 		corrugation_cost = board_unit * 0.40/item_per_sheet
 		pasting_cost = board_unit * 0.30/item_per_sheet
 		printing_cost = 0

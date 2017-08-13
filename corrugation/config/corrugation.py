@@ -115,7 +115,12 @@ def get_data():
 				},
 				{
 					"type": "doctype",
-					"name": "CM Paper management Tool",
+					"name": "CM Box Profit Management",
+					"label": _("Box Profit Management"),
+				},
+				{
+					"type": "doctype",
+					"name": "CM Paper Management",
 					"label": _("Paper Management"),
 				},
 			]

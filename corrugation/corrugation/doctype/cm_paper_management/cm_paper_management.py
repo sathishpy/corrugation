@@ -8,10 +8,32 @@ from frappe.model.document import Document
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_paper_attributes
 from erpnext.controllers.item_variant import create_variant
 from erpnext.controllers.item_variant import get_variant
+from operator import itemgetter
 
-class CMPaperManagementTool(Document):
+class CMPaperManagement(Document):
 	def autoname(self):
 		self.name = "Paper Management"
+
+	def map_paper_to_boxes(self):
+		boxes = frappe.db.sql("""select box.name, bom.name from `tabCM Box` box left join `tabCM Box Description` bom on bom.box = box.name""")
+		paper_box_map = {}
+		for (box, box_desc) in boxes:
+			box_desc = frappe.get_doc("CM Box Description", box_desc)
+			for paper in box_desc.item_papers:
+				if (paper_box_map.get(paper.rm) is None):
+					paper_box_map[paper.rm] = set([box])
+				else:
+					paper_box_map[paper.rm].add(box)
+
+		sorted_papers = sorted(paper_box_map.keys(), key=lambda item: len(paper_box_map[item]))
+		for paper in sorted_papers:
+			boxes = paper_box_map[paper]
+			paper_item = frappe.new_doc("CM PaperToBox Item")
+			paper_item.paper = paper
+			paper_item.box_count = len(boxes)
+			paper_item.boxes = ", ".join(boxes)
+			self.append("paper_to_boxes", paper_item)
+
 	def update_paper_rate(self):
 		for rate_item in self.paper_rates:
 			from_gsm = int(rate_item.gsm.strip().split("-")[0])
