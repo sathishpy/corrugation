@@ -113,6 +113,11 @@ def get_data():
 					"name": "CM Data Import Tool",
 					"label": _("Import Data"),
 				},
+				{
+					"type": "doctype",
+					"name": "CM Paper management Tool",
+					"label": _("Paper Management"),
+				},
 			]
 		},
 		{

@@ -13,7 +13,7 @@ from corrugation.corrugation.roll_selection import select_rolls_for_box
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_planned_paper_quantity
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boards_for_box
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boxes_from_board
-from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_paper_measurements
+from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_paper_attributes
 from frappe import _
 import copy
 
@@ -303,7 +303,7 @@ def filter_rolls_for_sheet(rolls, length, width):
 	filtered_rolls = []
 	for (roll, weight) in rolls:
 		paper = frappe.db.get_value("CM Paper Roll", roll, "paper")
-		(gsm, bf, deck) = get_paper_measurements(paper)
+		(color, bf, gsm, deck) = get_paper_attributes(paper)
 		if ((deck > length and deck < (length + 10)) or (deck > width and deck < (width + 10))):
 			filtered_rolls.append((roll, weight))
 	return filtered_rolls

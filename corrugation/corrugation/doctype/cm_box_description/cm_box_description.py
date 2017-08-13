@@ -113,7 +113,7 @@ class CMBoxDescription(Document):
 
 	def get_paper_weight(self, paper, rm_type):
 		if paper is None: return 0
-		(gsm, bf, deck) = get_paper_measurements(paper)
+		(color, bf, gsm, deck) = get_paper_attributes(paper)
 		weight = float((self.sheet_length * deck) * gsm/1000)/10000
 		if ("Flute" in rm_type):
 			weight = float(weight * self.item_flute)
@@ -122,7 +122,7 @@ class CMBoxDescription(Document):
 
 	def get_box_layer_weight(self, paper, rm_type):
 		if paper is None: return 0
-		(gsm, bf, deck) = get_paper_measurements(paper)
+		(color, bf, gsm, deck) = get_paper_attributes(paper)
 		box_length = self.sheet_length - (2 * self.item_cutting_margin)
 		box_width = self.sheet_width - (2 * self.item_cutting_margin)
 		weight = float((box_length * box_width) * gsm/1000)/10000
@@ -300,8 +300,8 @@ class CMBoxDescription(Document):
 		self.save(ignore_permissions=True)
 
 @frappe.whitelist()
-def get_paper_measurements(paper):
-	(gsm, bf, deck) = (0, 0, 0)
+def get_paper_attributes(paper):
+	(color, bf, gsm, deck) = (None, 0, 0, 0)
 	item = frappe.get_doc("Item", paper)
 	for attribute in item.attributes:
 		if attribute.attribute == "GSM":
@@ -310,7 +310,9 @@ def get_paper_measurements(paper):
 			bf = int(attribute.attribute_value)
 		elif attribute.attribute == "Deck":
 			deck = float(attribute.attribute_value)
-	return (gsm, bf, deck)
+		elif attribute.attribute == "Colour":
+			color = attribute.attribute_value
+	return (color, bf, gsm, deck)
 
 @frappe.whitelist()
 def get_item_rate(item_name, exclude_tax=True):
