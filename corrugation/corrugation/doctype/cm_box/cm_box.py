@@ -41,6 +41,9 @@ class CMBox(Document):
 		item.item_group = "Products"
 		item.is_purchase_item = False
 		item.default_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})
+		if (self.box_type == "Top Plate"):
+			item.stock_uom = "Kg"
+			self.box_ply_count = 1
 		item.save(ignore_permissions=True)
 		self.box_item = item.name
 

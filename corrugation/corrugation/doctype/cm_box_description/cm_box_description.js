@@ -124,9 +124,6 @@ frappe.ui.form.on('CM Box Description', {
 	scrap_ratio : function(frm) {
 		frm.events.update_cost(frm);
 	},
-	update_sheet_values : function(frm) {
-		frm.events.invoke_doc_function(frm, "update_sheet_values")
-	},
 });
 frappe.ui.form.on("CM Paper Item", "rm", function(frm, cdt, cdn) {
 	row = locals[cdt][cdn]

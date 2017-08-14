@@ -48,7 +48,6 @@ class CMBoxDescription(Document):
 		else:
 			frappe.throw("Box Type {0} isn;t supported yet".format(box_type))
 		print("Sheet length and width for {0} boxes is {1}-{2}".format(self.item_per_sheet, self.sheet_length, self.sheet_width))
-		self.update_cost()
 
 	def populate_paper_materials(self, quality = 0):
 		self.item_papers = []
@@ -187,6 +186,8 @@ class CMBoxDescription(Document):
 
 		#Assume about 70% of GUM/Ink will be dried/wasted
 		self.item_weight = paper_weight + misc_weight * 0.3
+		if (frappe.db.get_value("CM Box", self.box, "box_type") == "Top Plate"):
+			self.item_paper_cost = self.item_paper_cost/self.item_weight
 		print("Paper cost={0} Misc cost={1} items={2}".format(self.item_paper_cost, self.item_misc_cost, self.item_per_sheet))
 		if (self.item_paper_cost == 0): return
 
@@ -200,6 +201,8 @@ class CMBoxDescription(Document):
 		self.item_profit = float(self.item_profit_amount*100/self.item_total_cost)
 
 	def get_production_cost(self):
+		if (frappe.db.get_value("CM Box", self.box, "box_type") == "Top Plate"): return 1
+
 		layer_factor = (int(self.item_ply_count) - 1)/2
 		item_per_sheet = float(self.item_per_sheet) / layer_factor
 		board_unit = float(self.sheet_width * self.sheet_length)/10000
