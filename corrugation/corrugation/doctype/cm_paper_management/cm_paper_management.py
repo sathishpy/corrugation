@@ -15,6 +15,7 @@ class CMPaperManagement(Document):
 		self.name = "Paper Management"
 
 	def map_paper_to_boxes(self):
+		self.paper_to_boxes = []
 		boxes = frappe.db.sql("""select box.name, bom.name from `tabCM Box` box left join `tabCM Box Description` bom on bom.box = box.name""")
 		paper_box_map = {}
 		for (box, box_desc) in boxes:
@@ -32,6 +33,7 @@ class CMPaperManagement(Document):
 			paper_item.paper = paper
 			paper_item.box_count = len(boxes)
 			paper_item.boxes = ", ".join(boxes)
+			paper_item.box_desc = frappe.db.get_value("CM Box Description", filters={"box": next(iter(boxes))})
 			self.append("paper_to_boxes", paper_item)
 
 	def update_paper_rate(self):
