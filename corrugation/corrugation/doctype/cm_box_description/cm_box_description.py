@@ -76,7 +76,7 @@ class CMBoxDescription(Document):
 			items.append("Printing Ink")
 		box_type = frappe.db.get_value("CM Box", self.box, "box_type")
 		if ("Plate" not in box_type):
-			if ("Glue" in self.joint_type): items.append("Glue")
+			if (not self.item_stitched): items.append("Glue")
 			else: items.append("Stitching Coil")
 
 		for rm_type in items:
@@ -207,13 +207,15 @@ class CMBoxDescription(Document):
 		if (self.sheet_length > 175):
 			board_unit = float(board_unit/2)
 			item_per_sheet = float(item_per_sheet)/2
-		corrugation_cost = board_unit * 0.40/item_per_sheet
-		pasting_cost = board_unit * 0.30/item_per_sheet
+		corrugation_cost = (0.30 + board_unit * 0.10)/item_per_sheet
+		pasting_cost = (0.20 + board_unit * 0.10)/item_per_sheet
 		printing_cost = 0
 		box_top_type = frappe.db.get_value("CM Box", self.box, "box_top_type")
 		if ("Print" in box_top_type):
-			printing_cost = board_unit * 0.25/(item_per_sheet * layer_factor)
-		punching_cost = board_unit * 0.25/(item_per_sheet * layer_factor)
+			printing_cost = (0.15 + board_unit * 0.10)/(item_per_sheet * layer_factor)
+		punching_cost = (0.15 + board_unit * 0.10)/(item_per_sheet * layer_factor)
+		if (self.item_is_slotted):
+			punching_cost = (0.20 + board_unit * 0.15)/(item_per_sheet * layer_factor)
 		glue_cost = 0.10 + box_unit * 0.05
 		other_cost = 0.25 + box_unit * 0.10
 		total_cost = corrugation_cost + pasting_cost + printing_cost + punching_cost + glue_cost + other_cost

@@ -97,6 +97,12 @@ frappe.ui.form.on('CM Box Description', {
 	item_flute : function(frm) {
 		frm.events.update_cost(frm);
 	},
+	item_is_slotted : function(frm) {
+		frm.events.update_cost(frm);
+	},
+	item_stitched : function(frm) {
+		frm.events.invoke_doc_function(frm, "populate_misc_materials")
+	},
 	item_prod_cost : function(frm) {
 		frm.events.update_cost(frm);
 	},
