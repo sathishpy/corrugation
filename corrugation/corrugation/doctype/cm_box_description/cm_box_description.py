@@ -15,7 +15,7 @@ class CMBoxDescription(Document):
 			idx = 1
 		self.name = self.item + "-DESC" + ('-%.3i' % idx)
 
-	def add_paper_item(self, layer):
+	def add_paper_item(self, layer, quality = 0):
 		colour = "Brown"
 		if "White" in self.item_top_type and layer == "Top":
 			colour = 'White'
@@ -23,10 +23,9 @@ class CMBoxDescription(Document):
 		rm_item = frappe.new_doc("CM Paper Item")
 		rm_item.rm_type = layer
 		papers = get_layer_papers(layer, self.sheet_length, self.sheet_width, colour, "", self.stock_based)
-		if (len(papers) > 0):
-			print "Assigning paper {0} for {1}".format(papers[0], layer)
-			paper, deck = papers[0]
-			rm_item.rm = paper
+		paper = get_suitable_paper(papers, quality)
+		print ("Selected paper {0} for {1}".format(paper, layer))
+		rm_item.rm = paper
 		self.append("item_papers", rm_item)
 
 	def update_sheet_values(self):
@@ -51,13 +50,15 @@ class CMBoxDescription(Document):
 		print("Sheet length and width for {0} boxes is {1}-{2}".format(self.item_per_sheet, self.sheet_length, self.sheet_width))
 		self.update_cost()
 
-	def populate_paper_materials(self):
+	def populate_paper_materials(self, quality = 0):
+		self.item_papers = []
 		count = 1
-		self.add_paper_item("Top")
+		self.add_paper_item("Top", quality)
 		while count < int(self.item_ply_count):
-			self.add_paper_item("Flute")
-			self.add_paper_item("Liner")
+			self.add_paper_item("Flute", quality)
+			self.add_paper_item("Liner", quality)
 			count += 2
+		self.update_rate_and_cost()
 
 	def update_misc_items(self):
 		misc_items = {"Corrugation Gum": ("CRG-GUM", 2), "Pasting Gum": ("PST-GUM", 3), "Glue": ("GLU-GUM", 0.2), "Printing Ink": ("INK-BLUE", 0.3), "Stitching Coil": ("STCH-COIL", 0.2)}
@@ -97,6 +98,22 @@ class CMBoxDescription(Document):
 			self.populate_misc_materials()
 
 		self.update_rate_and_cost()
+		self.adjust_paper_to_maintain_profit()
+
+	def adjust_paper_to_maintain_profit(self):
+		for counter in range(1, 3):
+			saved_papers = self.item_papers
+			profit = self.item_profit
+			profit_aligned = True
+			if (profit < 10):
+				self.populate_paper_materials(-counter)
+				if (self.item_profit < profit or self.item_profit > 10): profit_aligned = False
+			elif (profit > 20):
+				self.populate_paper_materials(counter)
+				if (self.item_profit > profit or self.item_profit < 15): profit_aligned = False
+			if (not profit_aligned):
+				self.item_papers = saved_papers
+				break
 
 	def validate(self):
 		if (int(self.item_ply_count) != len(self.item_papers)):
@@ -195,10 +212,10 @@ class CMBoxDescription(Document):
 		printing_cost = 0
 		box_top_type = frappe.db.get_value("CM Box", self.box, "box_top_type")
 		if ("Print" in box_top_type):
-			printing_cost = board_unit * 0.25/item_per_sheet
-		punching_cost = board_unit * 0.25/item_per_sheet
-		glue_cost = box_unit * 0.15
-		other_cost = box_unit * 0.30
+			printing_cost = board_unit * 0.25/(item_per_sheet * layer_factor)
+		punching_cost = board_unit * 0.25/(item_per_sheet * layer_factor)
+		glue_cost = 0.10 + box_unit * 0.05
+		other_cost = 0.25 + box_unit * 0.10
 		total_cost = corrugation_cost + pasting_cost + printing_cost + punching_cost + glue_cost + other_cost
 		print("Prod Cost: crg={0} pst={1} prt={2} punch={3} glue={4} misc={5} unit={6}/{7}/{8}"
 				.format(corrugation_cost, pasting_cost, printing_cost, punching_cost, glue_cost, other_cost, item_per_sheet, board_unit, box_unit))
@@ -396,9 +413,9 @@ def filter_papers(doctype, txt, searchfield, start, page_len, filters):
 
 def get_layer_papers(layer_type, sheet_length, sheet_width, colour, txt, stock_based):
 	deck_query = "(attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_width, sheet_width+10)
-	if (layer_type == "Top"):
+	#if (layer_type == "Top"):
 		#Flute direction doesn't matter for top cuttings
-		deck_query += "or (attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_length, sheet_length+10)
+		#deck_query += "or (attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_length, sheet_length+10)
 
 	filter_query =	"""select item.name, attr.attribute_value
 						from tabItem item left join `tabItem Variant Attribute` attr
@@ -428,3 +445,21 @@ def filter_papers_based_on_stock(papers):
 		if (len(rolls) > 0):
 			stock_based_papers.append((paper, deck))
 	return stock_based_papers
+
+def get_suitable_paper(papers, quality):
+	if (len(papers) == 0): return
+	(suitable_paper, deck) = papers[0]
+	(clr, last_bf, last_gsm, deck) = get_paper_attributes(suitable_paper)
+	for (paper, deck) in papers[1:]:
+		(clr, bf, gsm, deck) = get_paper_attributes(paper)
+		#print ("Checking paper {0} at quality {1}".format(paper, quality))
+		if (quality < 0 and (bf < last_bf or gsm < last_gsm)):
+			quality += 1
+			suitable_paper = paper
+		if (quality > 0 and (bf > last_bf or gsm > last_gsm)):
+			quality -= 1
+			suitable_paper = paper
+		if (quality == 0):
+			break
+		last_bf, last_gsm = bf, gsm
+	return suitable_paper

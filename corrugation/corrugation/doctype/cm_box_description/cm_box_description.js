@@ -86,13 +86,13 @@ frappe.ui.form.on('CM Box Description', {
 		frm.events.invoke_doc_function(frm, "update_cost")
 	},
 	item_pin_lap : function(frm, cdt, cdn) {
-		frm.events.update_sheet_values(frm)
+		frm.events.invoke_doc_function(frm, "populate_raw_materials")
 	},
 	item_cutting_margin : function(frm, cdt, cdn) {
-		frm.events.update_sheet_values(frm)
+		frm.events.invoke_doc_function(frm, "populate_raw_materials")
 	},
 	item_per_sheet : function(frm, cdt, cdn) {
-		frm.events.update_sheet_values(frm)
+		frm.events.invoke_doc_function(frm, "populate_raw_materials")
 	},
 	item_flute : function(frm) {
 		frm.events.update_cost(frm);
