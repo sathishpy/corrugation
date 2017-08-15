@@ -140,37 +140,48 @@ class CMProductionOrder(Document):
 	def get_planned_paper_qty(self, rm_type, paper):
 		return get_planned_paper_quantity(self.box_desc, rm_type, paper, self.mfg_qty)
 
-	def update_production_cost(self):
+	def before_submit(self):
 		self.planned_rm_cost = frappe.db.get_value("CM Box Description", self.box_desc, "item_paper_cost")
 		self.planned_rm_cost += frappe.db.get_value("CM Box Description", self.box_desc, "item_misc_cost")
 		self.act_rm_cost = 0
+		self.crg_orders = []
 		for board_item in self.paper_boards:
 			corr_orders = frappe.db.sql("""select name from `tabCM Corrugation Order`
 											where board_name='{0}' and stock_qty > 0 and docstatus != 2""".format(board_item.layer), as_dict=1)
 			print("Corrugation orders for layer {0} are {1}".format(board_item.layer, len(corr_orders)))
-			updated_qty = 0
+			needed_qty = board_item.used_qty
 			board_cost = 0
 			for crg_order in corr_orders:
 				order = frappe.get_doc("CM Corrugation Order", crg_order.name)
-				updated_qty += order.stock_qty
-				saved_stock_qty = order.stock_qty
-				order.stock_qty = max(0, order.stock_qty - board_item.used_qty)
-				order.save()
-				board_cost += (saved_stock_qty - order.stock_qty) * order.get_paper_cost_per_board()
-				print("Cost of {0} boards {1} is {2}".format((saved_stock_qty - order.stock_qty), board_item.layer, board_cost))
-			 	if updated_qty >= board_item.used_qty:
+				remaining_in_order = max(0, order.stock_qty - needed_qty)
+				used_qty = order.stock_qty - remaining_in_order
+				needed_qty = needed_qty - used_qty
+
+				order_item = frappe.new_doc("CM Corrugation Board Item")
+				order_item.crg_order = crg_order.name
+				order_item.board_count = used_qty
+				self.append("crg_orders", order_item)
+				board_cost += used_qty * order.get_paper_cost_per_board()
+				print("Cost of {0} boards {1} is {2}".format(used_qty, board_item.layer, board_cost))
+			 	if needed_qty <= 0:
 					break
 			self.act_rm_cost += (board_cost/self.mfg_qty)
 		self.act_rm_cost += frappe.db.get_value("CM Box Description", self.box_desc, "item_misc_cost")
 		profit = frappe.db.get_value("CM Box Description", self.box_desc, "item_profit_amount")
 		self.profit = profit + self.planned_rm_cost - self.act_rm_cost
 
+	def update_used_corrugated_boards(self):
+		for crg_order in self.crg_orders:
+			order = frappe.get_doc("CM Corrugation Order", crg_order.crg_order)
+			order.stock_qty = order.stock_qty - crg_order.board_count
+			order.save()
+
 	def on_submit(self):
 		check_material_availability(self)
 		submit_sales_order(self.sales_order)
 		submit_production_order(self)
 		create_new_stock_entry(self)
-		self.update_production_cost()
+		self.update_used_corrugated_boards()
 
 def submit_production_order(cm_po):
 	po = frappe.new_doc("Production Order")

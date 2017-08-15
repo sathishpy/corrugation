@@ -48,6 +48,10 @@ class CMBoxDescription(Document):
 		else:
 			frappe.throw("Box Type {0} isn;t supported yet".format(box_type))
 		print("Sheet length and width for {0} boxes is {1}-{2}".format(self.item_per_sheet, self.sheet_length, self.sheet_width))
+		#not really sheet related
+		if (self.item_ply_count > 3):
+			self.item_flute = 1.3
+			self.scrap_ratio = 0.5
 
 	def populate_paper_materials(self, quality = 0):
 		self.item_papers = []

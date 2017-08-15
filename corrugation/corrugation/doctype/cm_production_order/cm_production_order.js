@@ -16,6 +16,10 @@ frappe.ui.form.on('CM Production Order', {
 				{fieldname: 'stock_qty', columns: 2},
 				{fieldname: 'used_qty', columns: 2},
 			];
+		frm.get_field('crg_orders').grid.editable_fields = [
+			  {fieldname: 'crg_order', columns: 6},
+				{fieldname: 'board_count', columns: 4},
+			];
 		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
 			return {
 				filters:[
