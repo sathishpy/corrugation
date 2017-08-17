@@ -57,9 +57,14 @@ class CMPaperRollRegister(Document):
 		item_rates = {}
 		std_cost = taxes = charges = 0
 
-		std_cost = (bill_doc.total - bill_doc.discount_amount)
+		for item in bill_doc.items:
+			if frappe.db.get_value("Item", item.item_code, "item_group") != "Services": continue
+			charges += item.amount
+
+		std_cost = (bill_doc.total - charges - bill_doc.discount_amount)
 		if (self.purchase_invoice):
 			 std_cost = std_cost - bill_doc.write_off_amount
+
 		for item in bill_doc.taxes:
 			account_type = frappe.db.get_value("Account", item.account_head, "account_type")
 			if (account_type == "Tax"):
@@ -72,7 +77,8 @@ class CMPaperRollRegister(Document):
 
 		print("Rate for {0}: Basic={1} Tax={2} Charges={3}".format(bill_doc.name, std_cost, taxes, charges))
 		for item in bill_doc.items:
-			unit_share = float(item.amount/bill_doc.total)/item.qty
+			if frappe.db.get_value("Item", item.item_code, "item_group") == "Services": continue
+			unit_share = float(item.amount/std_cost)/item.qty
 			item_rates[item.item_name] = (round(std_cost * unit_share, 3), round(taxes * unit_share, 3), round(charges * unit_share, 3))
 			print ("Item {0}:{1}".format(item.item_name, item_rates[item.item_name]))
 		return item_rates
@@ -146,6 +152,13 @@ class CMPaperRollRegister(Document):
 			weight += roll.weight
 		return weight
 
+	def on_validate(self):
+		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
+		items = [item.item_code for item in receipt.items]
+		for roll in self.paper_rolls:
+			if roll.paper not in items:
+				frappe.throw("Paper {0} from roll {1} is not present in purchase receipt".format(roll.paper, roll.number))
+
 	def on_submit(self):
 		roll_weight = self.get_roll_weight()
 		purchase_weight = self.get_purchase_weight()
@@ -186,10 +199,12 @@ def find_roll_receipt_matching_invoice(pi):
 		roll_reg = frappe.get_doc("CM Paper Roll Register", receipt)
 		pr = frappe.get_doc("Purchase Receipt", roll_reg.purchase_receipt)
 		if (pi.supplier != pr.supplier): continue
-		if (len(pr.items) != len(pi.items)): continue
+		pr_items = [item for item in pr.items if (frappe.db.get_value("Item", item.item_code, "item_group") == "Paper")]
+		pi_items = [item for item in pi.items if (frappe.db.get_value("Item", item.item_code, "item_group") == "Paper")]
+		if (len(pr_items) != len(pi_items)): continue
 		match = True
-		for idx in range(0, len(pi.items)):
-			if (pi.items[idx].item_code != pr.items[idx].item_code or pi.items[idx].qty != pr.items[idx].qty):
+		for idx in range(0, len(pi_items)):
+			if (pi_items[idx].item_code != pr_items[idx].item_code or pi_items[idx].qty != pr_items[idx].qty):
 				match = False
 				break
 		if (match): return roll_reg
