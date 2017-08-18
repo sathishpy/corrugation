@@ -147,14 +147,14 @@ class CMProductionOrder(Document):
 		self.crg_orders = []
 		for board_item in self.paper_boards:
 			corr_orders = frappe.db.sql("""select name from `tabCM Corrugation Order`
-											where board_name='{0}' and stock_qty > 0 and docstatus != 2""".format(board_item.layer), as_dict=1)
+											where board_name='{0}' and stock_batch_qty > 0 and docstatus != 2""".format(board_item.layer), as_dict=1)
 			print("Corrugation orders for layer {0} are {1}".format(board_item.layer, len(corr_orders)))
 			needed_qty = board_item.used_qty
 			board_cost = 0
 			for crg_order in corr_orders:
 				order = frappe.get_doc("CM Corrugation Order", crg_order.name)
-				remaining_in_order = max(0, order.stock_qty - needed_qty)
-				used_qty = order.stock_qty - remaining_in_order
+				remaining_in_order = max(0, order.stock_batch_qty - needed_qty)
+				used_qty = order.stock_batch_qty - remaining_in_order
 				needed_qty = needed_qty - used_qty
 
 				order_item = frappe.new_doc("CM Corrugation Board Item")
@@ -173,7 +173,7 @@ class CMProductionOrder(Document):
 	def update_used_corrugated_boards(self):
 		for crg_order in self.crg_orders:
 			order = frappe.get_doc("CM Corrugation Order", crg_order.crg_order)
-			order.stock_qty = order.stock_qty - crg_order.board_count
+			order.stock_batch_qty = order.stock_batch_qty - crg_order.board_count
 			order.save()
 
 	def on_submit(self):

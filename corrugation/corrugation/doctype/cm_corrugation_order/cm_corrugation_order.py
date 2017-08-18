@@ -14,6 +14,7 @@ from corrugation.corrugation.doctype.cm_box_description.cm_box_description impor
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boards_for_box
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_no_of_boxes_from_board
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_paper_attributes
+from erpnext.stock.utils import get_latest_stock_qty
 from frappe import _
 import copy
 
@@ -35,7 +36,8 @@ class CMCorrugationOrder(Document):
 		items_produced = frappe.db.count("CM Corrugation Order", filters={"layer_type": self.layer_type, "sales_order": self.sales_order})
 		print ("Number of productions is {0}".format(items_produced))
 		if (items_produced >= len(order_items)):
-			frappe.throw("All the {0} boards for sales order {1} items are already produced".format(self.layer_type, self.sales_order))
+			print("All the {0} boards for sales order {1} items are already produced".format(self.layer_type, self.sales_order))
+			items_produced = 0
 		selected_item = order_items[items_produced]
 		self.box = selected_item.item_code
 		self.order_qty = selected_item.qty
@@ -135,9 +137,12 @@ class CMCorrugationOrder(Document):
 		papers = [(roll.rm_type, roll.paper_roll) for roll in self.paper_rolls]
 		self.board_name = box_details.get_board_name_from_papers(self.layer_type, papers)
 		box_details.create_board_item(self.board_name)
+		self.stock_qty = get_latest_stock_qty(self.board_name)
 
 	def before_submit(self):
-		self.stock_qty = self.mfg_qty
+		self.stock_batch_qty = self.mfg_qty
+		self.stock_qty += self.mfg_qty
+
 		layers = []
 		exclude_tax = frappe.db.get_value("CM Box Description", self.box_desc, "exclude_tax")
 		for roll in self.paper_rolls:
