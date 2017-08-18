@@ -20,7 +20,7 @@ def get_data():
 			"link": "List/CM Corrugation Order"
 		},
 		{
-			"module_name": "Production Order",
+			"module_name": "Box Production Order",
 			"_doctype": "CM Production Order",
 			"color": "brown",
 			"icon": "octicon octicon-tools",
