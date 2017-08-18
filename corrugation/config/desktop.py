@@ -12,22 +12,6 @@ def get_data():
 			"label": _("Corrugation")
 		},
 		{
-			"module_name": "Purchase Order",
-			"_doctype": "Purchase Order",
-			"color": "#c0392b",
-			"icon": "octicon octicon-briefcase",
-			"type": "link",
-			"link": "List/Purchase Order"
-		},
-		{
-			"module_name": "Sales Order",
-			"_doctype": "Sales Order",
-			"color": "#c0392b",
-			"icon": "octicon octicon-briefcase",
-			"type": "link",
-			"link": "List/Sales Order"
-		},
-		{
 			"module_name": "Corrugation Order",
 			"_doctype": "CM Corrugation Order",
 			"color": "brown",
