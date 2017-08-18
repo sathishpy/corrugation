@@ -34,14 +34,19 @@ class CMCorrugationOrder(Document):
 			frappe.throw("Can't find any boxes to manufacture in Sales Order")
 
 		items_produced = frappe.db.count("CM Corrugation Order", filters={"layer_type": self.layer_type, "sales_order": self.sales_order})
-		print ("Number of productions is {0}".format(items_produced))
 		if (items_produced >= len(order_items)):
 			print("All the {0} boards for sales order {1} items are already produced".format(self.layer_type, self.sales_order))
 			items_produced = 0
 		selected_item = order_items[items_produced]
 		self.box = selected_item.item_code
-		self.order_qty = selected_item.qty
+		self.populate_item_prod_info()
 
+	def populate_item_prod_info(self):
+		order_items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
+											where parent='{0}' and item_code='{1}'""".format(self.sales_order, self.box))
+		if (order_items is None):
+			frappe.throw("Unable to find box {0} in the sales order".format(self.box))
+		(temp, self.order_qty) = order_items[0]
 		box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
 		if (box_boms is None or len(box_boms) == 0):
 			frappe.throw("Failed to find the Box Description for {0}".format(self.box))
@@ -53,7 +58,10 @@ class CMCorrugationOrder(Document):
 			frappe.throw("Box Description {0} is not verified and submitted".format(self.box_desc))
 
 		self.update_board_count()
-		return order_items
+		try:
+			self.populate_rolls()
+		except:
+			pass
 
 	def update_board_count(self):
 		self.mfg_qty = get_no_of_boards_for_box(self.box_desc, self.layer_type, self.order_qty)
@@ -142,7 +150,6 @@ class CMCorrugationOrder(Document):
 	def before_submit(self):
 		self.stock_batch_qty = self.mfg_qty
 		self.stock_qty += self.mfg_qty
-
 		layers = []
 		exclude_tax = frappe.db.get_value("CM Box Description", self.box_desc, "exclude_tax")
 		for roll in self.paper_rolls:
@@ -309,6 +316,13 @@ def filter_rolls_for_sheet(rolls, length, width):
 	for (roll, weight) in rolls:
 		paper = frappe.db.get_value("CM Paper Roll", roll, "paper")
 		(color, bf, gsm, deck) = get_paper_attributes(paper)
-		if ((deck > length and deck < (length + 10)) or (deck > width and deck < (width + 10))):
+		if ((deck >= length and deck <= (length + 10)) or (deck >= width and deck <= (width + 10))):
 			filtered_rolls.append((roll, weight))
 	return filtered_rolls
+
+@frappe.whitelist()
+def get_sales_order_items(doctype, txt, searchfield, start, page_len, filters):
+	sales_order = filters["sales_order"]
+	filter_query = """select item_code, qty from `tabSales Order Item`
+							where parent='{0}'""".format(sales_order)
+	return frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})

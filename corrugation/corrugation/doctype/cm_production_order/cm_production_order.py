@@ -30,11 +30,17 @@ class CMProductionOrder(Document):
 		if (len(order_items) > 0):
 			selected_item = order_items[0]
 			self.box = selected_item.item_code
+			self.populate_item_prod_info()
+
+	def populate_item_prod_info(self):
+		order_items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
+										where parent='{0}' and item_code='{1}'""".format(self.sales_order, self.box), as_dict=1);
+		if (len(order_items) > 0):
+			selected_item = order_items[0]
 			self.order_qty = self.mfg_qty = selected_item.qty
 			self.stock_qty = get_latest_stock_qty(self.box)
 			box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
 			self.box_desc = box_boms[0].name
-		return order_items
 
 	def update_box_roll_qty(self):
 		if (self.box_desc is None): return

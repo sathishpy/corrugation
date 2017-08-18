@@ -10,14 +10,9 @@ frappe.ui.form.on('CM Corrugation Order', {
 				{fieldname: 'est_weight', columns: 1},
 				{fieldname: 'final_weight', columns: 2}
 			];
-		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
-			return {
-				filters:[
-					["Sales Order", "status", "in", ["Draft", "To Deliver and Bill"]]
-				]
-			}
-		};
+		frm.events.set_sales_order_filter(frm)
 		frm.events.set_box_filter(frm)
+		frm.events.set_box_desc_filter(frm)
 		frm.events.set_roll_filter(frm)
 	},
 
@@ -28,7 +23,40 @@ frappe.ui.form.on('CM Corrugation Order', {
 		frm.toggle_display("ignore_bom", frm.doc.ignore_bom)
 	},
 
+	invoke_function(frm, method) {
+		frappe.call({
+			doc: frm.doc,
+			method: method,
+			callback: function(r) {
+				if(!r.exe) {
+					frm.refresh_fields()
+				}
+			}
+		});
+	},
+
+	set_sales_order_filter: function(frm) {
+		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
+			return {
+				filters:[
+					["Sales Order", "status", "in", ["Draft", "To Deliver and Bill"]]
+				]
+			}
+		};
+	},
+
 	set_box_filter: function(frm) {
+		frm.set_query("box", function(doc) {
+			return {
+				query: "corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order.get_sales_order_items",
+				filters: {
+								"sales_order": doc.sales_order,
+							},
+			};
+		});
+	},
+
+	set_box_desc_filter: function(frm) {
 		frm.set_query("box_desc", function(doc) {
 			if (doc.box) {
 				return {
@@ -36,9 +64,10 @@ frappe.ui.form.on('CM Corrugation Order', {
 						['CM Box Description', 'item', '=', doc.box]
 					]
 				}
-			} else msgprint(__("Please select the Box first"));
+			} else msgprint(__("Please select the Item first"));
 		});
 	},
+
 	set_roll_filter: function(frm) {
 		frm.fields_dict.paper_rolls.grid.get_field('paper_roll').get_query = function(doc, cdt, cdn) {
 			row = locals[cdt][cdn]
@@ -52,6 +81,7 @@ frappe.ui.form.on('CM Corrugation Order', {
 			};
 		}
 	},
+
 	refresh: function(frm) {
 		if (frm.doc.docstatus == 1) {
 			frm.add_custom_button(__('Make Other Layer'), function() {
@@ -59,28 +89,15 @@ frappe.ui.form.on('CM Corrugation Order', {
 			});
 		}
 	},
+
 	sales_order: function(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: "populate_order_items",
-			callback: function(r) {
-				if(!r.exe) {
-					frm.refresh_fields()
-					frm.events.mfg_qty(frm)
-				}
-			}
-		});
+		frm.events.invoke_function(frm, "populate_order_items")
+	},
+	box: function(frm) {
+		frm.events.invoke_function(frm, "populate_item_prod_info")
 	},
 	mfg_qty: function(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: "populate_rolls",
-			callback: function(r) {
-				if(!r.exe) {
-					frm.refresh_fields()
-				}
-			}
-		});
+		frm.events.invoke_function(frm, "populate_rolls")
 	},
 	manual_entry: function(frm) {
 		frm.toggle_display("ignore_bom", frm.doc.manual_entry)
@@ -93,15 +110,7 @@ frappe.ui.form.on('CM Corrugation Order', {
 		}
 	},
 	layer_type: function(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: "update_layer",
-			callback: function(r) {
-				if(!r.exe) {
-					frm.refresh_fields()
-				}
-			}
-		});
+		frm.events.invoke_function(frm, "update_layer")
 	},
 	make_other_layer: function(frm) {
 		frappe.model.open_mapped_doc({

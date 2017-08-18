@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from operator import itemgetter
+from corrugation.corrugation.roll_selection import get_box_production_capacity
 
 class CMBoxManagement(Document):
 	def autoname(self):
@@ -54,11 +55,12 @@ class CMBoxManagement(Document):
 			box_item = frappe.new_doc("CM Box Capacity Item")
 			box_item.box = box_name
 			box_item.box_desc = box_desc
-			box_desc = frappe.get_doc("CM Box Description", box_item.box_desc)
-			top_paper = next((paper.rm for paper in box_desc.item_papers if paper.rm_type == "Top"), None)
-			flute_paper = next((paper.rm for paper in box_desc.item_papers if paper.rm_type == "Flute"), None)
-			liner_paper = next((paper.rm for paper in box_desc.item_papers if paper.rm_type == "Liner"), None)
+			box_desc_doc = frappe.get_doc("CM Box Description", box_item.box_desc)
+			top_paper = next((paper.rm for paper in box_desc_doc.item_papers if paper.rm_type == "Top"), None)
+			flute_paper = next((paper.rm for paper in box_desc_doc.item_papers if paper.rm_type == "Flute"), None)
+			liner_paper = next((paper.rm for paper in box_desc_doc.item_papers if paper.rm_type == "Liner"), None)
 			papers = set([top_paper, flute_paper, liner_paper])
 			paper_list = [str(paper)[4:] for paper in papers]
 			box_item.papers = ", ".join(paper_list)
+			box_item.mfg_qty = get_box_production_capacity(box_desc)
 			self.append("box_capacity_items", box_item)

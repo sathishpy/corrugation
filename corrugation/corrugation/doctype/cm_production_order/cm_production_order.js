@@ -20,6 +20,13 @@ frappe.ui.form.on('CM Production Order', {
 			  {fieldname: 'crg_order', columns: 6},
 				{fieldname: 'board_count', columns: 4},
 			];
+		frm.events.set_sales_order_filter(frm)
+		frm.events.set_box_filter(frm)
+		frm.events.set_box_desc_filter(frm)
+		frm.events.set_roll_filter(frm)
+	},
+
+	set_sales_order_filter: function(frm) {
 		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
 			return {
 				filters:[
@@ -27,26 +34,16 @@ frappe.ui.form.on('CM Production Order', {
 				]
 			}
 		};
-
-		frm.events.set_box_filter(frm)
-		frm.events.set_roll_filter(frm)
 	},
-
-	onload: function(frm) {
-		frm.events.set_default_warehouse(frm);
-		frm.set_value("mfg_date", frappe.datetime.nowdate())
-	},
-
-	refresh: function(frm) {
-		frm.add_custom_button(__('Production Capacity'), function() {
-				msgprint("Implementation in progress")
-		});
-		frm.add_custom_button(__('Create Purhcase Order'), function() {
-				frm.events.make_purchase_order(frm)
-		});
-	},
-
 	set_box_filter: function(frm) {
+		frm.set_query("box", function(doc) {
+			return {
+				query: "corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order.get_sales_order_items",
+				filters: {'sales_order': doc.sales_order},
+			};
+		});
+	},
+	set_box_desc_filter: function(frm) {
 		frm.set_query("box_desc", function(doc) {
 			if (doc.box) {
 				return {
@@ -57,7 +54,6 @@ frappe.ui.form.on('CM Production Order', {
 			} else msgprint(__("Please select the Item first"));
 		});
 	},
-
 	set_roll_filter: function(frm) {
 		frm.fields_dict.paper_rolls.grid.get_field('paper_roll').get_query = function(doc, cdt, cdn) {
 			row = locals[cdt][cdn]
@@ -81,6 +77,20 @@ frappe.ui.form.on('CM Production Order', {
 								},
 			};
 		}
+	},
+
+	onload: function(frm) {
+		frm.events.set_default_warehouse(frm);
+		frm.set_value("mfg_date", frappe.datetime.nowdate())
+	},
+
+	refresh: function(frm) {
+		frm.add_custom_button(__('Production Capacity'), function() {
+				msgprint("Implementation in progress")
+		});
+		frm.add_custom_button(__('Create Purhcase Order'), function() {
+				frm.events.make_purchase_order(frm)
+		});
 	},
 
 	set_default_warehouse: function(frm) {
@@ -110,7 +120,18 @@ frappe.ui.form.on('CM Production Order', {
 			}
 		});
 	},
-
+	box: function(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: "populate_item_prod_info",
+			callback: function(r) {
+				if(!r.exe) {
+					frm.refresh_fields()
+					frm.events.box_desc(frm)
+				}
+			}
+		});
+	},
 	box_desc: function(frm) {
 		frappe.call({
 			doc: frm.doc,

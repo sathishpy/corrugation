@@ -7,6 +7,42 @@ import frappe
 from frappe.model.document import Document
 from frappe import _
 
+def select_production_rolls(box_desc, mfg_qty):
+	if (frappe.db.get_value("CM Box Description", box_desc) is None):
+		print("Failed to find the box decsription {0}".format(box_desc))
+		return None
+
+	box_details = frappe.get_doc("CM Box Description", box_desc)
+	paper_items = []
+	for paper_item in box_details.item_papers:
+		new_item = next((item for item in paper_items if item.rm == paper_item.rm and item.rm_type == paper_item.rm_type), None)
+		if (new_item != None):
+			new_item.rm_weight += float(paper_item.rm_weight * mfg_qty)
+			continue
+		new_item = frappe.new_doc("CM Paper Item")
+		new_item.rm_type = paper_item.rm_type
+		new_item.rm = paper_item.rm
+		new_item.rm_weight = float(paper_item.rm_weight * mfg_qty)
+		paper_items += [new_item]
+	try:
+		return select_rolls_for_box(paper_items)
+	except:
+		return None
+
+@frappe.whitelist()
+def get_box_production_capacity(box_desc):
+	low_capacity = 0
+	high_capacity = 50000
+	capacity = counter = 0
+	while counter < 10 and low_capacity < high_capacity:
+		capacity = (low_capacity + high_capacity)/2
+		print("Find the box capacity {0} for decsription {1}".format(capacity, box_desc))
+		rolls = select_production_rolls(box_desc, capacity)
+		if (rolls is None):	high_capacity = capacity
+		else: low_capacity = capacity
+		counter += 1
+	return capacity
+
 @frappe.whitelist()
 def select_rolls_for_box(paper_items):
 	added_rolls, available_rolls = [], []
