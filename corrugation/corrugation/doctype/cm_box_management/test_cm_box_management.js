@@ -2,15 +2,15 @@
 // rename this file from _test_[name] to test_[name] to activate
 // and remove above this line
 
-QUnit.test("test: CM Box Profit Management", function (assert) {
+QUnit.test("test: CM Box Management", function (assert) {
 	let done = assert.async();
 
 	// number of asserts
 	assert.expect(1);
 
-	frappe.run_serially('CM Box Profit Management', [
-		// insert a new CM Box Profit Management
-		() => frappe.tests.make([
+	frappe.run_serially([
+		// insert a new CM Box Management
+		() => frappe.tests.make('CM Box Management', [
 			// values to be set
 			{key: 'value'}
 		]),

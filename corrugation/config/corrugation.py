@@ -115,8 +115,8 @@ def get_data():
 				},
 				{
 					"type": "doctype",
-					"name": "CM Box Profit Management",
-					"label": _("Box Profit Management"),
+					"name": "CM Box Management",
+					"label": _("Box Management"),
 				},
 				{
 					"type": "doctype",

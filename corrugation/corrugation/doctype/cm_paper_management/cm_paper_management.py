@@ -19,6 +19,8 @@ class CMPaperManagement(Document):
 		boxes = frappe.db.sql("""select box.name, bom.name from `tabCM Box` box left join `tabCM Box Description` bom on bom.box = box.name""")
 		paper_box_map = {}
 		for (box, box_desc) in boxes:
+			if (frappe.db.get_value("CM Box Description", box_desc) is None):
+				frappe.throw("Failed to find the description {0} for box {1}".format(box_desc, box))
 			box_desc = frappe.get_doc("CM Box Description", box_desc)
 			for paper in box_desc.item_papers:
 				if (paper_box_map.get(paper.rm) is None):
