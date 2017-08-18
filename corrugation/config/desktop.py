@@ -30,18 +30,10 @@ def get_data():
 		{
 			"module_name": "Roll Entry",
 			"_doctype": "CM Paper Roll Register",
-			"color": "#f39c12",
+			"color": "#f39c11",
 			"icon": "octicon octicon-tools",
 			"type": "link",
 			"link": "List/CM Paper Roll Register"
-		},
-		{
-			"module_name": "Expense Entry",
-			"_doctype": "Journal Entry",
-			"color": "#f39c12",
-			"icon": "octicon octicon-verified",
-			"type": "link",
-			"link": "List/Journal Entry"
 		},
 		{
 			"module_name": "Rolls Report ",
@@ -50,5 +42,13 @@ def get_data():
 			"icon": "octicon octicon-database",
 			"type": "link",
 			"link": "query-report/CM Paper Roll"
+		},
+		{
+			"module_name": "Expense Entry",
+			"_doctype": "Journal Entry",
+			"color": "#f39c12",
+			"icon": "octicon octicon-book",
+			"type": "link",
+			"link": "List/Journal Entry"
 		},
 	]
