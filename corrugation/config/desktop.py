@@ -12,28 +12,59 @@ def get_data():
 			"label": _("Corrugation")
 		},
 		{
-			"module_name": "CM Corrugation Order",
+			"module_name": "Purchase Order",
+			"_doctype": "Purchase Order",
+			"color": "#c0392b",
+			"icon": "octicon octicon-briefcase",
+			"type": "link",
+			"link": "List/Purchase Order"
+		},
+		{
+			"module_name": "Sales Order",
+			"_doctype": "Sales Order",
+			"color": "#c0392b",
+			"icon": "octicon octicon-briefcase",
+			"type": "link",
+			"link": "List/Sales Order"
+		},
+		{
+			"module_name": "Corrugation Order",
 			"_doctype": "CM Corrugation Order",
-			"color": "#f39c12",
+			"color": "brown",
 			"icon": "octicon octicon-tools",
 			"type": "link",
 			"link": "List/CM Corrugation Order"
 		},
 		{
-			"module_name": "CM Production Order",
+			"module_name": "Production Order",
 			"_doctype": "CM Production Order",
-			"color": "#f39c12",
+			"color": "brown",
 			"icon": "octicon octicon-tools",
 			"type": "link",
 			"link": "List/CM Production Order"
 		},
 		{
-			"module_name": "CM Paper Roll",
-			"_doctype": "CM Paper Roll",
+			"module_name": "Roll Entry",
+			"_doctype": "CM Paper Roll Register",
 			"color": "#f39c12",
 			"icon": "octicon octicon-tools",
 			"type": "link",
-			"link": "Report/CM Paper Roll"
+			"link": "List/CM Paper Roll Register"
 		},
-
+		{
+			"module_name": "Expense Entry",
+			"_doctype": "Journal Entry",
+			"color": "#f39c12",
+			"icon": "octicon octicon-verified",
+			"type": "link",
+			"link": "List/Journal Entry"
+		},
+		{
+			"module_name": "Rolls Report ",
+			"_doctype": "CM Paper Roll",
+			"color": "#f39c12",
+			"icon": "octicon octicon-database",
+			"type": "link",
+			"link": "query-report/CM Paper Roll"
+		},
 	]
