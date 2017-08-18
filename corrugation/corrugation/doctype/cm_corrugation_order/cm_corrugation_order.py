@@ -70,7 +70,10 @@ class CMCorrugationOrder(Document):
 		self.board_name = ""
 		if (self.box is None): return
 		self.update_board_count()
-		self.populate_rolls()
+		try:
+			self.populate_rolls()
+		except:
+			pass
 
 	def populate_rolls(self):
 		if (self.box_desc is None or self.manual_entry): return
@@ -138,7 +141,8 @@ class CMCorrugationOrder(Document):
 		return papers
 
 	def on_update(self):
-		self.update_board_name()
+		if (len(self.paper_rolls) > 0):
+			self.update_board_name()
 
 	def update_board_name(self):
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
@@ -316,7 +320,7 @@ def filter_rolls_for_sheet(rolls, length, width):
 	for (roll, weight) in rolls:
 		paper = frappe.db.get_value("CM Paper Roll", roll, "paper")
 		(color, bf, gsm, deck) = get_paper_attributes(paper)
-		if ((deck >= length and deck <= (length + 10)) or (deck >= width and deck <= (width + 10))):
+		if ((deck >= (length-1) and deck <= (length + 10)) or (deck >= (width-1) and deck <= (width + 10))):
 			filtered_rolls.append((roll, weight))
 	return filtered_rolls
 
