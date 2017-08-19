@@ -17,10 +17,12 @@ frappe.ui.form.on('CM Corrugation Order', {
 	},
 
 	onload: function(frm) {
-		frm.set_value("mfg_date", frappe.datetime.nowdate())
-		frm.add_fetch("box_desc", "sheet_length", "sheet_length")
-		frm.add_fetch("box_desc", "sheet_width", "sheet_width")
-		frm.toggle_display("ignore_bom", frm.doc.ignore_bom)
+		if (frm.doc.docstatus != 1) {
+			frm.set_value("mfg_date", frappe.datetime.nowdate())
+			frm.add_fetch("box_desc", "sheet_length", "sheet_length")
+			frm.add_fetch("box_desc", "sheet_width", "sheet_width")
+			frm.toggle_display("ignore_bom", frm.doc.ignore_bom)
+		}
 	},
 
 	invoke_function(frm, method) {
