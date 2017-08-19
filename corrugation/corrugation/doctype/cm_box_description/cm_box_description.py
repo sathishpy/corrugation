@@ -393,10 +393,13 @@ def get_no_of_boxes_from_board(box_desc_name, layer, boards):
 @frappe.whitelist()
 def get_planned_paper_quantity(box_desc, rmtype, paper, mfg_qty):
 	box_details = frappe.get_doc("CM Box Description", box_desc)
+	paper_qty = 0
 	for paper_item in box_details.item_papers:
 		if paper_item.rm_type == rmtype and (paper is None or paper_item.rm == paper):
-			return paper_item.rm_weight * mfg_qty
-	return box_details.get_paper_weight(paper, rmtype)/box_details.item_per_sheet * mfg_qty
+			paper_qty += paper_item.rm_weight * mfg_qty
+	if (paper_qty == 0):
+		paper_qty = box_details.get_paper_weight(paper, rmtype)/box_details.item_per_sheet * mfg_qty
+	return paper_qty
 
 @frappe.whitelist()
 def is_layer_compatible(box_desc1, box_desc2, layers):
