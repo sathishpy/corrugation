@@ -398,7 +398,10 @@ def get_planned_paper_quantity(box_desc, rmtype, paper, mfg_qty):
 		if paper_item.rm_type == rmtype and (paper is None or paper_item.rm == paper):
 			paper_qty += paper_item.rm_weight * mfg_qty
 	if (paper_qty == 0):
-		paper_qty = box_details.get_paper_weight(paper, rmtype)/box_details.item_per_sheet * mfg_qty
+		items = box_details.item_per_sheet
+		if ("Top" not in rmtype):
+			items = items/((box_details.item_ply_count - 1)/2)
+		paper_qty = box_details.get_paper_weight(paper, rmtype)/items * mfg_qty
 	return paper_qty
 
 @frappe.whitelist()
