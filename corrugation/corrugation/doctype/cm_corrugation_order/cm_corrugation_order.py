@@ -264,17 +264,17 @@ def get_next_layer(layer):
 
 @frappe.whitelist()
 def set_new_layer_defaults(prod_order, first_layer):
-	rolls_count, layer, weight_consumed = len(prod_order.paper_rolls), first_layer, 0
+	rolls_count = len(prod_order.paper_rolls)
 	last_row = prod_order.paper_rolls[rolls_count-1]
+	last_row.rm_type = first_layer
+	last_row.est_weight = prod_order.get_planned_paper_qty(last_row.rm_type, None)
 	if (rolls_count > 1):
 		previous_roll = prod_order.paper_rolls[rolls_count-2]
-		layer = previous_roll.rm_type
-		weight_consumed = previous_roll.start_weight - previous_roll.final_weight
+		last_row.rm_type = previous_roll.rm_type
+		last_row.est_weight = previous_roll.est_weight - previous_roll.start_weight
 		if (previous_roll.final_weight > 0):
-			layer = get_next_layer(layer)
-			weight_consumed = 0
-	last_row.rm_type = layer
-	last_row.est_weight = prod_order.get_planned_paper_qty(layer, None) - weight_consumed
+			last_row.rm_type = get_next_layer(last_row.rm_type)
+			last_row.est_weight = prod_order.get_planned_paper_qty(last_row.rm_type, None)
 	last_row.final_weight = -1
 
 @frappe.whitelist()
