@@ -8,6 +8,7 @@ from frappe.model.document import Document
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_paper_attributes
 from erpnext.controllers.item_variant import create_variant
 from erpnext.controllers.item_variant import get_variant
+from erpnext.stock.utils import get_latest_stock_qty
 from operator import itemgetter
 
 class CMPaperManagement(Document):
@@ -28,15 +29,42 @@ class CMPaperManagement(Document):
 				else:
 					paper_box_map[paper.rm].add(box)
 
-		sorted_papers = sorted(paper_box_map.keys(), key=lambda item: len(paper_box_map[item]))
 		for paper in sorted_papers:
 			boxes = paper_box_map[paper]
 			paper_item = frappe.new_doc("CM PaperToBox Item")
 			paper_item.paper = paper
 			paper_item.box_count = len(boxes)
+			paper_item.paper_qty = get_latest_stock_qty(paper)
 			paper_item.boxes = ", ".join(boxes)
 			paper_item.box_desc = frappe.db.get_value("CM Box Description", filters={"box": next(iter(boxes))})
 			self.append("paper_to_boxes", paper_item)
+		self.sort_on_box_count()
+
+	def sort_paper_items(self, sort_type):
+		paper_box_map = {}
+		for paper_item in self.paper_to_boxes:
+			paper_box_map[paper_item.paper] = paper_item
+
+		sorted_items = []
+		if (sort_type == "weight"):
+			sorted_items = sorted(paper_box_map.keys(), key=lambda item: paper_box_map[item].paper_qty)
+		elif (sort_type == "box-count"):
+			sorted_items = sorted(paper_box_map.keys(), key=lambda item: paper_box_map[item].box_count)
+		else:
+			sorted_items = sorted(paper_box_map.keys(), key=lambda item: get_paper_deck(item))
+
+		for counter in range(0, len(sorted_items)):
+			paper_item = paper_box_map[sorted_items[counter]]
+			paper_item.idx = counter+1
+
+	def sort_on_weight(self):
+		self.sort_paper_items("weight")
+
+	def sort_on_box_count(self):
+		self.sort_paper_items("box-count")
+
+	def sort_on_deck(self):
+		self.sort_paper_items("deck")
 
 	def update_paper_rate(self):
 		for rate_item in self.paper_rates:
@@ -88,3 +116,8 @@ def get_papers(colour, bf, from_gsm, to_gsm):
 		if (colour == p_colour and bf == p_bf and p_gsm >= from_gsm and p_gsm <= to_gsm):
 			filtered_papers.append(paper.name)
 	return filtered_papers
+
+def get_paper_deck(paper):
+	if (paper is None): return 0
+	(colour, bf, gsm, deck) = get_paper_attributes(paper)
+	return deck

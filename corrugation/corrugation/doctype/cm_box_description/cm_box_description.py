@@ -167,6 +167,7 @@ class CMBoxDescription(Document):
 		self.update_cost()
 
 	def update_cost(self):
+		if (self.box is None): return
 		self.item_paper_cost, self.item_misc_cost = 0, 0
 		paper_weight = 0
 		for item in self.item_papers:

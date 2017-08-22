@@ -16,9 +16,10 @@ frappe.ui.form.on('CM Paper Management', {
 				{fieldname: 'paper', columns: 3},
 			];
 		frm.get_field('paper_to_boxes').grid.editable_fields = [
-				{fieldname: 'paper', columns: 3},
+				{fieldname: 'paper', columns: 2},
 				{fieldname: 'box_count', columns: 4},
 				{fieldname: 'boxes', columns: 3},
+				{fieldname: 'paper_qty', columns: 1},
 			];
 	},
 	invoke_doc_function(frm, method) {
@@ -41,6 +42,17 @@ frappe.ui.form.on('CM Paper Management', {
 		if (frm.doc.mgmnt_type == "New Paper") {
 			frm.add_custom_button(__('Add Paper'), function() {
 					frm.events.invoke_doc_function(frm, "add_new_paper");
+			});
+		}
+		if (frm.doc.mgmnt_type == "Paper Box Mapping") {
+			frm.add_custom_button(__('Sort On Weight'), function() {
+				frm.events.invoke_doc_function(frm, "sort_on_weight");
+			});
+			frm.add_custom_button(__('Sort On Box Count'), function() {
+				frm.events.invoke_doc_function(frm, "sort_on_box_count");
+			});
+			frm.add_custom_button(__('Sort On Deck'), function() {
+				frm.events.invoke_doc_function(frm, "sort_on_deck");
 			});
 		}
 	},
