@@ -30,6 +30,7 @@ class CMBoxManagement(Document):
 			box_item.box_desc = box_desc
 			box_desc = frappe.get_doc("CM Box Description", box_item.box_desc)
 			box_item.board = "{0}-{1}".format(box_desc.sheet_length, box_desc.sheet_width)
+			box_item.deck = box_desc.sheet_width
 			box_item.profit = box_desc.item_profit_amount
 			box_item.top_paper = next((paper.rm for paper in box_desc.item_papers if paper.rm_type == "Top"), None)
 			box_item.flute_paper = next((paper.rm for paper in box_desc.item_papers if paper.rm_type == "Flute"), None)
@@ -43,6 +44,27 @@ class CMBoxManagement(Document):
 			self.box_count += 1
 
 		self.paper_count += len(list(set(unique_papers)))
+
+	def sort_box_items(self, sort_type):
+		box_map = {}
+		for box_item in self.box_profit_items:
+			box_map[box_item.box] = box_item
+
+		sorted_items = []
+		if (sort_type == "profit"):
+			sorted_items = sorted(box_map.keys(), key=lambda item: box_map[item].profit)
+		else:
+			sorted_items = sorted(box_map.keys(), key=lambda item: box_map[item].deck)
+
+		for counter in range(0, len(sorted_items)):
+			box_item = box_map[sorted_items[counter]]
+			box_item.idx = counter+1
+
+	def sort_on_profit(self):
+		self.sort_box_items("profit")
+
+	def sort_on_deck(self):
+		self.sort_box_items("deck")
 
 	def populate_box_capacity(self):
 		boxes = frappe.db.sql("""select box.name, bom.name

@@ -5,7 +5,7 @@ frappe.ui.form.on('CM Box Management', {
 	setup: function(frm) {
 		frm.get_field('box_profit_items').grid.editable_fields = [
 				{fieldname: 'box', columns: 2},
-				{fieldname: 'board', columns: 2},
+				{fieldname: 'deck', columns: 2},
 				{fieldname: 'papers', columns: 2},
 				{fieldname: 'box_rate', columns: 2},
 				{fieldname: 'profit', columns: 2},
@@ -36,11 +36,23 @@ frappe.ui.form.on('CM Box Management', {
 		frm.toggle_display("box_count", frm.doc.mgmnt_type == "Profit Management")
 		frm.toggle_display("paper_count", frm.doc.mgmnt_type == "Profit Management")
 		frm.toggle_display("box_capacity_items", frm.doc.mgmnt_type == "Stock Management")
-		if (frm.doc.mgmnt_type == "Stock Management") {
-			frm.events.invoke_doc_function(frm, "populate_box_capacity");
-		} else {
-			frm.events.invoke_doc_function(frm, "populate_box_profit");
-		}
 		frm.refresh_fields();
+	},
+	refresh: function(frm) {
+		if (frm.doc.mgmnt_type == "Profit Management") {
+			frm.add_custom_button(__('Sort On Profit'), function() {
+				frm.events.invoke_doc_function(frm, "sort_on_profit");
+			});
+			frm.add_custom_button(__('Sort On Deck'), function() {
+				frm.events.invoke_doc_function(frm, "sort_on_deck");
+			});
+		}
+		frm.add_custom_button(__('Reload'), function() {
+			if (frm.doc.mgmnt_type == "Stock Management") {
+				frm.events.invoke_doc_function(frm, "populate_box_capacity");
+			} else {
+				frm.events.invoke_doc_function(frm, "populate_box_profit");
+			}
+		});
 	},
 });
