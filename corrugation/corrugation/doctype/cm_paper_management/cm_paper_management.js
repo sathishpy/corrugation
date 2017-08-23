@@ -63,10 +63,14 @@ frappe.ui.form.on('CM Paper Management', {
 		frm.toggle_display("paper_rates", frm.doc.mgmnt_type == "Update Rate")
 		frm.toggle_display("new_papers", frm.doc.mgmnt_type == "New Paper")
 		frm.toggle_display("paper_to_boxes", frm.doc.mgmnt_type == "Paper Box Mapping")
+		frm.toggle_display("box_filter", frm.doc.mgmnt_type == "Paper Box Mapping")
 		if (frm.doc.mgmnt_type == "Paper Box Mapping") {
 			frm.events.invoke_doc_function(frm, "map_paper_to_boxes");
 		}
 		frm.refresh_fields();
+	},
+	box_filter: function(frm) {
+		frm.events.invoke_doc_function(frm, "filter_boxes");
 	},
 });
 

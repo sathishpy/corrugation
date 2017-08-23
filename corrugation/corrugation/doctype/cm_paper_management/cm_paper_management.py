@@ -29,8 +29,7 @@ class CMPaperManagement(Document):
 				else:
 					paper_box_map[paper.rm].add(box)
 
-		for paper in sorted_papers:
-			boxes = paper_box_map[paper]
+		for (paper, boxes) in paper_box_map.items():
 			paper_item = frappe.new_doc("CM PaperToBox Item")
 			paper_item.paper = paper
 			paper_item.box_count = len(boxes)
@@ -65,6 +64,17 @@ class CMPaperManagement(Document):
 
 	def sort_on_deck(self):
 		self.sort_paper_items("deck")
+
+	def filter_boxes(self):
+		self.map_paper_to_boxes()
+		if (self.box_filter is None): return
+		filtered_items = [item for item in self.paper_to_boxes if self.box_filter.lower() in item.boxes.lower()]
+		self.paper_to_boxes = []
+		print("Found {0} items matching {1}".format(len(filtered_items), self.box_filter))
+		for counter in range(0, len(filtered_items)):
+			paper_item = filtered_items[counter]
+			paper_item.idx = counter + 1
+			self.append("paper_to_boxes", paper_item)
 
 	def update_paper_rate(self):
 		for rate_item in self.paper_rates:
