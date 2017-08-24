@@ -50,6 +50,16 @@ class CMPaperRollRegister(Document):
 				self.total_weight += paper_roll.weight
 				print "Creating Roll {0}-{1}".format(item.item_code, paper_roll.weight)
 
+	def get_item_extra_charges(self, items):
+		qty, charges = 0, 0
+		for item in items:
+			qty += item.qty
+		for item in self.charges:
+			charges += item.amount
+		if (qty != self.purchase_weight):
+			print("Purchase weight is {0} and item weight is {1}".format(self.purchase_weight, qty))
+		return (charges * float(qty)/self.purchase_weight)
+
 	def get_actual_roll_rates(self):
 		bill_doc = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
 		if (self.purchase_invoice):
@@ -72,8 +82,7 @@ class CMPaperRollRegister(Document):
 			else:
 				charges += item.tax_amount
 
-		for item in self.charges:
-			charges += item.amount
+		charges += self.get_item_extra_charges(bill_doc.items)
 
 		print("Rate for {0}: Basic={1} Tax={2} Charges={3}".format(bill_doc.name, std_cost, taxes, charges))
 		for item in bill_doc.items:
@@ -89,8 +98,9 @@ class CMPaperRollRegister(Document):
 		for roll_item in self.paper_rolls:
 			roll_name = "{0}-RL-{1}".format(roll_item.paper, roll_item.number)
 			if (frappe.db.get_value("CM Paper Roll", roll_name) == None): continue
-			roll = frappe.get_doc("CM Paper Roll", roll_name)
+			if (roll_item.paper not in item_rates): continue
 
+			roll = frappe.get_doc("CM Paper Roll", roll_name)
 			(basic, tax, charge) = item_rates[roll_item.paper]
 			if (roll.basic_cost == basic and roll.misc_cost == charge and roll.tax_cost == tax): continue
 
@@ -124,7 +134,7 @@ class CMPaperRollRegister(Document):
 			paper_roll.save()
 
 	def update_invoice(self, pi):
-		if (len(self.charges) > 0):
+		if (len(self.charges) > 0 and self.charge_entry is None):
 			jentry = frappe.new_doc("Journal Entry")
 			jentry.update({"voucher_type": "Journal Entry", "posting_date": nowdate(), "is_opening": "No", "remark": "Purchase Charges"})
 			for item in self.charges:
@@ -195,6 +205,9 @@ def create_new_rolls(doc, method):
 	new_register.save(ignore_permissions=True)
 
 def find_roll_receipt_matching_invoice(pi):
+	pi_items = [item for item in pi.items if (frappe.db.get_value("Item", item.item_code, "item_group") == "Paper")]
+	if (pi_items is None or len(pi_items) == 0): return (None, False)
+
 	open_roll_receipts = frappe.get_all("CM Paper Roll Register", filters={"purchase_invoice": None})
 	for receipt in open_roll_receipts:
 		print("Checking receipt {0}".format(receipt))
@@ -202,20 +215,31 @@ def find_roll_receipt_matching_invoice(pi):
 		pr = frappe.get_doc("Purchase Receipt", roll_reg.purchase_receipt)
 		if (pi.supplier != pr.supplier): continue
 		pr_items = [item for item in pr.items if (frappe.db.get_value("Item", item.item_code, "item_group") == "Paper")]
-		pi_items = [item for item in pi.items if (frappe.db.get_value("Item", item.item_code, "item_group") == "Paper")]
-		if (len(pr_items) != len(pi_items)): continue
-		match = True
+		match = 0
 		for idx in range(0, len(pi_items)):
-			if (pi_items[idx].item_code != pr_items[idx].item_code or pi_items[idx].qty != pr_items[idx].qty):
-				match = False
-				break
-		if (match): return roll_reg
+			pr_item = next((item for item in pr_items if item.item_code == pi_items[idx].item_code), None)
+			if (pr_item is not None and pi_items[idx].qty == pr_item.qty):
+				match += 1
+		if (match == len(pi_items)): return (roll_reg, len(pr_items) == len(pi_items))
 
 @frappe.whitelist()
 def update_invoice(pi, method):
 	print("Updating roll register for doc {0}".format(pi.name))
-	roll_receipt = find_roll_receipt_matching_invoice(pi)
+	(roll_receipt, full_match) = find_roll_receipt_matching_invoice(pi)
 	if (roll_receipt == None):
 		print("Failed to find the roll receipt for invoice {0}".format(pi.name))
 		return
 	roll_receipt.update_invoice(pi)
+	if (not full_match):
+		pr = frappe.get_doc("Purchase Receipt", roll_receipt.purchase_receipt)
+		pr_items = [item for item in pr.items if (frappe.db.get_value("Item", item.item_code, "item_group") == "Paper")]
+		pi_items = []
+		for invoice in [roll_receipt.purchase_invoice, roll_receipt.purchase_invoice_2, roll_receipt.purchase_invoice_3]:
+			if invoice is None: continue
+			pi = frappe.get_doc("Purchase Invoice", invoice)
+			pi_items += [item for item in pi.items if (frappe.db.get_value("Item", item.item_code, "item_group") == "Paper")]
+		if (len(pi_items) != len(pr_items)):
+			roll_receipt.purchase_invoice_3 = roll_receipt.purchase_invoice_2
+			roll_receipt.purchase_invoice_2 = roll_receipt.purchase_invoice
+			roll_receipt.purchase_invoice = None
+			roll_receipt.save()
