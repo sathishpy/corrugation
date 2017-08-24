@@ -186,6 +186,8 @@ class CMPaperRollRegister(Document):
 
 @frappe.whitelist()
 def create_new_rolls(doc, method):
+	pr_items = [item for item in doc.items if (frappe.db.get_value("Item", item.item_code, "item_group") == "Paper")]
+	if (pr_items is None or len(pr_items) == 0): return
 	print("Creating new roll register for doc {0}".format(doc.name))
 	new_register = frappe.new_doc("CM Paper Roll Register")
 	new_register.purchase_receipt = doc.name
