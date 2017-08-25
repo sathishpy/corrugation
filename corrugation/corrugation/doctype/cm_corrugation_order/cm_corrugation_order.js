@@ -49,6 +49,7 @@ frappe.ui.form.on('CM Corrugation Order', {
 
 	set_box_filter: function(frm) {
 		frm.set_query("box", function(doc) {
+			if (!doc.sales_order) return
 			return {
 				query: "corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order.get_sales_order_items",
 				filters: {

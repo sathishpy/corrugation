@@ -42,11 +42,12 @@ class CMCorrugationOrder(Document):
 		self.populate_item_prod_info()
 
 	def populate_item_prod_info(self):
-		order_items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
-											where parent='{0}' and item_code='{1}'""".format(self.sales_order, self.box))
-		if (order_items is None):
-			frappe.throw("Unable to find box {0} in the sales order".format(self.box))
-		(temp, self.order_qty) = order_items[0]
+		if (self.sales_order):
+			order_items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
+												where parent='{0}' and item_code='{1}'""".format(self.sales_order, self.box))
+			if (order_items is None):
+				frappe.throw("Unable to find box {0} in the sales order".format(self.box))
+			(temp, self.order_qty) = order_items[0]
 		box_boms = frappe.get_all("CM Box Description", filters={'box': self.box})
 		if (box_boms is None or len(box_boms) == 0):
 			frappe.throw("Failed to find the Box Description for {0}".format(self.box))

@@ -29,7 +29,7 @@ class CMPaperRollRegister(Document):
 
 		item_rates = self.get_actual_roll_rates()
 		for item in receipt.items:
-			item_doc = frappe.get_doc("Item", item.item_name)
+			item_doc = frappe.get_doc("Item", item.item_code)
 			if item_doc.item_group != "Paper": continue
 
 			weight = item.qty
