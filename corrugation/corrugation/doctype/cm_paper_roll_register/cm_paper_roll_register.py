@@ -166,6 +166,11 @@ class CMPaperRollRegister(Document):
 			if roll.paper not in items:
 				frappe.throw("Paper {0} from roll {1} is not present in purchase receipt".format(roll.paper, roll.number))
 
+	def on_update(self):
+		self.total_weight = 0
+		for paper_roll in self.paper_rolls:
+			self.total_weight += paper_roll.weight
+
 	def on_submit(self):
 		roll_weight = self.get_roll_weight()
 		purchase_weight = self.get_purchase_weight()
