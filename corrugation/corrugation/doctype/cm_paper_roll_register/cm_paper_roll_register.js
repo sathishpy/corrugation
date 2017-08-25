@@ -5,8 +5,6 @@ frappe.ui.form.on('CM Paper Roll Register', {
 	setup: function(frm) {
 		frm.get_field('charges').grid.editable_fields = [
 				{fieldname: 'party', columns: 2},
-				{fieldname: 'from_account', columns: 3},
-				{fieldname: 'to_account', columns: 3},
 				{fieldname: 'amount', columns: 2},
 		];
 		frm.get_field('paper_rolls').grid.editable_fields = [
@@ -23,7 +21,9 @@ frappe.ui.form.on('CM Paper Roll Register', {
 		frm.add_custom_button(__('Update Price'), function() {
 				frm.events.invoke_function(frm, "update_roll_cost")
 		});
-
+		frm.add_custom_button(__('Re-number Rolls'), function() {
+				frm.events.invoke_function(frm, "renumber_rolls")
+		});
 	},
 	invoke_function(frm, method) {
 		frappe.call({

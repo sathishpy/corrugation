@@ -50,6 +50,13 @@ class CMPaperRollRegister(Document):
 				self.total_weight += paper_roll.weight
 				print "Creating Roll {0}-{1}".format(item.item_code, paper_roll.weight)
 
+	def renumber_rolls(self):
+		if (len(self.paper_rolls) == 0): return
+		roll_num = int(self.paper_rolls[0].number)
+		for roll_item in self.paper_rolls:
+			roll_item.number = roll_num
+			roll_num += 1
+
 	def get_item_extra_charges(self, items):
 		qty, charges = 0, 0
 		for item in items:
@@ -134,16 +141,6 @@ class CMPaperRollRegister(Document):
 			paper_roll.save()
 
 	def update_invoice(self, pi):
-		if (len(self.charges) > 0 and self.charge_entry is None):
-			jentry = frappe.new_doc("Journal Entry")
-			jentry.update({"voucher_type": "Journal Entry", "posting_date": nowdate(), "is_opening": "No", "remark": "Purchase Charges"})
-			for item in self.charges:
-				jentry.append("accounts", {"account": item.from_account, "credit_in_account_currency": item.amount})
-				jentry.append("accounts", {"account": item.to_account, "debit_in_account_currency": item.amount})
-			jentry.submit()
-			print("Sumitted journal entry {0}".format(jentry.name))
-			self.charge_entry = jentry.name
-
 		self.purchase_invoice = pi.name
 		self.save()
 		#Update the cost only after setting the invoice
@@ -186,9 +183,10 @@ class CMPaperRollRegister(Document):
 			paper_roll = frappe.get_doc("CM Paper Roll", roll_name)
 			print ("Deleting roll {0}".format(paper_roll.name))
 			paper_roll.delete()
-		docs = frappe.get_doc("Purchase Invoice", self.purchase_invoice)
-		docs += frappe.get_doc("Purchase Receipt", self.purchase_receipt)
-		docs += frappe.get_doc("Journal Entry", self.charge_entry)
+		docs = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
+		for invoice in [self.purchase_invoice, self.purchase_invoice_2, self.purchase_invoice_3]:
+			if (invoie is None): continue
+			docs += frappe.get_doc("Purchase Invoice", invoice)
 		for doc in docs:
 			print ("Deleting entry {0}".format(doc.name))
 			doc.cancel()
