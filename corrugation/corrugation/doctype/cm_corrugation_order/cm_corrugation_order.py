@@ -152,10 +152,9 @@ class CMCorrugationOrder(Document):
 		box_details.create_board_item(self.board_name)
 		self.stock_qty = get_latest_stock_qty(self.board_name)
 
-	def before_submit(self):
-		self.stock_batch_qty = self.mfg_qty
-		self.stock_qty += self.mfg_qty
+	def update_production_cost(self):
 		layers = []
+		self.actual_cost = self.planned_cost = 0
 		exclude_tax = frappe.db.get_value("CM Box Description", self.box_desc, "exclude_tax")
 		for roll in self.paper_rolls:
 			roll_item = frappe.get_doc("CM Paper Roll", roll.paper_roll)
@@ -170,9 +169,22 @@ class CMCorrugationOrder(Document):
 			if (paper_cost != None):
 				self.planned_cost += (paper_cost * box_desc.item_per_sheet)
 
-	def on_submit(self):
-		self.create_new_stock_entry()
+	def on_update(self):
+		self.update_production_cost()
+
+	def before_submit(self):
+		self.stock_batch_qty = self.mfg_qty
+		self.stock_qty += self.mfg_qty
+		self.stock_entry = self.create_new_stock_entry()
 		update_production_roll_qty(self)
+
+	def on_cancel(self):
+		self.stock_qty -= self.mfg_qty
+		if (self.stock_entry):
+			se = frappe.get_doc("Stock Entry", self.stock_entry)
+			se.cancel()
+			se.delete()
+		cancel_production_roll_qty(self)
 
 	def create_new_stock_entry(self):
 		print "Creating stock entry for corrugation order {0} of quantity {1}".format(self.box, self.mfg_qty)
@@ -192,6 +204,8 @@ class CMCorrugationOrder(Document):
 		se.append("items", board_item)
 		se.calculate_rate_and_amount()
 		se.submit()
+		return se.name
+
 
 @frappe.whitelist()
 def get_used_paper_qunatity_from_rolls(paper_rolls, paper):
@@ -254,6 +268,14 @@ def update_production_roll_qty(cm_po):
 		roll = frappe.get_doc("CM Paper Roll", roll_item.paper_roll)
 		roll.status = "Ready"
 		roll.weight = roll_item.final_weight
+		roll.save()
+
+def cancel_production_roll_qty(cm_po):
+	for roll_item in cm_po.paper_rolls:
+		print("Resetting the weight of roll {0}".format(roll_item.paper_roll))
+		roll = frappe.get_doc("CM Paper Roll", roll_item.paper_roll)
+		roll.status = "Ready"
+		roll.weight = roll_item.start_weight
 		roll.save()
 
 @frappe.whitelist()

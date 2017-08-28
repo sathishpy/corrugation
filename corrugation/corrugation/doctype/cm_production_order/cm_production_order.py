@@ -10,6 +10,7 @@ from erpnext.stock.utils import get_latest_stock_qty
 from corrugation.corrugation.roll_selection import select_rolls_for_box
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_planned_paper_quantity
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import update_production_roll_qty
+from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import cancel_production_roll_qty
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import update_roll_qty
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import get_used_paper_qunatity_from_rolls
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import set_new_layer_defaults
@@ -146,7 +147,7 @@ class CMProductionOrder(Document):
 	def get_planned_paper_qty(self, rm_type, paper):
 		return get_planned_paper_quantity(self.box_desc, rm_type, paper, self.mfg_qty)
 
-	def before_submit(self):
+	def update_production_cost(self):
 		self.planned_rm_cost = frappe.db.get_value("CM Box Description", self.box_desc, "item_paper_cost")
 		self.planned_rm_cost += frappe.db.get_value("CM Box Description", self.box_desc, "item_misc_cost")
 		self.act_rm_cost = 0
@@ -182,12 +183,35 @@ class CMProductionOrder(Document):
 			order.stock_batch_qty = order.stock_batch_qty - crg_order.board_count
 			order.save()
 
-	def on_submit(self):
+	def update_used_corrugated_boards(self):
+		for crg_order in self.crg_orders:
+			order = frappe.get_doc("CM Corrugation Order", crg_order.crg_order)
+			order.stock_batch_qty = order.stock_batch_qty + crg_order.board_count
+			order.save()
+
+	def on_update(self):
 		check_material_availability(self)
+		self.update_production_cost()
+
+	def before_submit(self):
 		submit_sales_order(self.sales_order)
-		submit_production_order(self)
-		create_new_stock_entry(self)
+		self.prod_order = submit_production_order(self)
+		self.stock_entry = create_new_stock_entry(self)
+		update_production_roll_qty(self)
 		self.update_used_corrugated_boards()
+
+	def on_cancel(self):
+		docs = []
+		if(self.prod_order is not None):
+			docs.append(frappe.get_doc("Production Order", self.prod_order))
+		if(self.stock_entry is not None):
+			docs.append(frappe.get_doc("Stock Entry", self.stock_entry))
+
+		for doc in docs:
+			doc.cancel()
+			doc.delete()
+		cancel_production_roll_qty(self)
+		self.revert_used_corrugated_boards()
 
 def submit_production_order(cm_po):
 	po = frappe.new_doc("Production Order")
@@ -201,6 +225,7 @@ def submit_production_order(cm_po):
 	po.fg_warehouse = cm_po.target_warehouse
 	po.submit()
 	print "Created production order {0} for {1} of quantity {2}".format(po.name, po.production_item, po.qty)
+	return po.name
 
 def submit_sales_order(sales_order):
 	order_doc = frappe.get_doc("Sales Order", sales_order)
@@ -227,7 +252,7 @@ def create_new_stock_entry(cm_po):
 		print "Item:{0} Quantity:{1}".format(item.item_code, item.qty)
 	se.submit()
 
-	update_production_roll_qty(cm_po)
+	return se.name
 
 @frappe.whitelist()
 def check_material_availability(cm_po):
