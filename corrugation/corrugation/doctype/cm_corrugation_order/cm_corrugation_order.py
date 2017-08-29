@@ -144,6 +144,7 @@ class CMCorrugationOrder(Document):
 	def on_update(self):
 		if (len(self.paper_rolls) > 0):
 			self.update_board_name()
+		self.update_production_cost()
 
 	def update_board_name(self):
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
@@ -168,9 +169,6 @@ class CMCorrugationOrder(Document):
 			paper_cost = next((item.rm_cost for item in box_desc.item_papers if item.rm_type == layer), None)
 			if (paper_cost != None):
 				self.planned_cost += (paper_cost * box_desc.item_per_sheet)
-
-	def on_update(self):
-		self.update_production_cost()
 
 	def before_submit(self):
 		self.stock_batch_qty = self.mfg_qty

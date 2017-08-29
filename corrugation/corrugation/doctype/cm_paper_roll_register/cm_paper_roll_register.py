@@ -172,15 +172,12 @@ class CMPaperRollRegister(Document):
 		for paper_roll in self.paper_rolls:
 			self.total_weight += paper_roll.weight
 
-	def on_submit(self):
-		roll_weight = self.get_roll_weight()
-		purchase_weight = self.get_purchase_weight()
-		if (roll_weight != purchase_weight):
+	def before_submit(self):
+		self.total_weight = self.get_roll_weight()
+		self.purchase_weight = self.get_purchase_weight()
+		if (self.purchase_weight != self.total_weight):
 			frappe.throw(_("Paper roll weight doesn't match the purchase weight"))
 		self.register_rolls()
-
-	def on_update_after_submit(self):
-		pass
 
 	def on_trash(self):
 		for roll in self.paper_rolls:
