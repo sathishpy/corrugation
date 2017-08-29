@@ -85,13 +85,8 @@ class CMProductionOrder(Document):
 		for board in box_details.get_all_boards():
 			print "Adding board item for {0}".format(board)
 			new_item = frappe.new_doc("CM Production Board Detail")
-			no_of_board_layers = 1
-			if "Top" in board:
-				new_item.layer_type = "Top"
-			else:
-				new_item.layer_type = "Flute"
-				no_of_board_layers = int(int(box_details.item_ply_count)/2)
-
+			new_item.layer_type = "Top" if "Top" in board else "Flute"
+			no_of_board_layers = 1 if "Top" in board else int(int(box_details.item_ply_count)/2)
 			qty = get_latest_stock_qty(board)
 			if (qty is None or qty == 0):
 				filters= {"box_desc": box_details.name, "layer_type": new_item.layer_type, "ignore_bom": self.ignore_bom}
@@ -105,9 +100,10 @@ class CMProductionOrder(Document):
 			self.append("paper_boards", new_item)
 
 	def update_board_qty(self):
+		ply_count = frappe.db.get_value("CM Box Description", self.box_desc, "item_ply_count")
 		for board in self.paper_boards:
-			board_item = frappe.get_doc("Item", board.layer)
-			board.stock_qty = get_latest_stock_qty(board.layer)
+			no_of_board_layers = 1 if "Top" in board.layer_type else int(int(ply_count)/2)
+			board.stock_qty = get_latest_stock_qty(board.layer)/no_of_board_layers
 
 	def set_new_layer_defaults(self):
 		set_new_layer_defaults(self, "Top")
