@@ -150,6 +150,7 @@ class CMPaperRollRegister(Document):
 		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
 		weight = 0
 		for item in receipt.items:
+			if frappe.db.get_value("Item", item.item_code, "item_group") != "Paper": continue
 			weight += item.qty
 		return weight
 
