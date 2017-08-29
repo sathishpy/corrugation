@@ -80,17 +80,22 @@ frappe.ui.form.on('CM Production Order', {
 	},
 
 	onload: function(frm) {
-		frm.events.set_default_warehouse(frm);
-		frm.set_value("mfg_date", frappe.datetime.nowdate())
+		if (frm.doc.docstatus != 1) {
+			frm.events.set_default_warehouse(frm);
+			frm.set_value("mfg_date", frappe.datetime.nowdate())
+		} else {
+			frm.set_df_property("mfg_qty", "read_only", 1);
+		}
 	},
 
 	refresh: function(frm) {
-		frm.add_custom_button(__('Production Capacity'), function() {
-				msgprint("Implementation in progress")
+		frm.add_custom_button(__('Update Box Count'), function() {
+				frm.events.update_prod_qty(frm)
 		});
 		frm.add_custom_button(__('Create Purhcase Order'), function() {
 				frm.events.make_purchase_order(frm)
 		});
+		frm.events.show_boards(frm)
 	},
 
 	set_default_warehouse: function(frm) {
@@ -147,11 +152,14 @@ frappe.ui.form.on('CM Production Order', {
 	mfg_qty: function(frm) {
 		frm.events.box_desc(frm)
 	},
-
-	use_boards: function(frm) {
+	show_boards: function(frm) {
 		frm.toggle_display("manual_entry", !frm.doc.use_boards)
 		frm.toggle_display("paper_rolls", !frm.doc.use_boards)
 		frm.toggle_display("paper_boards", frm.doc.use_boards)
+		frm.refresh_fields()
+	},
+	use_boards: function(frm) {
+		frm.events.show_boards(frm)
 		frm.events.box_desc(frm)
 	},
 
@@ -177,6 +185,20 @@ frappe.ui.form.on('CM Production Order', {
 			method: "erpnext.selling.doctype.sales_order.sales_order.make_sales_invoice",
 			frm: frm.doc.sales_order,
 		})
+	},
+	update_prod_qty(frm) {
+		if (frm.doc.docstatus != 1) return
+		frappe.prompt({fieldtype:"Int", label: __("Updated box quantity"), fieldname:"qty", 'default': frm.doc.mfg_qty },
+			function(data) {
+				frappe.call({
+					doc: frm.doc,
+					method:"update_production_quantity",
+					args: {"qty": data.qty},
+					callback: function(r) {
+						frm.refresh_fields()
+					}
+				});
+			}, __("Updated Quantity"), __("Update"));
 	},
 });
 

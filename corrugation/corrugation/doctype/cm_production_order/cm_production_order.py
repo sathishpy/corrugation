@@ -8,6 +8,7 @@ from frappe.model.document import Document
 from erpnext.manufacturing.doctype.production_order.production_order import make_stock_entry
 from erpnext.stock.utils import get_latest_stock_qty
 from corrugation.corrugation.roll_selection import select_rolls_for_box
+from corrugation.corrugation.utils import delete_submitted_document
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_planned_paper_quantity
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import update_production_roll_qty
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import cancel_production_roll_qty
@@ -84,15 +85,23 @@ class CMProductionOrder(Document):
 		for board in box_details.get_all_boards():
 			print "Adding board item for {0}".format(board)
 			new_item = frappe.new_doc("CM Production Board Detail")
+			no_of_board_layers = 1
 			if "Top" in board:
 				new_item.layer_type = "Top"
 			else:
 				new_item.layer_type = "Flute"
-			board_item = frappe.get_doc("Item", board)
-			qty = get_latest_stock_qty(board_item.name)
-			new_item.layer = board_item.name
-			new_item.stock_qty = qty
-			new_item.used_qty = self.mfg_qty/box_details.item_per_sheet
+				no_of_board_layers = int(int(box_details.item_ply_count)/2)
+
+			qty = get_latest_stock_qty(board)
+			if (qty is None or qty == 0):
+				filters= {"box_desc": box_details.name, "layer_type": new_item.layer_type, "ignore_bom": self.ignore_bom}
+				boards = get_filtered_boards("", filters)
+				if (len(boards) > 0):
+					(board, qty) = boards[0]
+				else: continue
+			new_item.layer = board
+			new_item.stock_qty = qty/no_of_board_layers
+			new_item.used_qty = min(new_item.stock_qty, self.mfg_qty/box_details.item_per_sheet)
 			self.append("paper_boards", new_item)
 
 	def update_board_qty(self):
@@ -177,6 +186,16 @@ class CMProductionOrder(Document):
 		profit = frappe.db.get_value("CM Box Description", self.box_desc, "item_profit_amount")
 		self.profit = profit + self.planned_rm_cost - self.act_rm_cost
 
+	def update_production_cost_after_submit(self):
+		board_cost = 0
+		for order_item in self.crg_orders:
+			order = frappe.get_doc("CM Corrugation Order", order_item.crg_order)
+			board_cost += order_item.board_count * order.get_paper_cost_per_board()
+		self.act_rm_cost = (board_cost/self.mfg_qty)
+		self.act_rm_cost += frappe.db.get_value("CM Box Description", self.box_desc, "item_misc_cost")
+		profit = frappe.db.get_value("CM Box Description", self.box_desc, "item_profit_amount")
+		self.profit = profit + self.planned_rm_cost - self.act_rm_cost
+
 	def update_used_corrugated_boards(self):
 		for crg_order in self.crg_orders:
 			order = frappe.get_doc("CM Corrugation Order", crg_order.crg_order)
@@ -200,18 +219,25 @@ class CMProductionOrder(Document):
 		update_production_roll_qty(self)
 		self.update_used_corrugated_boards()
 
-	def on_cancel(self):
-		docs = []
-		if(self.prod_order is not None):
-			docs.append(frappe.get_doc("Production Order", self.prod_order))
-		if(self.stock_entry is not None):
-			docs.append(frappe.get_doc("Stock Entry", self.stock_entry))
+	def delete_stock_and_production_entry(self, stock_entry, prod_order):
+		self.stock_entry = self.prod_order = None
+		self.save()
+		delete_submitted_document("Stock Entry", stock_entry)
+		delete_submitted_document("Production Order", prod_order)
 
-		for doc in docs:
-			doc.cancel()
-			doc.delete()
+	def on_cancel(self):
+		self.delete_stock_and_production_entry(self.stock_entry, self.prod_order)
 		cancel_production_roll_qty(self)
 		self.revert_used_corrugated_boards()
+
+	def update_production_quantity(self, qty):
+		self.mfg_qty = qty
+		self.delete_stock_and_production_entry(self.stock_entry, self.prod_order)
+		self.update_production_cost_after_submit()
+		self.prod_order = submit_production_order(self)
+		self.stock_entry = create_new_stock_entry(self)
+		print("Updating produced quantity from {0} to {1}".format(self.mfg_qty, qty))
+		self.save(ignore_permissions=True)
 
 def submit_production_order(cm_po):
 	po = frappe.new_doc("Production Order")
@@ -280,15 +306,21 @@ def make_new_purchase_order(source_name):
 
 @frappe.whitelist()
 def filter_boards(doctype, txt, searchfield, start, page_len, filters):
+	return get_filtered_boards(txt, filters)
+
+def get_filtered_boards(txt, filters):
 	box_desc = frappe.get_doc("CM Box Description", filters["box_desc"])
 	layer_type = filters["layer_type"]
 	ignore_bom = filters["ignore_bom"]
 
+	deck_filter = ""
+	if (not ignore_bom):
+		deck_filter = "and item_code LIKE '{0}%%'".format(box_desc.get_board_prefix(layer_type))
 	filter_query =	"""select name from `tabItem`
 						where item_group='Board Layer'
-						and item_code LIKE '{0}%%'
+						{0}
 						and name LIKE %(txt)s
-					""".format(box_desc.get_board_prefix(layer_type))
+					""".format(deck_filter)
 	#print "Searching boards matching {0} with query {1}".format(box_desc.get_board_prefix(layer_type), filter_query)
 	boards = frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})
 	filtered_boards = []
