@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from . import __version__ as app_version
+import frappe
+from frappe import _
 
 app_name = "corrugation"
 app_title = "Corrugation"
@@ -85,12 +87,22 @@ after_install = "corrugation.install.after_install"
 # 		"on_trash": "method"
 #	}
 # }
+def set_sales_terms(inv, method):
+    if (inv.tc_name is not None): return
+    terms = frappe.db.get_value("Terms and Conditions", filters={"name": "Sales Terms"})
+    inv.tc_name = terms
+    from erpnext.setup.doctype.terms_and_conditions.terms_and_conditions import get_terms_and_conditions
+    inv.terms = get_terms_and_conditions(terms, inv.as_dict())
+
 doc_events = {
     "Purchase Receipt": {
         "on_submit": "corrugation.corrugation.doctype.cm_paper_roll_register.cm_paper_roll_register.create_new_rolls",
     },
     "Purchase Invoice": {
         "on_submit": "corrugation.corrugation.doctype.cm_paper_roll_register.cm_paper_roll_register.update_invoice",
+    },
+    "Sales Invoice": {
+        "on_update": "corrugation.hooks.set_sales_terms",
     },
 }
 # Scheduled Tasks
