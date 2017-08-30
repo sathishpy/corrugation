@@ -182,6 +182,7 @@ class CMCorrugationOrder(Document):
 			se = frappe.get_doc("Stock Entry", self.stock_entry)
 			se.cancel()
 			se.delete()
+			self.stock_entry = None
 		cancel_production_roll_qty(self)
 
 	def create_new_stock_entry(self):

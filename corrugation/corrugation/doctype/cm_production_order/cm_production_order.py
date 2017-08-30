@@ -82,28 +82,32 @@ class CMProductionOrder(Document):
 
 	def populate_box_boards(self):
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
-		for board in box_details.get_all_boards():
-			print "Adding board item for {0}".format(board)
-			new_item = frappe.new_doc("CM Production Board Detail")
-			new_item.layer_type = "Top" if "Top" in board else "Flute"
+		for board in set(box_details.get_all_boards()):
+			layer_type = "Top" if "Top" in board else "Flute"
 			no_of_board_layers = 1 if "Top" in board else int(int(box_details.item_ply_count)/2)
-			qty = get_latest_stock_qty(board)
-			if (qty is None or qty == 0):
-				filters= {"box_desc": box_details.name, "layer_type": new_item.layer_type, "ignore_bom": self.ignore_bom}
-				boards = get_filtered_boards("", filters)
-				if (len(boards) > 0):
-					(board, qty) = boards[0]
-				else: continue
-			new_item.layer = board
-			new_item.stock_qty = qty/no_of_board_layers
-			new_item.used_qty = min(new_item.stock_qty, self.mfg_qty/box_details.item_per_sheet)
-			self.append("paper_boards", new_item)
+			needed_boards = (self.mfg_qty/box_details.item_per_sheet) * no_of_board_layers
+			filters= {"box_desc": box_details.name, "layer_type": layer_type, "ignore_bom": 0}
+			boards = get_filtered_boards("", filters)
+			if (len(boards) == 0): continue
+			bom_board_idx = next((idx for idx in range(0, len(boards)) if boards[idx][0] == board), 0)
+			idx = 0
+			boards[idx], boards[bom_board_idx] = boards[bom_board_idx], boards[idx]
+			while needed_boards > 0 and idx < len(boards):
+				(board_name, qty) = boards[idx]
+				print "Adding {0} board items for {1}".format(needed_boards, board_name)
+				new_item = frappe.new_doc("CM Production Board Detail")
+				new_item.layer_type = layer_type
+				new_item.layer = board_name
+				new_item.stock_qty = qty
+				new_item.used_qty = min(new_item.stock_qty, needed_boards)
+				self.append("paper_boards", new_item)
+				needed_boards -= new_item.used_qty
+				idx += 1
 
 	def update_board_qty(self):
-		ply_count = frappe.db.get_value("CM Box Description", self.box_desc, "item_ply_count")
 		for board in self.paper_boards:
-			no_of_board_layers = 1 if "Top" in board.layer_type else int(int(ply_count)/2)
-			board.stock_qty = get_latest_stock_qty(board.layer)/no_of_board_layers
+			if (board.layer is None): continue
+			board.stock_qty = get_latest_stock_qty(board.layer)
 
 	def set_new_layer_defaults(self):
 		set_new_layer_defaults(self, "Top")
@@ -198,7 +202,7 @@ class CMProductionOrder(Document):
 			order.stock_batch_qty = order.stock_batch_qty - crg_order.board_count
 			order.save()
 
-	def update_used_corrugated_boards(self):
+	def revert_used_corrugated_boards(self):
 		for crg_order in self.crg_orders:
 			order = frappe.get_doc("CM Corrugation Order", crg_order.crg_order)
 			order.stock_batch_qty = order.stock_batch_qty + crg_order.board_count
@@ -216,10 +220,9 @@ class CMProductionOrder(Document):
 		self.update_used_corrugated_boards()
 
 	def delete_stock_and_production_entry(self, stock_entry, prod_order):
-		self.stock_entry = self.prod_order = None
-		self.save()
 		delete_submitted_document("Stock Entry", stock_entry)
 		delete_submitted_document("Production Order", prod_order)
+		self.stock_entry = self.prod_order = None
 
 	def on_cancel(self):
 		self.delete_stock_and_production_entry(self.stock_entry, self.prod_order)
