@@ -315,11 +315,12 @@ def make_other_layer(source_name):
 	crg_order = frappe.get_doc("CM Corrugation Order", source_name)
 	other_order = frappe.new_doc("CM Corrugation Order")
 	other_order.sales_order = crg_order.sales_order
+	other_order.box = crg_order.box
 	other_order.ignore_bom = crg_order.ignore_bom
 	other_order.layer_type = "Flute"
 	if (crg_order.layer_type == "Flute"):
 		other_order.layer_type = "Top"
-	other_order.populate_order_items()
+	other_order.populate_item_prod_info()
 	other_order.populate_rolls()
 	return other_order.as_dict()
 
