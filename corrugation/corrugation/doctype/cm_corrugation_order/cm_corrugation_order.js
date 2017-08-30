@@ -99,18 +99,12 @@ frappe.ui.form.on('CM Corrugation Order', {
 	box: function(frm) {
 		frm.events.invoke_function(frm, "populate_item_prod_info")
 	},
-	mfg_qty: function(frm) {
+	auto_populate: function(frm) {
 		frm.events.invoke_function(frm, "populate_rolls")
 	},
-	manual_entry: function(frm) {
-		frm.toggle_display("ignore_bom", frm.doc.manual_entry)
-		frm.set_value("ignore_bom", 0)
-		if (frm.doc.manual_entry) {
-			frm.doc.paper_rolls = []
-			frm.refresh_fields()
-		}	else {
-			frm.events.mfg_qty(frm)
-		}
+	clear_rolls: function(frm) {
+		frm.doc.paper_rolls = []
+		frm.refresh_fields()
 	},
 	layer_type: function(frm) {
 		frm.events.invoke_function(frm, "update_layer")

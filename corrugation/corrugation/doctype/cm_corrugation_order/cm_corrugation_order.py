@@ -19,6 +19,10 @@ from frappe import _
 import copy
 
 class CMCorrugationOrder(Document):
+	def __init__(self, arg1, arg2=None):
+		super(CMCorrugationOrder, self).__init__(arg1, arg2)
+		self.paper_rolls = []
+
 	def autoname(self):
 		items = frappe.db.sql_list("""select name from `tabCM Corrugation Order`
 										where box='{0}' and layer_type='{1}'""".format(self.box, self.layer_type))
@@ -77,9 +81,10 @@ class CMCorrugationOrder(Document):
 			pass
 
 	def populate_rolls(self):
-		if (self.box_desc is None or self.manual_entry): return
-		paper_items, self.paper_rolls = [], []
+		if (self.box_desc is None): return
+		if (len(self.paper_rolls) > 0):	return self.update_box_roll_qty()
 
+		paper_items = []
 		box_count = get_no_of_boxes_from_board(self.box_desc, self.layer_type, self.mfg_qty)
 		print("Getting {0} paper for {1} boxes".format(self.layer_type, box_count))
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
@@ -169,6 +174,12 @@ class CMCorrugationOrder(Document):
 			paper_cost = next((item.rm_cost for item in box_desc.item_papers if item.rm_type == layer), None)
 			if (paper_cost != None):
 				self.planned_cost += (paper_cost * box_desc.item_per_sheet)
+
+	def validate(self):
+		expected_layers = ["Top"] if self.layer_type == "Top" else ["Flute", "Liner"]
+		for roll in self.paper_rolls:
+			if (roll.rm_type not in expected_layers):
+				frappe.throw("Unexpected layer type {0} in paper rolls".format(roll.rm_type))
 
 	def before_submit(self):
 		self.stock_batch_qty = self.mfg_qty
@@ -304,7 +315,6 @@ def make_other_layer(source_name):
 	crg_order = frappe.get_doc("CM Corrugation Order", source_name)
 	other_order = frappe.new_doc("CM Corrugation Order")
 	other_order.sales_order = crg_order.sales_order
-	other_order.manual_entry = crg_order.manual_entry
 	other_order.ignore_bom = crg_order.ignore_bom
 	other_order.layer_type = "Flute"
 	if (crg_order.layer_type == "Flute"):
@@ -332,7 +342,7 @@ def filter_rolls(doctype, txt, searchfield, start, page_len, filters):
 						order by roll.weight * 1 asc
 					""".format(paper_filter)
 	#print "Searching rolls matching paper {0} with query {1}".format(",".join(paper for paper in papers), filter_query)
-	rolls = frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})
+	rolls = frappe.db.sql(filter_query, {"txt": "%%%s" % txt})
 	if (ignore_bom):
 		rolls = filter_rolls_for_sheet(rolls, box_desc.sheet_length, box_desc.sheet_width)
 	return rolls
