@@ -19,10 +19,6 @@ from frappe import _
 import copy
 
 class CMCorrugationOrder(Document):
-	def __init__(self, arg1, arg2=None):
-		super(CMCorrugationOrder, self).__init__(arg1, arg2)
-		self.paper_rolls = []
-
 	def autoname(self):
 		items = frappe.db.sql_list("""select name from `tabCM Corrugation Order`
 										where box='{0}' and layer_type='{1}'""".format(self.box, self.layer_type))
@@ -63,6 +59,7 @@ class CMCorrugationOrder(Document):
 			frappe.throw("Box Description {0} is not verified and submitted".format(self.box_desc))
 
 		self.update_board_count()
+		self.paper_rolls = []
 		try:
 			self.populate_rolls()
 		except:
@@ -176,6 +173,9 @@ class CMCorrugationOrder(Document):
 				self.planned_cost += (paper_cost * box_desc.item_per_sheet)
 
 	def validate(self):
+		if (len(self.paper_rolls) == 0):
+			frappe.throw("No rolls added")
+
 		expected_layers = ["Top"] if self.layer_type == "Top" else ["Flute", "Liner"]
 		for roll in self.paper_rolls:
 			if (roll.rm_type not in expected_layers):
@@ -317,9 +317,7 @@ def make_other_layer(source_name):
 	other_order.sales_order = crg_order.sales_order
 	other_order.box = crg_order.box
 	other_order.ignore_bom = crg_order.ignore_bom
-	other_order.layer_type = "Flute"
-	if (crg_order.layer_type == "Flute"):
-		other_order.layer_type = "Top"
+	other_order.layer_type = "Flute" if (crg_order.layer_type == "Top") else "Top"
 	other_order.populate_item_prod_info()
 	other_order.populate_rolls()
 	return other_order.as_dict()
