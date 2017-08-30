@@ -128,9 +128,9 @@ class CMProductionOrder(Document):
 			return self.replace_paper_with_boards(se)
 
 		for item in se.items:
-			print ("Updating item {0}".format(item.item_code))
 			rm = frappe.get_doc("Item", item.item_code)
 			if rm.item_group != "Paper": continue
+			print ("Updating item {0}".format(item.item_code))
 			qty = get_used_paper_qunatity_from_rolls(self.paper_rolls, rm.name)
 			if qty != 0:
 				print("Updating item {0} qunatity to {1}".format(rm.name, qty))
@@ -140,6 +140,7 @@ class CMProductionOrder(Document):
 	def update_rm_quantity(self, se):
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
 		for item in se.items:
+			if (frappe.db.get_value("Item", item.item_code, "item_group") == "Paper"): continue
 			bom = frappe.get_doc("BOM", box_details.item_bom)
 			bom_item = next((bi for bi in bom.items if bi.item_code == item.item_code), None)
 			if (bom_item == None): continue
@@ -228,7 +229,10 @@ class CMProductionOrder(Document):
 
 	def update_production_quantity(self, qty):
 		self.mfg_qty = qty
-		self.delete_stock_and_production_entry(self.stock_entry, self.prod_order)
+		stock_entry, prod_order = self.stock_entry, self.prod_order
+		self.stock_entry = self.prod_order = None
+		self.save(ignore_permissions=True)
+		self.delete_stock_and_production_entry(stock_entry, prod_order)
 		self.update_production_cost_after_submit()
 		self.prod_order = submit_production_order(self)
 		self.stock_entry = create_new_stock_entry(self)
