@@ -150,8 +150,11 @@ class CMCorrugationOrder(Document):
 
 	def update_board_name(self):
 		box_details = frappe.get_doc("CM Box Description", self.box_desc)
-		papers = [(roll.rm_type, roll.paper_roll) for roll in self.paper_rolls]
-		self.board_name = box_details.get_board_name_from_papers(self.layer_type, papers)
+		if (self.printed and self.layer_type == "Top"):
+			self.board_name = box_details.get_board_prefix(self.layer_type) + "-" + self.box
+		else:
+			papers = [(roll.rm_type, roll.paper_roll) for roll in self.paper_rolls]
+			self.board_name = box_details.get_board_name_from_papers(self.layer_type, papers)
 		box_details.create_board_item(self.board_name)
 		self.stock_qty = get_latest_stock_qty(self.board_name)
 
@@ -180,6 +183,10 @@ class CMCorrugationOrder(Document):
 		for roll in self.paper_rolls:
 			if (roll.rm_type not in expected_layers):
 				frappe.throw("Unexpected layer type {0} in paper rolls".format(roll.rm_type))
+
+		top_type = frappe.db.get_value("CM Box Description", self.box_desc, "item_top_type")
+		if (self.printed and "Printed" not in top_type):
+			frappe.throw("Printing not allowed for top type {0}".format(top_type))
 
 	def before_submit(self):
 		self.stock_batch_qty = self.mfg_qty
