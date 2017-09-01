@@ -1,0 +1,97 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2017, sathishpy@gmail.com and contributors
+# For license information, please see license.txt
+
+from __future__ import unicode_literals
+import frappe
+from frappe.model.document import Document
+from frappe.frappeclient import FrappeClient
+
+class CMDocMirror(Document):
+	def autoname(self):
+		self.name = "data-mirror"
+
+	def mirror_data(self, item):
+		client = FrappeClient(self.mirror_url, "raju@skpi.in", "Raju123")
+		print("Connecting to {0} to execute {1}:{2}".format(self.mirror_url, item.doc_type, item.doc_method))
+		if (self.mirror_type == "Mock"): return item.seq_no
+		result = 0
+		if (item.doc_method == "on_update"):
+			doc = frappe.get_doc(item.doc_type, item.doc_name)
+			result = client.update(doc.as_dict())
+		elif (item.doc_method == "on_submit"):
+			doc = frappe.get_doc(item.doc_type, item.doc_name)
+			result = client.submit(doc.as_dict())
+		elif (item.doc_method == "on_delete"):
+			result = client.delete(item.doc_type, item.doc_name)
+		elif (item.doc_method == "on_cancel"):
+			result = client.cancel(item.doc_type, item.doc_name)
+		print("Result is {0}".format(result))
+		return item.seq_no if (result == 0) else 0
+
+	def mirror_queued_items(self):
+		items_to_sync = [item for item in self.doc_items if item.seq_no >= self.ack_seq]
+		idx = retry = 0
+		for idx in range(0, len(items_to_sync)):
+			item = items_to_sync[idx]
+			print("Mirroring item {0}".format(item.seq_no))
+			try:
+				ack = self.mirror_data(item)
+				if (ack == item.seq_no):
+					self.ack_seq += 1
+					idx += 1
+					retry = 0
+					self.move_doc_item_to_mirrored_list(item)
+				else:
+					retry += 1
+			except Exception as e:
+				retry += 1
+			if (retry > 10): break
+
+	def move_doc_item_to_mirrored_list(self, item):
+		new_item = frappe.new_doc("CM Doc Mirrored Item")
+		new_item.seq_no = item.seq_no
+		new_item.doc_method = item.doc_type + ":" + item.doc_method
+		new_item.doc_name = item.doc_name
+		self.append("mirrored_items", new_item)
+		if (len(self.mirrored_items) > 5):
+			self.remove(self.mirrored_items[0])
+			for idx in range(0, length(self.mirrored_items)):
+				self.mirrored_items[idx].idx = idx + 1
+		self.remove(item)
+		self.save()
+
+	def queue_mirror_item(self, doc, method):
+		item = frappe.new_doc("CM Doc Mirrored Item")
+		self.mirror_seq += 1
+		item.seq_no = self.mirror_seq
+		print("Adding item {0} with seq_no {1} to mirror queue".format(doc.name, item.seq_no))
+		item.doc_type = doc.doctype
+		item.doc_name = doc.name
+		item.doc_method = method
+		self.append("doc_items", item)
+		self.mirror_queued_items()
+		self.save()
+
+def add_doc_to_mirroring_queue(doc, method):
+	monitored_item_events = {"Item": ["on_update", "after_delete"],
+							 "CM Box": ["on_update", "after_delete"],
+							 "CM Box Description": ["on_submit", "on_cancel"],
+							 "Customer": ["on_update", "after_delete"],
+							 "Supplier": ["on_update", "after_delete"],
+							 "Purchase Order": ["on_submit", "on_cancel"],
+							 "Sales Order": ["on_submit", "on_cancel"],
+							 "Purchase Receipt": ["on_submit", "on_cancel"],
+							 "Purchase Invoice": ["on_submit", "on_cancel"],
+							 "Sales Invoice": ["on_submit", "on_cancel"],
+							 "Delivery Note": ["on_submit", "on_cancel"],
+							 "Journal Entry": ["on_submit", "on_cancel"],
+							 "Payment Entry": ["on_submit", "on_cancel"],
+							 }
+	if (frappe.db.get_value("CM Doc Mirror", "data-mirror") is None):
+		#print ("Mirroing not enabled")
+		return
+	if (doc.doctype not in monitored_item_events or method not in monitored_item_events[doc.doctype]): return
+	print("Mirroring item {0}:{1} for method {2}".format(doc.doctype, doc.name, method))
+	mirror_doc = frappe.get_doc("CM Doc Mirror", "data-mirror")
+	mirror_doc.queue_mirror_item(doc, method)

@@ -157,6 +157,7 @@ class CMCorrugationOrder(Document):
 			self.board_name = box_details.get_board_name_from_papers(self.layer_type, papers)
 		box_details.create_board_item(self.board_name)
 		self.stock_qty = get_latest_stock_qty(self.board_name)
+		if (self.stock_qty is None): self.stock_qty = 0
 
 	def update_production_cost(self):
 		layers = []
@@ -189,6 +190,7 @@ class CMCorrugationOrder(Document):
 			frappe.throw("Printing not allowed for top type {0}".format(top_type))
 
 	def before_submit(self):
+		self.update_board_name()
 		self.stock_batch_qty = self.mfg_qty
 		self.stock_qty += self.mfg_qty
 		self.stock_entry = self.create_new_stock_entry()

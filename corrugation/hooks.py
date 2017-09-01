@@ -95,6 +95,12 @@ doc_events = {
     "Sales Invoice": {
         "on_update": "corrugation.corrugation.utils.set_sales_terms",
     },
+    "*": {
+        "on_update": "corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.add_doc_to_mirroring_queue",
+        "on_submit": "corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.add_doc_to_mirroring_queue",
+        "on_cancel": "corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.add_doc_to_mirroring_queue",
+        "after_delete": "corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.add_doc_to_mirroring_queue",
+    },
 }
 # Scheduled Tasks
 # ---------------
