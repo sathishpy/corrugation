@@ -45,11 +45,6 @@ def get_data():
 					"name": "CM Box",
                     "label": _("Register New Box")
 				},
-				{
-					"type": "doctype",
-					"name": "CM Paper",
-                    "label": _("Register New Paper")
-				},
 			]
 		},
 		{
@@ -81,6 +76,12 @@ def get_data():
 			"label": _("Reports"),
 			"icon": "fa fa-list",
 			"items": [
+                {
+                    "type": "report",
+                    "name": "CM Box Report",
+                    "label": _("Box List"),
+					"is_query_report": True,
+                },
                 {
                     "type": "report",
                     "name": "CM Paper Roll",

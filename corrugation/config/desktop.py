@@ -44,6 +44,14 @@ def get_data():
 			"link": "query-report/CM Paper Roll"
 		},
 		{
+			"module_name": "Box Report ",
+			"_doctype": "CM Box Report",
+			"color": "#f39c12",
+			"icon": "octicon octicon-package",
+			"type": "link",
+			"link": "query-report/CM Box Report"
+		},
+		{
 			"module_name": "Expense Entry",
 			"_doctype": "Journal Entry",
 			"color": "#f39c12",
