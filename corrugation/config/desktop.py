@@ -45,7 +45,7 @@ def get_data():
 		},
 		{
 			"module_name": "Box Report ",
-			"_doctype": "CM Box Report",
+			"_doctype": "CM Box",
 			"color": "#f39c12",
 			"icon": "octicon octicon-package",
 			"type": "link",
