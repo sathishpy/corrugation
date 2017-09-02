@@ -24,13 +24,14 @@ def execute(filters=None):
 		lt.append(box_desc.item_profit)
 		lt.append(next((paper_item.rm for paper_item in box_desc.item_papers if paper_item.rm_type == "Top"), None))
 		lt.append(next((paper_item.rm for paper_item in box_desc.item_papers if paper_item.rm_type == "Flute"), None))
+		lt.append(desc)
 		data.append (lt)
 	return columns, data
 
 def get_columns():
 	columns = [
-			_("Box") + ":Link/CM Box:150", _("Length") + ":Float:70", _("Width") + ":Float:70", _("Height") + ":Float:70",
-			_("Layer") + ":Float:70", _("Sheet Length") + ":Float:70", _("Deck") + ":Float:70",
-			_("Rate") + ":Currency:70", _("Proft %") + ":Float:70", _("Top") + ":Link/Item:170", _("Board") + ":Link/Item:170"
+			_("Box") + ":Link/CM Box:150", _("Length") + ":Float:60", _("Width") + ":Float:60", _("Height") + ":Float:60",
+			_("Layers") + ":Int:50", _("Sheet Length") + ":Float:60", _("Deck") + ":Float:60",
+			_("Rate") + ":Currency:60", _("Proft %") + ":Float:60", _("Top") + ":Link/Item:150", _("Board") + ":Link/Item:150", _("Description") + ":Link/CM Box Description:150"
 			]
 	return columns

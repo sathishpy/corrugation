@@ -25,7 +25,6 @@ frappe.ui.form.on('CM Box Description', {
 									'sheet_width': doc.sheet_width,
 									'top_type': doc.item_top_type,
 									'layer_type': row.rm_type,
-									'stock_based': doc.stock_based,
 								},
 			};
 		}
@@ -69,7 +68,7 @@ frappe.ui.form.on('CM Box Description', {
 	box: function(frm) {
 		frm.events.invoke_doc_function(frm, "populate_raw_materials")
 	},
-	stock_based: function(frm) {
+	swap_deck: function(frm) {
 		frm.events.box(frm)
 	},
 	refresh: function(frm) {

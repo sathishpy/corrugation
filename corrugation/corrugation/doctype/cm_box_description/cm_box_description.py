@@ -22,7 +22,7 @@ class CMBoxDescription(Document):
 
 		rm_item = frappe.new_doc("CM Paper Item")
 		rm_item.rm_type = layer
-		papers = get_layer_papers(layer, self.sheet_length, self.sheet_width, colour, "", self.stock_based)
+		papers = get_layer_papers(layer, self.sheet_length, self.sheet_width, colour, "")
 		paper = get_suitable_paper(papers, quality)
 		print ("Selected paper {0} for {1}".format(paper, layer))
 		rm_item.rm = paper
@@ -46,13 +46,15 @@ class CMBoxDescription(Document):
 			self.sheet_length = self.item_length + 2 * self.item_cutting_margin
 			self.sheet_width = self.item_per_sheet * self.item_width + 2 * self.item_cutting_margin
 		else:
-			frappe.throw("Box Type {0} isn;t supported yet".format(box_type))
+			frappe.throw("Box Type {0} isn't supported yet".format(box_type))
 		print("Sheet length and width for {0} boxes is {1}-{2}".format(self.item_per_sheet, self.sheet_length, self.sheet_width))
 		#not really sheet related
 		if (self.item_ply_count > 3):
 			self.item_flute = 1.3
 			self.scrap_ratio = 0.5
-
+		if(self.swap_deck):
+			self.sheet_width, self.sheet_length = self.sheet_length, self.sheet_width
+			
 	def populate_paper_materials(self, quality = 0):
 		self.item_papers = []
 		count = 1
@@ -420,16 +422,15 @@ def filter_papers(doctype, txt, searchfield, start, page_len, filters):
 	sheet_length = filters["sheet_length"]
 	sheet_width = filters["sheet_width"]
 	layer_type = filters["layer_type"]
-	stock_based = filters["stock_based"]
 	colour = 'Brown'
 	if layer_type == "Top" and "White" in filters["top_type"]:	colour = 'White'
-	return get_layer_papers(layer_type, sheet_length, sheet_width, colour, txt, stock_based)
+	return get_layer_papers(layer_type, sheet_length, sheet_width, colour, txt)
 
-def get_layer_papers(layer_type, sheet_length, sheet_width, colour, txt, stock_based):
+def get_layer_papers(layer_type, sheet_length, sheet_width, colour, txt):
 	deck_query = "(attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_width, sheet_width+10)
-	#if (layer_type == "Top"):
-		#Flute direction doesn't matter for top cuttings
-		#deck_query += "or (attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_length, sheet_length+10)
+	#if (swap_deck):
+		#Flute direction doesn't matter
+		#deck_query = "(attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_length, sheet_length+10)
 
 	filter_query =	"""select item.name, attr.attribute_value
 						from tabItem item left join `tabItem Variant Attribute` attr
@@ -448,8 +449,6 @@ def get_layer_papers(layer_type, sheet_length, sheet_width, colour, txt, stock_b
 					""".format(deck_query, colour)
 	#print "Searching papers matching deck {0} with query {1}".format(sheet_length, filter_query)
 	papers = frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})
-	if (stock_based):
-		papers = filter_papers_based_on_stock(papers)
 	return papers
 
 def filter_papers_based_on_stock(papers):
