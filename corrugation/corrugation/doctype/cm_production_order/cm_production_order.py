@@ -19,7 +19,7 @@ from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order i
 class CMProductionOrder(Document):
 	def autoname(self):
 		orders = frappe.db.sql_list("""select name from `tabCM Production Order` where box='{0}'""".format(self.box))
-		self.name = "PO-{0}".format(self.box, 0 if orders is None else len(orders))
+		self.name = "PO-{0}-{1}".format(self.box, len(orders))
 
 	def populate_order_items(self):
 		if (self.sales_order is None): return
