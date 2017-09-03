@@ -13,9 +13,9 @@ class CMDocMirror(Document):
 
 	def mirror_data(self, item):
 		client = FrappeClient(self.mirror_url, "raju@skpi.in", "Raju123")
-		print("Connecting to {0} to execute {1}:{2}".format(self.mirror_url, item.doc_type, item.doc_method))
 		if (self.mirror_type == "Mock"): return item.seq_no
 		result = 0
+		print("Connecting to {0} to execute {1}:{2}".format(self.mirror_url, item.doc_type, item.doc_method))
 		if (item.doc_method == "on_update"):
 			doc = frappe.get_doc(item.doc_type, item.doc_name)
 			result = client.update(doc.as_dict())
@@ -54,10 +54,10 @@ class CMDocMirror(Document):
 		new_item.doc_method = item.doc_type + ":" + item.doc_method
 		new_item.doc_name = item.doc_name
 		self.append("mirrored_items", new_item)
-		if (len(self.mirrored_items) > 5):
+		if (len(self.mirrored_items) > 10):
+			for idx in range(0, len(self.mirrored_items)):
+				self.mirrored_items[idx].idx = idx
 			self.remove(self.mirrored_items[0])
-			for idx in range(0, length(self.mirrored_items)):
-				self.mirrored_items[idx].idx = idx + 1
 		self.remove(item)
 		self.save()
 
@@ -75,6 +75,7 @@ class CMDocMirror(Document):
 
 def add_doc_to_mirroring_queue(doc, method):
 	monitored_item_events = {"Item": ["on_update", "after_delete"],
+							 "Item Group": ["on_update", "after_delete"],
 							 "CM Box": ["on_update", "after_delete"],
 							 "CM Box Description": ["on_submit", "on_cancel"],
 							 "Customer": ["on_update", "after_delete"],
@@ -87,6 +88,7 @@ def add_doc_to_mirroring_queue(doc, method):
 							 "Delivery Note": ["on_submit", "on_cancel"],
 							 "Journal Entry": ["on_submit", "on_cancel"],
 							 "Payment Entry": ["on_submit", "on_cancel"],
+							 "Account": ["on_update", "on_delete"],
 							 }
 	if (frappe.db.get_value("CM Doc Mirror", "data-mirror") is None):
 		#print ("Mirroing not enabled")
