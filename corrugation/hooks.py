@@ -122,6 +122,11 @@ doc_events = {
 # 		"corrugation.tasks.monthly"
 # 	]
 # }
+scheduler_events = {
+	"all": [
+		"corrugation.corrugation.utils.schedule_jobs"
+	]
+}
 
 # Testing
 # -------

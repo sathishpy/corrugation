@@ -41,7 +41,7 @@ class CMDocMirror(Document):
 						"doc": json.dumps(doc.as_dict(), default=date_handler)
 					})
 		print("Result of remote request is {0}".format(result))
-		return result
+		return int(result)
 
 	def process_mirroring_request(self, item):
 		if (item.doc_method == "on_update"):
@@ -59,7 +59,7 @@ class CMDocMirror(Document):
 		ack = idx = retry = 0
 		for idx in range(0, len(items_to_sync)):
 			item = items_to_sync[idx]
-			print("Mirroring item {0} by calling {1}".format(item.seq_no, process_method.__name__))
+			print("{0}: Mirroring item {1}".format(process_method.__name__, item.seq_no))
 			try:
 				ack = process_method(item)
 			except Exception as e:
@@ -77,6 +77,7 @@ class CMDocMirror(Document):
 		self.mirror_queued_items(self.send_mirror_data)
 
 	def move_doc_item_to_mirrored_list(self, item):
+		print("Moving item {0} to mirrored queue".format(item.seq_no))
 		new_item = frappe.new_doc("CM Doc Mirrored Item")
 		new_item.seq_no = item.seq_no
 		new_item.doc_method = item.doc_type + ":" + item.doc_method
