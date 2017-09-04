@@ -116,6 +116,7 @@ class CMDocMirror(Document):
 def add_doc_to_mirroring_queue(doc, method):
 	monitored_item_events = {"Item": ["on_update", "after_delete"],
 							 "Item Group": ["on_update", "after_delete"],
+							 "Item Price": ["on_update"],
 							 "CM Box": ["on_update", "after_delete"],
 							 "CM Box Description": ["on_submit", "on_cancel"],
 							 "Customer": ["on_update", "after_delete"],
