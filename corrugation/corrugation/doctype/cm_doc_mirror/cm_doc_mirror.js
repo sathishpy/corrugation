@@ -29,7 +29,7 @@ frappe.ui.form.on('CM Doc Mirror', {
 
 	refresh: function(frm) {
 		frm.add_custom_button(__('Mirror Items'), function() {
-				frm.events.invoke_function(frm, "mirror_queued_items")
+				frm.events.invoke_function(frm, "mirror_pending_items")
 		});
 	},
 });
