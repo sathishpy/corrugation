@@ -87,19 +87,16 @@ class CMPaperManagement(Document):
 			print("Getting all the papers matching color:{0} BF:{1} GSM:{2}-{3}".format(rate_item.colour, rate_item.bf, from_gsm, to_gsm))
 			papers = get_papers(rate_item.colour, rate_item.bf, from_gsm, to_gsm)
 			for paper in papers:
-				std_rate = frappe.db.get_value("Item", paper, "standard_rate")
-				landing_rate = std_rate = frappe.db.get_value("Item", paper, "valuation_rate")
-				#print("Updating paper {0} rate from {1} to {2}".format(paper, std_rate, rate_item.std_rate))
 				frappe.db.set_value("Item", paper, "standard_rate", rate_item.std_rate)
 				frappe.db.set_value("Item", paper, "valuation_rate", rate_item.landing_rate)
 
 				item_price = frappe.db.get_value("Item Price", filters={"item_code": paper, "price_list": "Standard Buying"})
 				if (not item_price):
 					price_doc = frappe.new_doc("Item Price")
-					price_doc.update({"price_list": "Standard Buying", "item_code": paper, "price_list_rate": std_rate})
+					price_doc.update({"price_list": "Standard Buying", "item_code": paper, "price_list_rate": rate_item.std_rate})
 					price_doc.save()
 				else:
-					frappe.db.set_value("Item Price", item_price, "price_list_rate", std_rate)
+					frappe.db.set_value("Item Price", item_price, "price_list_rate", rate_item.std_rate)
 
 		self.save()
 
