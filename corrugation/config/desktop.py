@@ -59,4 +59,20 @@ def get_data():
 			"type": "link",
 			"link": "List/Journal Entry"
 		},
+		{
+			"module_name": "Sales Invoice",
+			"_doctype": "Sales Invoice",
+			"color": "#f39c12",
+			"icon": "octicon octicon-book",
+			"type": "link",
+			"link": "List/Sales Invoice"
+		},
+		{
+			"module_name": "Purchase Receipt",
+			"_doctype": "Purchase Receipt",
+			"color": "#f39c12",
+			"icon": "octicon octicon-book",
+			"type": "link",
+			"link": "List/Purchase Receipt"
+		},
 	]

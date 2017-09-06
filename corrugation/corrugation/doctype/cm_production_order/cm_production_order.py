@@ -226,16 +226,24 @@ class CMProductionOrder(Document):
 		self.revert_used_corrugated_boards()
 
 	def update_production_quantity(self, qty):
+		stock_difference = qty - self.mfg_qty
 		self.mfg_qty = qty
-		stock_entry, prod_order = self.stock_entry, self.prod_order
-		self.stock_entry = self.prod_order = None
-		self.save(ignore_permissions=True)
-		self.delete_stock_and_production_entry(stock_entry, prod_order)
 		self.update_production_cost_after_submit()
-		self.prod_order = submit_production_order(self)
-		self.stock_entry = create_new_stock_entry(self)
+		self.create_difference_stock_entry(stock_difference)
 		print("Updating produced quantity from {0} to {1}".format(self.mfg_qty, qty))
 		self.save(ignore_permissions=True)
+
+	def create_difference_stock_entry(self, quantity):
+		se = frappe.new_doc("Stock Entry")
+		se.purpose = "Repack"
+		se.from_bom = 0
+		se.to_warehouse  = self.target_warehouse
+		box_item = frappe.new_doc("Stock Entry Detail")
+		box_item.item_code = self.box
+		se.fg_completed_qty = box_item.qty = quantity
+		se.append("items", box_item)
+		se.calculate_rate_and_amount()
+		se.submit()
 
 def submit_production_order(cm_po):
 	po = frappe.new_doc("Production Order")
