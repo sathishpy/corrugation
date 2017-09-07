@@ -13,6 +13,12 @@ def schedule_jobs():
     mirror_doc = frappe.get_doc("CM Doc Mirror", "Data-Mirror-Sender")
     mirror_doc.mirror_pending_items()
 
+def schedule_daily_jobs():
+    if (frappe.db.get_value("CM Box Management", "Box Management") is None): return
+    print("Populating box stock items")
+    box_mgmnt = frappe.get_doc("CM Box Management", "Box Management")
+    box_mgmnt.populate_box_capacity()
+
 def delete_submitted_document(doctype, docname):
     if (docname is None): return
     doc = frappe.get_doc(doctype, docname)

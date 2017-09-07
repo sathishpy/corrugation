@@ -86,3 +86,4 @@ class CMBoxManagement(Document):
 			box_item.papers = ", ".join(paper_list)
 			box_item.mfg_qty = get_box_production_capacity(box_desc)
 			self.append("box_capacity_items", box_item)
+		self.save()

@@ -63,6 +63,24 @@ def get_box_production_capacity(box_desc):
 	return capacity
 
 @frappe.whitelist()
+def select_optimal_rolls_for_box(paper_items):
+	if (len(paper_items) > 3):
+		frappe.throw("This box is using more than 3 paper types {0}".format(",".join(paper_items)))
+
+	flute_paper = next((paper.rm for paper in paper_items if paper.rm_type == "Flute"))
+	liner_paper = next((paper.rm for paper in paper_items if paper.rm_type == "Liner"))
+	top_paper = next((paper.rm for paper in paper_items if paper.rm_type == "Top"))
+
+	paper_condition = "where paper='{0}'".format(flute_paper)
+	if (liner_paper != flute_paper):
+		paper_condition += " or paper='{0}'".format(liner_paper)"
+	if (top_paper != flute_paper and top_paper != liner_paper):
+		paper_condition += " or paper='{0}'".format(top_paper)"
+
+	rolls = frappe.db.sql("""select name, weight from `tabCM Paper Roll` {0} order by weight * 1 asc""".format(paper_condition), as_dict=1)
+	return rolls
+
+@frappe.whitelist()
 def select_rolls_for_box(paper_items):
 	added_rolls, available_rolls = [], []
 	#build the unique list

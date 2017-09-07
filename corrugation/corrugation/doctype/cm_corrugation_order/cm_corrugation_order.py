@@ -174,7 +174,7 @@ class CMCorrugationOrder(Document):
 		for layer in layers:
 			paper_cost = next((item.rm_cost for item in box_desc.item_papers if item.rm_type == layer), None)
 			if (paper_cost != None):
-				self.planned_cost += (paper_cost * box_desc.item_per_sheet)
+				self.planned_cost += (paper_cost * box_desc.get_items_per_board())
 
 	def validate(self):
 		if (len(self.paper_rolls) == 0):

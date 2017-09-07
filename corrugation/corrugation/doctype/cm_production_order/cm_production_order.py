@@ -80,7 +80,7 @@ class CMProductionOrder(Document):
 		for board in set(box_details.get_all_boards()):
 			layer_type = "Top" if "Top" in board else "Flute"
 			no_of_board_layers = 1 if "Top" in board else int(int(box_details.item_ply_count)/2)
-			needed_boards = (self.mfg_qty/box_details.item_per_sheet) * no_of_board_layers
+			needed_boards = (self.mfg_qty/box_details.get_items_per_board()) * no_of_board_layers
 			filters= {"box_desc": box_details.name, "layer_type": layer_type, "ignore_bom": 0}
 			boards = get_filtered_boards("", filters)
 			if (len(boards) == 0): continue

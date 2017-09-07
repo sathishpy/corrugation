@@ -93,6 +93,9 @@ frappe.ui.form.on('CM Box Description', {
 	item_per_sheet : function(frm, cdt, cdn) {
 		frm.events.invoke_doc_function(frm, "populate_raw_materials")
 	},
+	item_per_length : function(frm, cdt, cdn) {
+		frm.events.invoke_doc_function(frm, "populate_raw_materials")
+	},
 	item_flute : function(frm) {
 		frm.events.update_cost(frm);
 	},

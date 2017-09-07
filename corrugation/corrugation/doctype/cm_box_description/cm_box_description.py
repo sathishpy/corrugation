@@ -43,10 +43,12 @@ class CMBoxDescription(Document):
 			self.sheet_length = (self.item_length + 2 * (self.item_height + self.item_cutting_margin))
 			self.sheet_width = self.item_per_sheet *  (self.item_width + 2 * (self.item_height + self.item_cutting_margin))
 		elif (box_type == "Top Plate" or box_type == "Flute Plate"):
-			self.sheet_length = self.item_length + 2 * self.item_cutting_margin
+			self.sheet_length = self.item_per_length * self.item_length + 2 * self.item_cutting_margin
 			self.sheet_width = self.item_per_sheet * self.item_width + 2 * self.item_cutting_margin
 		else:
 			frappe.throw("Box Type {0} isn't supported yet".format(box_type))
+		if (box_type != "Top Plate" and box_type != "Flute Plate"):
+			self.sheet_length = self.item_per_length * self.sheet_length
 		print("Sheet length and width for {0} boxes is {1}-{2}".format(self.item_per_sheet, self.sheet_length, self.sheet_width))
 		#not really sheet related
 		if (self.item_ply_count > 3):
@@ -54,7 +56,7 @@ class CMBoxDescription(Document):
 			self.scrap_ratio = 0.5
 		if(self.swap_deck):
 			self.sheet_width, self.sheet_length = self.sheet_length, self.sheet_width
-			
+
 	def populate_paper_materials(self, quality = 0):
 		self.item_papers = []
 		count = 1
@@ -137,6 +139,8 @@ class CMBoxDescription(Document):
 		if paper is None: return 0
 		(color, bf, gsm, deck) = get_paper_attributes(paper)
 		weight = float((self.sheet_length * deck) * gsm/1000)/10000
+		if ("Top" in rm_type and deck >= self.sheet_length and self.sheet_length > self.sheet_width):
+			weight = float((self.sheet_width * deck) * gsm/1000)/10000
 		if ("Flute" in rm_type):
 			weight = float(weight * self.item_flute)
 		print ("Weight of length:{0} deck:{1} gsm:{2} is {3}".format(self.sheet_length, deck, gsm, weight))
@@ -174,11 +178,11 @@ class CMBoxDescription(Document):
 		paper_weight = 0
 		for item in self.item_papers:
 			if item.rm is None: continue
-			item.rm_weight = float(self.get_paper_weight(item.rm, item.rm_type)/self.item_per_sheet)
+			item.rm_weight = float(self.get_paper_weight(item.rm, item.rm_type)/self.get_items_per_board())
 			item.rm_weight += (item.rm_weight * self.scrap_ratio)/100
 			item.rm_cost = item.rm_rate * item.rm_weight
 			self.item_paper_cost += item.rm_cost
-			paper_weight += float(self.get_box_layer_weight(item.rm, item.rm_type)/self.item_per_sheet)
+			paper_weight += float(self.get_box_layer_weight(item.rm, item.rm_type)/self.get_items_per_board())
 			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
 		misc_weight = 0
@@ -195,7 +199,7 @@ class CMBoxDescription(Document):
 		self.item_weight = paper_weight + misc_weight * 0.3
 		if (frappe.db.get_value("CM Box", self.box, "box_type") == "Top Plate"):
 			self.item_paper_cost = self.item_paper_cost/self.item_weight
-		print("Paper cost={0} Misc cost={1} items={2}".format(self.item_paper_cost, self.item_misc_cost, self.item_per_sheet))
+		print("Paper cost={0} Misc cost={1} items={2}".format(self.item_paper_cost, self.item_misc_cost, self.get_items_per_board()))
 		if (self.item_paper_cost == 0): return
 
 		self.item_prod_cost = self.get_production_cost()
@@ -207,11 +211,14 @@ class CMBoxDescription(Document):
 		self.item_profit_amount = self.item_rate - (self.item_total_cost + interest_loss)
 		self.item_profit = float(self.item_profit_amount*100/self.item_total_cost)
 
+	def get_items_per_board(self):
+		return (self.item_per_sheet * self.item_per_length)
+
 	def get_production_cost(self):
 		if (frappe.db.get_value("CM Box", self.box, "box_type") == "Top Plate"): return 1
 
 		layer_factor = (int(self.item_ply_count) - 1)/2
-		item_per_sheet = float(self.item_per_sheet) / layer_factor
+		item_per_sheet = float(self.get_items_per_board()) / layer_factor
 		board_unit = float(self.sheet_width * self.sheet_length)/10000
 		box_unit = float(self.item_length * self.item_width * self.item_height)/7000
 		if (self.sheet_length > 175):
@@ -291,7 +298,7 @@ class CMBoxDescription(Document):
 		for item in (self.item_papers + self.item_others):
 			if item.rm is None: continue
 
-			quantity = (bom.quantity * item.rm_weight)/int(self.item_per_sheet)
+			quantity = (bom.quantity * item.rm_weight)/int(self.get_items_per_board())
 			print ("Updating Item {0} of quantity {1}".format(item.rm, quantity))
 
 			if (len(bom.items) > 0):
@@ -380,7 +387,7 @@ def get_production_details(month):
 @frappe.whitelist()
 def get_no_of_boards_for_box(box_desc_name, layer, box_count):
 	box_desc = frappe.get_doc("CM Box Description", box_desc_name)
-	boards = box_count/box_desc.item_per_sheet
+	boards = box_count/box_desc.get_items_per_board()
 	if (layer != "Top"):
 		boards = boards * int(int(box_desc.item_ply_count)/2)
 	return boards
@@ -390,7 +397,7 @@ def get_no_of_boxes_from_board(box_desc_name, layer, boards):
 	box_desc = frappe.get_doc("CM Box Description", box_desc_name)
 	if (layer != "Top"):
 		boards = boards/int(int(box_desc.item_ply_count)/2)
-	box_count = boards * box_desc.item_per_sheet
+	box_count = boards * box_desc.get_items_per_board()
 	return box_count
 
 @frappe.whitelist()
@@ -402,7 +409,7 @@ def get_planned_paper_quantity(box_desc, rmtype, paper, mfg_qty):
 			if (paper is None or paper_item.rm == paper):
 				paper_qty += paper_item.rm_weight * mfg_qty
 			else:
-				paper_qty += box_details.get_paper_weight(paper, rmtype)/box_details.item_per_sheet * mfg_qty
+				paper_qty += box_details.get_paper_weight(paper, rmtype)/box_details.get_items_per_board() * mfg_qty
 	return paper_qty
 
 @frappe.whitelist()
@@ -428,9 +435,9 @@ def filter_papers(doctype, txt, searchfield, start, page_len, filters):
 
 def get_layer_papers(layer_type, sheet_length, sheet_width, colour, txt):
 	deck_query = "(attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_width, sheet_width+10)
-	#if (swap_deck):
-		#Flute direction doesn't matter
-		#deck_query = "(attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_length, sheet_length+10)
+	if (layer_type == "Top"):
+		#Top direction doesn't matter
+		deck_query += " or (attr.attribute_value >= {0} and attr.attribute_value <= {1})".format(sheet_length, sheet_length+10)
 
 	filter_query =	"""select item.name, attr.attribute_value
 						from tabItem item left join `tabItem Variant Attribute` attr
