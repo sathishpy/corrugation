@@ -13,7 +13,7 @@ class CMDocMirror(Document):
 		self.name = "Data-Mirror" + "-" + self.mirror_type
 
 	def mirror_data(self, item):
-		client = FrappeClient(self.mirror_url, "raju@skpi.in", "Raju123")
+		client = FrappeClient(self.mirror_url, self.username, self.password)
 		if (self.mirror_type == "Mock"): return item.seq_no
 		result = 0
 		print("Connecting to {0} to execute {1}:{2}".format(self.mirror_url, item.doc_type, item.doc_method))
@@ -31,7 +31,7 @@ class CMDocMirror(Document):
 		return item.seq_no if (result == 0) else 0
 
 	def send_mirror_data(self, item):
-		client = FrappeClient(self.mirror_url, "raju@skpi.in", "Raju123")
+		client = FrappeClient(self.mirror_url, self.username, self.password)
 		doc = frappe.get_doc(item.doc_type, item.doc_name)
 		print("Calling remote mirror_document on {0} to mirro {1}:{2}".format(client.url, item.doc_type, item.doc_method))
 		result = client.post_request({
@@ -46,12 +46,16 @@ class CMDocMirror(Document):
 	def process_mirroring_request(self, item):
 		if (item.doc_method == "on_update"):
 			print("Updating item {0}-{1}".format(item.doc_type, item.doc_name))
+			item.doc.save()
 		elif (item.doc_method == "on_submit"):
 			print("Submitting item {0}-{1}".format(item.doc_type, item.doc_name))
+			item.doc.submit()
 		elif (item.doc_method == "on_delete"):
 			print("Deleting item {0}-{1}".format(item.doc_type, item.doc_name))
+			item.doc.delete()
 		elif (item.doc_method == "on_cancel"):
 			print("Cancelling item {0}-{1}".format(item.doc_type, item.doc_name))
+			item.doc.cancel()
 		return item.seq_no
 
 	def mirror_queued_items(self, process_method):
@@ -110,7 +114,8 @@ class CMDocMirror(Document):
 		item.doc_type = doc.doctype
 		item.doc_name = doc.name
 		item.doc_method = method
-		print("Adding item {0} with seq_no {1} to mirror queue".format(doc.name, item.seq_no))
+		item.doc = doc
+		print("Adding item {0} with seq_no {1} to mirror queue".format(item.doc.name, item.seq_no))
 		self.append("doc_items", item)
 
 def add_doc_to_mirroring_queue(doc, method):
