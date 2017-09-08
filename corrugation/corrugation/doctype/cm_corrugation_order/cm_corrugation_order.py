@@ -328,7 +328,10 @@ def make_other_layer(source_name):
 	other_order.ignore_bom = crg_order.ignore_bom
 	other_order.layer_type = "Flute" if (crg_order.layer_type == "Top") else "Top"
 	other_order.populate_item_prod_info()
-	other_order.populate_rolls()
+	try:
+		other_order.populate_rolls()
+	except:
+		pass
 	return other_order.as_dict()
 
 @frappe.whitelist()

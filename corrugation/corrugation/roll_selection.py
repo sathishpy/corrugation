@@ -73,9 +73,9 @@ def select_optimal_rolls_for_box(paper_items):
 
 	paper_condition = "where paper='{0}'".format(flute_paper)
 	if (liner_paper != flute_paper):
-		paper_condition += " or paper='{0}'".format(liner_paper)"
+		paper_condition += " or paper='{0}'".format(liner_paper)
 	if (top_paper != flute_paper and top_paper != liner_paper):
-		paper_condition += " or paper='{0}'".format(top_paper)"
+		paper_condition += " or paper='{0}'".format(top_paper)
 
 	rolls = frappe.db.sql("""select name, weight from `tabCM Paper Roll` {0} order by weight * 1 asc""".format(paper_condition), as_dict=1)
 	return rolls
