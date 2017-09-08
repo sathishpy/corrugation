@@ -13,7 +13,7 @@ class CMDocMirror(Document):
 		self.name = "Data-Mirror" + "-" + self.mirror_type
 
 	def mirror_data(self, item):
-		client = FrappeClient(self.mirror_url, self.username, self.password)
+		client = FrappeClient(self.mirror_url, self.username, self.get_password(fieldname="password", raise_exception=False))
 		if (self.mirror_type == "Mock"): return item.seq_no
 		result = 0
 		print("Connecting to {0} to execute {1}:{2}".format(self.mirror_url, item.doc_type, item.doc_method))
@@ -31,7 +31,7 @@ class CMDocMirror(Document):
 		return item.seq_no if (result == 0) else 0
 
 	def send_mirror_data(self, item):
-		client = FrappeClient(self.mirror_url, self.username, self.password)
+		client = FrappeClient(self.mirror_url, self.username, self.get_password(fieldname="password", raise_exception=False))
 		doc = frappe.get_doc(item.doc_type, item.doc_name)
 		print("Calling remote mirror_document on {0} to mirro {1}:{2}".format(client.url, item.doc_type, item.doc_method))
 		result = client.post_request({
