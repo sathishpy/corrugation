@@ -89,9 +89,10 @@ def get_data():
 					"is_query_report": True,
                 },
 				{
-					"type": "page",
-					"name": "stock-balance",
-					"label": _("Stock Summary")
+					"type": "report",
+                    "name": "CM Stock Report",
+					"label": _("Stock Summary"),
+					"is_query_report": True,
 				},
 				{
 					"type": "report",
