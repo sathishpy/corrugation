@@ -14,6 +14,10 @@ frappe.ui.form.on('CM Doc Mirror', {
 				{fieldname: 'doc_method', columns: 1},
 				{fieldname: 'doc_name', columns: 2},
 			];
+		frm.get_field('documents').grid.editable_fields = [
+				{fieldname: 'doc_type', columns: 4},
+				{fieldname: 'doc_methods', columns: 6},
+			];
 	},
 	invoke_function(frm, method) {
 		frappe.call({
@@ -30,6 +34,9 @@ frappe.ui.form.on('CM Doc Mirror', {
 	refresh: function(frm) {
 		frm.add_custom_button(__('Mirror Items'), function() {
 				frm.events.invoke_function(frm, "mirror_pending_items")
+		});
+		frm.add_custom_button(__('Load Default Docs'), function() {
+				frm.events.invoke_function(frm, "load_default_docs")
 		});
 	},
 });

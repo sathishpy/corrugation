@@ -24,7 +24,10 @@ class CMCorrugationOrder(Document):
 										where box='{0}' and layer_type='{1}'""".format(self.box, self.layer_type))
 		if items: idx = len(items) + 1
 		else: idx = 1
-		self.name = "CRG-" + self.layer_type + "-" + self.box + ('-%.3i' % idx)
+		order_name = "CRG-" + self.layer_type + "-" + self.box + ('-%.3i' % idx)
+		while (frappe.db.get_value("CM Corrugation Order", order_name) != None):
+			order_name = order_name + "-1"
+		self.name = order_name
 
 	def populate_order_items(self):
 		if (self.sales_order is None): return

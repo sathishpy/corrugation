@@ -10,7 +10,7 @@ import json
 
 class CMDocMirror(Document):
 	def autoname(self):
-		self.name = "Data-Mirror" + "-" + self.mirror_type
+		self.name = "DocMirror" + self.mirror_type
 
 	def mirror_data(self, item):
 		client = FrappeClient(self.mirror_url, self.username, self.get_password(fieldname="password", raise_exception=False))
@@ -118,38 +118,55 @@ class CMDocMirror(Document):
 		print("Adding item {0} with seq_no {1} to mirror queue".format(item.doc.name, item.seq_no))
 		self.append("doc_items", item)
 
+	def load_default_docs(self):
+		default_mon_events = {"Item": "on_update, after_delete",
+								 "Item Group": "on_update, after_delete",
+								 "Item Price": "on_update",
+								 "CM Box": "on_update, after_delete",
+								 "CM Box Description": "on_submit, on_cancel",
+								 "Customer": "on_update, after_delete",
+								 "Supplier": "on_update, after_delete",
+								 "Purchase Order": "on_submit, on_cancel",
+								 "Sales Order": "on_submit, on_cancel",
+								 "Purchase Receipt": "on_submit, on_cancel",
+								 "Purchase Invoice": "on_submit, on_cancel",
+								 "Sales Invoice": "on_submit, on_cancel",
+								 "Delivery Note": "on_submit, on_cancel",
+								 "Journal Entry": "on_submit, on_cancel",
+								 "Payment Entry": "on_submit, on_cancel",
+								 "Account": "on_update, on_delete",
+								}
+		self.documents = []
+		for doctype, methods in default_mon_events.items():
+			doc_item = frappe.new_doc("CM Doc Mirror Doc Item")
+			doc_item.doc_type = doctype
+			doc_item.doc_methods = methods
+			self.append("documents", doc_item)
+		self.save()
+
 def add_doc_to_mirroring_queue(doc, method):
-	monitored_item_events = {"Item": ["on_update", "after_delete"],
-							 "Item Group": ["on_update", "after_delete"],
-							 "Item Price": ["on_update"],
-							 "CM Box": ["on_update", "after_delete"],
-							 "CM Box Description": ["on_submit", "on_cancel"],
-							 "Customer": ["on_update", "after_delete"],
-							 "Supplier": ["on_update", "after_delete"],
-							 "Purchase Order": ["on_submit", "on_cancel"],
-							 "Sales Order": ["on_submit", "on_cancel"],
-							 "Purchase Receipt": ["on_submit", "on_cancel"],
-							 "Purchase Invoice": ["on_submit", "on_cancel"],
-							 "Sales Invoice": ["on_submit", "on_cancel"],
-							 "Delivery Note": ["on_submit", "on_cancel"],
-							 "Journal Entry": ["on_submit", "on_cancel"],
-							 "Payment Entry": ["on_submit", "on_cancel"],
-							 "Account": ["on_update", "on_delete"],
-							 }
-	if (frappe.db.get_value("CM Doc Mirror", "Data-Mirror-Sender") is None):
-		#print ("Mirroing not enabled")
-		return
+	if (frappe.db.get_value("CM Doc Mirror", "DocMirrorSender") is None): return
+
+	ignore_list = ["CM Doc Mirror", "Communication", "DocType", "Version", "Error Log", "Authentication Log"]
+	for doctype in ignore_list:
+		if doctype in doc.doctype: return
+
+	print("Attempting to mirror item {0}:{1} for method {2}".format(doc.doctype, doc.name, method))
+	mirror_doc = frappe.get_doc("CM Doc Mirror", "DocMirrorSender")
+	monitored_item_events = {}
+	for doc_item in mirror_doc.documents:
+		monitored_item_events[doc_item.doc_type] = doc_item.doc_methods
+
 	if (doc.doctype not in monitored_item_events or method not in monitored_item_events[doc.doctype]): return
-	print("Mirroring item {0}:{1} for method {2}".format(doc.doctype, doc.name, method))
-	mirror_doc = frappe.get_doc("CM Doc Mirror", "Data-Mirror-Sender")
+	print("mirroring item {0}:{1} for method {2}".format(doc.doctype, doc.name, method))
 	mirror_doc.send_mirror_item(method, doc)
 
 @frappe.whitelist()
 def mirror_document(seq_no, method, doc):
 	print("Received mirror request for {0} {1}".format(seq_no, method))
-	if (frappe.db.get_value("CM Doc Mirror", "Data-Mirror-Receiver") is None):
+	if (frappe.db.get_value("CM Doc Mirror", "DocMirrorReceiver") is None):
 		return
-	mirror_doc = frappe.get_doc("CM Doc Mirror", "Data-Mirror-Receiver")
+	mirror_doc = frappe.get_doc("CM Doc Mirror", "DocMirrorReceiver")
 	from six import string_types
 	if isinstance(doc, string_types):
 		doc = json.loads(doc)
