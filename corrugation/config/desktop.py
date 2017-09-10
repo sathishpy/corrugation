@@ -52,6 +52,14 @@ def get_data():
 			"link": "query-report/CM Box Report"
 		},
 		{
+			"module_name": "Stock Summary",
+			"_doctype": "CM Box",
+			"color": "#f39c12",
+			"icon": "octicon octicon-package",
+			"type": "link",
+			"link": "query-report/CM Stock Report"
+		},
+		{
 			"module_name": "Expense Entry",
 			"_doctype": "Journal Entry",
 			"color": "#f39c12",

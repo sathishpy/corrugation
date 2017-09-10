@@ -1,7 +1,7 @@
 {
  "allow_copy": 0, 
  "allow_guest_to_view": 0, 
- "allow_import": 0, 
+ "allow_import": 1, 
  "allow_rename": 0, 
  "autoname": "field:box_code", 
  "beta": 0, 
@@ -477,7 +477,7 @@
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
- "modified": "2017-09-02 01:26:34.153500", 
+ "modified": "2017-09-10 12:01:18.784933", 
  "modified_by": "Administrator", 
  "module": "Corrugation", 
  "name": "CM Box", 

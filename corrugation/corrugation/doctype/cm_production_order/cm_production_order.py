@@ -204,6 +204,10 @@ class CMProductionOrder(Document):
 			order.stock_batch_qty = order.stock_batch_qty + crg_order.board_count
 			order.save()
 
+	def validate(self):
+		if (self.box not in self.name):
+			frappe.throw("Rename(Menu->Rename) the document with {0} as box was updated".format(self.box))
+
 	def on_update(self):
 		check_material_availability(self)
 		self.update_production_cost()
