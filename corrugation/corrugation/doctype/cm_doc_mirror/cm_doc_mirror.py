@@ -126,6 +126,7 @@ class CMDocMirror(Document):
 								 "CM Box Description": "on_submit, on_cancel",
 								 "Customer": "on_update, after_delete",
 								 "Supplier": "on_update, after_delete",
+								 "Address": "on_update, after_delete",
 								 "Purchase Order": "on_submit, on_cancel",
 								 "Sales Order": "on_submit, on_cancel",
 								 "Purchase Receipt": "on_submit, on_cancel",
