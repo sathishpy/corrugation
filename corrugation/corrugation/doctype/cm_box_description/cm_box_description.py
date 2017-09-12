@@ -122,9 +122,9 @@ class CMBoxDescription(Document):
 				self.item_papers = saved_papers
 				break
 
-	def validate(self):
+	def check_papers(self):
 		if (int(self.item_ply_count) != len(self.item_papers)):
-			frappe.trow("Not all box layers added as paper items")
+			frappe.throw("Not all box layers added as paper items")
 
 		expected_type = "Top"
 		for paper in self.item_papers:
@@ -325,6 +325,7 @@ class CMBoxDescription(Document):
 		self.update_cost()
 
 	def before_submit(self):
+		self.check_papers()
 		self.make_new_bom()
 
 	def on_submit(self):
