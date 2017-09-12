@@ -195,7 +195,7 @@ class CMCorrugationOrder(Document):
 		name_part = self.layer_type + "-" + self.box
 		if (name_part not in self.name):
 			frappe.throw("Rename(Menu->Rename) the document with string {0} as box/layer was updated".format(name_part))
-			
+
 	def before_submit(self):
 		self.update_board_name()
 		self.stock_batch_qty = self.mfg_qty

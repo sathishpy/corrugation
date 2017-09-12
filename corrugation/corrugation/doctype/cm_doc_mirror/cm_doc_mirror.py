@@ -33,7 +33,7 @@ class CMDocMirror(Document):
 	def send_mirror_data(self, item):
 		client = FrappeClient(self.mirror_url, self.username, self.get_password(fieldname="password", raise_exception=False))
 		doc = frappe.get_doc(item.doc_type, item.doc_name)
-		print("Calling remote mirror_document on {0} to mirro {1}:{2}".format(client.url, item.doc_type, item.doc_method))
+		print("Calling remote mirror_document on {0} to mirror {1}:{2}".format(client.url, item.doc_type, item.doc_method))
 		result = client.post_request({
 						"cmd": "corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.mirror_document",
 						"seq_no": item.seq_no,

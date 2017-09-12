@@ -22,7 +22,6 @@ def get_result(filters=None):
 
 	start_date = filters.get("from_date")
 	end_date = filters.get("to_date")
-	print("Genarating report from {0} to {1}".format(start_date, end_date))
 
 	act_indirect_cost = get_total_expenses(start_date, end_date)
 	per_box_op_cost = get_op_cost_per_box(start_date, end_date)
@@ -34,9 +33,6 @@ def get_result(filters=None):
 									where production_order is not NULL and posting_date between '{0}' and '{1}'"""\
 									.format(start_date, end_date),as_dict=1)
 	for se in stock_entries:
-		print ("--------------------------------------------------------------")
-		print "Processing stock entry {0} on {1} for {2}".format(se.name, se.posting_date, se.production_order)
-
 		order = frappe.get_doc("Production Order", se.production_order)
 		stock_entry = frappe.get_doc("Stock Entry", se.name)
 		bom_entries = frappe.db.sql("""select item_rm_cost, item_prod_cost
@@ -50,9 +46,7 @@ def get_result(filters=None):
 			item = frappe.get_doc("Stock Entry Detail", sitem.name)
 			if (item.s_warehouse is not None):
 				act_rm_cost += item.amount
-				print("RM:{0}    Price:{1}".format(item.item_name, item.amount))
 			else:
-				print("Item:{0}  Qty:{1}".format(item.item_name, item.qty))
 				item_qty += item.qty
 
 		if (item_qty == 0): continue
@@ -68,7 +62,6 @@ def get_result(filters=None):
 		nitem = frappe.get_doc("Item", order.production_item)
 		sales_price = item_qty * nitem.standard_rate
 		int_loss = 0
-		print("Sales Price={0} Actual cost={1}".format(sales_price, act_cost))
 		profit = ((sales_price - act_cost - int_loss) * 100)/act_cost
 
 		total_bom_rm_cost += bom_rm_cost

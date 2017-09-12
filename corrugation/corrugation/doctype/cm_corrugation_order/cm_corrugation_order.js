@@ -89,6 +89,9 @@ frappe.ui.form.on('CM Corrugation Order', {
 			frm.add_custom_button(__('Make Other Layer'), function() {
 					frm.events.make_other_layer(frm)
 			});
+			frm.add_custom_button(__('Update Costs'), function() {
+					frm.events.invoke_function(frm, "update_production_cost")
+			});
 		}
 	},
 
