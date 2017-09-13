@@ -9,7 +9,7 @@ app_description = "Customizations for corrugation manufacturing Industry"
 app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "sathishpy@gmail.com"
-app_license = "MIT"
+app_license = "GNUv3"
 
 # Includes in <head>
 # ------------------

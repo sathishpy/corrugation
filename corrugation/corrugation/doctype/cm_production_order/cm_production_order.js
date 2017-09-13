@@ -82,7 +82,6 @@ frappe.ui.form.on('CM Production Order', {
 
 	onload: function(frm) {
 		if (frm.doc.docstatus != 1) {
-			frm.events.set_default_warehouse(frm);
 			frm.set_value("mfg_date", frappe.datetime.nowdate())
 		} else {
 			frm.set_df_property("mfg_qty", "read_only", 1);
@@ -97,21 +96,6 @@ frappe.ui.form.on('CM Production Order', {
 				frm.events.make_purchase_order(frm)
 		});
 		frm.events.show_boards(frm)
-	},
-
-	set_default_warehouse: function(frm) {
-		if (!(frm.doc.source_warehouse || frm.doc.target_warehouse)) {
-			frappe.call({
-				method: "erpnext.manufacturing.doctype.production_order.production_order.get_default_warehouse",
-
-				callback: function(r) {
-					if(!r.exe) {
-						frm.set_value("source_warehouse", r.message.wip_warehouse);
-						frm.set_value("target_warehouse", r.message.fg_warehouse)
-					}
-				}
-			});
-		}
 	},
 
 	sales_order: function(frm) {

@@ -114,7 +114,7 @@ class CMProductionOrder(Document):
 			board_item = frappe.new_doc("Stock Entry Detail")
 			board_item.item_code = board.layer
 			board_item.qty = board.used_qty
-			board_item.s_warehouse = self.source_warehouse
+			board_item.s_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_wip_warehouse")
 			se.append("items", board_item)
 
 		for item in other_items:
@@ -248,7 +248,7 @@ class CMProductionOrder(Document):
 		se = frappe.new_doc("Stock Entry")
 		se.purpose = "Repack"
 		se.from_bom = 0
-		se.to_warehouse  = self.target_warehouse
+		se.to_warehouse  = frappe.db.get_single_value("Manufacturing Settings", "default_fg_warehouse")
 		box_item = frappe.new_doc("Stock Entry Detail")
 		box_item.item_code = self.box
 		se.fg_completed_qty = box_item.qty = quantity
@@ -264,8 +264,8 @@ def submit_production_order(cm_po):
 	po.sales_order = cm_po.sales_order
 	po.skip_transfer = True
 	po.qty = cm_po.mfg_qty
-	po.wip_warehouse = po.source_warehouse = cm_po.source_warehouse
-	po.fg_warehouse = cm_po.target_warehouse
+	po.wip_warehouse = po.source_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_wip_warehouse")
+	po.fg_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_fg_warehouse")
 	po.submit()
 	print "Created production order {0} for {1} of quantity {2}".format(po.name, po.production_item, po.qty)
 	return po.name

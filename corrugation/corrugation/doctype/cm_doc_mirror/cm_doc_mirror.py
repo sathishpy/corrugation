@@ -168,14 +168,16 @@ def add_doc_to_mirroring_queue(doc, method):
 
 @frappe.whitelist()
 def mirror_document(seq_no, method, doc):
-	print("Received mirror request for {0} {1}".format(seq_no, method))
+	#print("Received mirror request for {0} {1}".format(seq_no, method))
 	if (frappe.db.get_value("CM Doc Mirror", "DocMirrorReceiver") is None):
 		return
 	mirror_doc = frappe.get_doc("CM Doc Mirror", "DocMirrorReceiver")
 	from six import string_types
 	if isinstance(doc, string_types):
-		doc_map = json.loads(doc)
-		return mirror_doc.receive_mirror_item(seq_no, method, doc_map)
+		doc = json.loads(doc)
+		print("Converted from json object")
+	print("Received mirror request for {0} {1}".format(seq_no, doc))
+	return mirror_doc.receive_mirror_item(seq_no, method, doc)
 
 def date_handler(obj):
 	if (hasattr(obj, 'isoformat')):
