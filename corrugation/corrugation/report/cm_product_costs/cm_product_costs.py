@@ -50,6 +50,10 @@ def get_result(filters=None):
 		planned_cost = planned_op_cost + planned_rm_cost
 		act_cost = act_op_cost + act_rm_cost
 
+		prod_order = frappe.get_doc("CM Production Order", order.name)
+		paper_qty = prod_order.get_used_paper_qty()
+		total_paper_qty += paper_qty
+
 		sales_price = frappe.db.get_value("Item", order.box, "standard_rate") * order.mfg_qty
 		int_loss = 0
 		profit = ((sales_price - act_cost - int_loss) * 100)/act_cost
@@ -61,11 +65,11 @@ def get_result(filters=None):
 		total_act_cost += act_cost
 		total_production += sales_price
 
-		result.append([order.box, order.mfg_date, order.name, planned_rm_cost, act_rm_cost, 0, op_profit, planned_cost, act_cost, profit])
+		result.append([order.box, order.mfg_date, order.name, planned_rm_cost, act_rm_cost, paper_qty, op_profit, planned_cost, act_cost, profit])
 
 	total_profit = ((total_production - total_act_cost) * 100 / total_act_cost)
 	result.append(["", "", "", "", "", "", "", "","",""])
-	result.append(["Total", "", "", total_planned_rm_cost, total_act_rm_cost, 0, total_op_profit, total_planned_cost, total_act_cost, total_profit])
+	result.append(["Total", "", "", total_planned_rm_cost, total_act_rm_cost, total_paper_qty, total_op_profit, total_planned_cost, total_act_cost, total_profit])
 
 	return result
 

@@ -182,6 +182,13 @@ class CMProductionOrder(Document):
 		profit = frappe.db.get_value("CM Box Description", self.box_desc, "item_profit_amount")
 		self.profit = profit + self.planned_rm_cost - self.act_rm_cost
 
+	def get_used_paper_qty(self):
+		paper_qty = 0
+		for order_item in self.crg_orders:
+			order = frappe.get_doc("CM Corrugation Order", order_item.crg_order)
+			paper_qty += order_item.board_count * order.get_paper_qty_per_board()
+		return paper_qty
+
 	def update_production_cost_after_submit(self):
 		board_cost = 0
 		for order_item in self.crg_orders:

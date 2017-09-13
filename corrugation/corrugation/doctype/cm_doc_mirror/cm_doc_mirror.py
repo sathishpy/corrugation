@@ -32,13 +32,12 @@ class CMDocMirror(Document):
 
 	def send_mirror_data(self, item):
 		client = FrappeClient(self.mirror_url, self.username, self.get_password(fieldname="password", raise_exception=False))
-		doc = frappe.get_doc(item.doc_type, item.doc_name)
 		print("Calling remote mirror_document on {0} to mirror {1}:{2}".format(client.url, item.doc_type, item.doc_method))
 		result = client.post_request({
 						"cmd": "corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.mirror_document",
 						"seq_no": item.seq_no,
 						"method": item.doc_method,
-						"doc": json.dumps(doc.as_dict(), default=date_handler)
+						"doc": json.dumps(item.doc.as_dict(), default=date_handler)
 					})
 		print("Result of remote request is {0}".format(result))
 		return int(result)
@@ -132,7 +131,7 @@ class CMDocMirror(Document):
 								 "Purchase Receipt": "on_submit, on_cancel",
 								 "Purchase Invoice": "on_submit, on_cancel",
 								 "Sales Invoice": "on_submit, on_cancel",
-								 "Delivery Note": "on_submit, on_cancel",
+#								 "Delivery Note": "on_submit, on_cancel",
 								 "Journal Entry": "on_submit, on_cancel",
 								 "Payment Entry": "on_submit, on_cancel",
 								 "Account": "on_update, on_delete",
