@@ -108,7 +108,7 @@ class CMDocMirror(Document):
 		self.add_item_to_mirror_queue(seq_no, method, doc)
 		self.mirror_queued_items(self.process_mirroring_request)
 		self.mirror_seq = int(seq_no) + 1
-		self.save()
+		#self.save()
 		return seq_no
 
 	def add_item_to_mirror_queue(self, seq_no, method, doc):
@@ -118,7 +118,7 @@ class CMDocMirror(Document):
 		item.doc_name = doc["name"]
 		item.doc_method = method
 		item.doc = doc
-		print("Adding item {0} with seq_no {1} to mirror queue".format(item.doc.name, item.seq_no))
+		print("Adding item {0} with seq_no {1} to mirror queue".format(item.doc_name, item.seq_no))
 		self.append("doc_items", item)
 
 	def load_default_docs(self):
@@ -174,10 +174,14 @@ def mirror_document(seq_no, method, doc):
 	mirror_doc = frappe.get_doc("CM Doc Mirror", "DocMirrorReceiver")
 	from six import string_types
 	if isinstance(doc, string_types):
-		doc = json.loads(doc)
-		print("Converted from json object")
-	print("Received mirror request for {0} {1}".format(seq_no, doc))
-	return mirror_doc.receive_mirror_item(seq_no, method, doc)
+		print("Received mirror request for {0} {1}".format(seq_no, doc))
+		doc_map = json.loads(doc)
+		if isinstance(doc, unicode):
+			import datetime
+			doc_map = eval(doc_map)
+		else:
+			print("Docmap type is {0}".format(type(doc_map)))
+		return mirror_doc.receive_mirror_item(seq_no, method, doc_map)
 
 def date_handler(obj):
 	if (hasattr(obj, 'isoformat')):
