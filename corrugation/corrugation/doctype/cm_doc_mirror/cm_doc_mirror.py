@@ -63,8 +63,9 @@ class CMDocMirror(Document):
 
 	def mirror_queued_items(self, process_method):
 		items_to_sync = [item for item in self.doc_items if item.seq_no >= self.ack_seq]
+
 		ack = idx = retry = 0
-		for idx in range(0, len(items_to_sync)):
+		while idx < len(items_to_sync):
 			item = items_to_sync[idx]
 			print("{0}: Mirroring item {1}".format(process_method.__name__, item.seq_no))
 			try:
@@ -81,7 +82,10 @@ class CMDocMirror(Document):
 			if (retry > 10): break
 
 	def mirror_pending_items(self):
-		self.mirror_queued_items(self.send_mirror_data)
+		if (self.mirror_type == "Sender"):
+			self.mirror_queued_items(self.send_mirror_data)
+		elif (self.mirror_type == "Receiver"):
+			self.mirror_queued_items(self.process_mirroring_request)
 
 	def move_doc_item_to_mirrored_list(self, item):
 		print("Moving item {0} to mirrored queue".format(item.seq_no))
@@ -105,6 +109,9 @@ class CMDocMirror(Document):
 
 	def receive_mirror_item(self, seq_no, method, doc):
 		#don't accept seq_no that we are not anticipating
+		if (int(seq_no) > self.mirror_seq):
+			print("Out of order sequence no {0} received, expected: {1}".format(seq_no, self.mirror_seq))
+			return 0
 		self.add_item_to_mirror_queue(seq_no, method, doc)
 		self.mirror_queued_items(self.process_mirroring_request)
 		self.mirror_seq = int(seq_no) + 1

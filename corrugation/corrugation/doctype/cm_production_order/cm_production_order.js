@@ -30,7 +30,7 @@ frappe.ui.form.on('CM Production Order', {
 		frm.fields_dict['sales_order'].get_query = function(doc, dt, dn) {
 			return {
 				filters:[
-					["Sales Order", "status", "in", ["Draft", "To Deliver and Bill"]]
+					["Sales Order", "status", "in", ["Draft", "To Deliver and Bill", "To Deliver"]]
 				]
 			}
 		};
