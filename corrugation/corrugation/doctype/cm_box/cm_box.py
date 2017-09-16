@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from corrugation.corrugation.utils import delete_submitted_document
 
 class CMBox(Document):
 	def get_item_doc(self):
@@ -76,12 +77,18 @@ class CMBox(Document):
 			box_bom.save(ignore_permissions=True)
 
 	def on_trash(self):
-		boxes = frappe.get_all("CM Box Description", filters={'box': self.box_code})
-		box_docs = [frappe.get_doc("CM Box Description", box) for box in boxes]
-		for box_doc in box_docs:
-			box_doc.delete()
-		item_price = frappe.db.get_value("Item Price", filters={"item_code": self.box_code, "price_list": "Standard Selling"})
-		price_doc = frappe.get_doc("Item Price", item_price)
-		price_doc.delete()
-		#item = frappe.get_doc("Item", self.box_code)
-		#item.delete()
+		box_descs = frappe.get_all("CM Box Description", filters={'box': self.box_code})
+		for box_desc in box_descs:
+			delete_submitted_document("CM Box Description", box_desc)
+
+		boms = frappe.get_all("BOM", filters={'item': self.box_item})
+		for bom in boms:
+			delete_submitted_document("BOM", bom)
+
+		price_lists = frappe.get_all("Item Price", filters={"item_code": self.box_code})
+		for item_price in price_lists:
+			price_doc = frappe.get_doc("Item Price", item_price)
+			price_doc.delete()
+
+		item = frappe.get_doc("Item", self.box_code)
+		item.delete()
