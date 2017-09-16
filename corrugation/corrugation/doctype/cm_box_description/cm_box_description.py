@@ -252,7 +252,7 @@ class CMBoxDescription(Document):
 		for layer_type in layers:
 			paper = next((paper for (rmtype, paper) in papers if layer_type == rmtype), None)
 			if (paper == None):
-				frappe.throw("Cannot find layer type {0} in rolls".format(rmtype))
+				frappe.throw("Cannot find layer type {0} in rolls".format(layer_type))
 			paper_elements = paper.split("-")
 			board_name += "-" + paper_elements[2] + "-" + paper_elements[3]
 		return board_name

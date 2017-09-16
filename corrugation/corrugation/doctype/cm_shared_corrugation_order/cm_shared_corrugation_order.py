@@ -109,7 +109,7 @@ class CMSharedCorrugationOrder(Document):
 			for paper_item in box_desc.item_papers:
 				paper_weight_ratio = float((paper_item.rm_weight * cbbox.box_qty)/planned_total_paper_weight[paper_item.rm_type])
 				actual_paper_used[paper_item.rm_type] = paper_weight_ratio * total_paper_used[paper_item.rm_type]
-				print("Box:{0}     Type:{1}   Ratio:{2}".format(cbbox.box, paper_item.rm_type, paper_weight_ratio))
+				print("Box:{0}     Type:{1}  Ratio={2} Paper:{3}".format(cbbox.box, paper_item.rm_type, paper_weight_ratio, actual_paper_used[paper_item.rm_type]))
 			weight_map[cbbox.box] = actual_paper_used
 
 		return weight_map
@@ -137,19 +137,22 @@ class CMSharedCorrugationOrder(Document):
 			crg_order.box_desc = paper_box.box_desc
 			crg_order.mfg_qty = paper_box.mfg_qty
 			crg_order.layer_type = self.layer_type
-
-			box_desc = frappe.get_doc("CM Box Description", paper_box.box_desc)
-			crg_order.bom = box_desc.item_bom
+			crg_order.bom = frappe.db.get_value("CM Box Description", paper_box.box_desc, "item_bom")
 
 			for ptype, weight in weights.items():
-				while weight > 0:
+				while weight > 0.1:
+					print("Looking for {0} kg paper for box {1} layer {2}".format(weight, paper_box.box, ptype))
 					roll = next((rl for rl in available_rolls if rl.rm_type == ptype and rl.start_weight > 0), None)
+					if (roll is None):
+						roll = next((rl for rl in available_rolls if rl.start_weight > 0), None)
+						roll.rm_type = ptype
 					roll.est_weight = weight
 					roll.final_weight = max(0, (roll.start_weight - roll.est_weight))
 					weight = weight - roll.start_weight + roll.final_weight
+					#print("Taking {0} kg paper from {1}".format((roll.start_weight-roll.final_weight), roll.paper_roll))
 					crg_order.append("paper_rolls", copy.copy(roll))
 					roll.start_weight = roll.final_weight
-
+			crg_order.save()
 			crg_order.submit()
 
 		for roll in available_rolls:
