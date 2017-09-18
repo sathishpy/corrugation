@@ -124,7 +124,7 @@ doc_events = {
 # }
 scheduler_events = {
 	"all": [
-		"corrugation.corrugation.utils.schedule_jobs"
+		"corrugation.corrugation.utils.mirror_doc_updates"
 	],
 	"daily": [
 		"corrugation.corrugation.utils.schedule_daily_jobs"

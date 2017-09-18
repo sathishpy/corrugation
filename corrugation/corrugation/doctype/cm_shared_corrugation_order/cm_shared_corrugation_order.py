@@ -36,7 +36,6 @@ class CMSharedCorrugationOrder(Document):
 		order_items = frappe.db.sql("""select item_code, qty from `tabSales Order Item`
 								where parent='{0}'""".format(item_info["sales_order"]), as_dict=1);
 		box_item = next((bi for bi in self.box_details if bi.sales_order == item_info["sales_order"] and bi.box is None), None)
-		print("Sales order {0} matches row {1}".format(item_info["sales_order"], box_item.sales_order))
 		if (len(order_items) > 0 and box_item is not None):
 			selected_item = order_items[0]
 			box_item.box = selected_item.item_code

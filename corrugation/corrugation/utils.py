@@ -7,7 +7,7 @@ import frappe
 from frappe.model.document import Document
 from frappe import _
 
-def schedule_jobs():
+def mirror_doc_updates():
     if (frappe.db.get_value("CM Doc Mirror", "DocMirrorSender") is None): return
     print("Checking pending items to mirror")
     mirror_doc = frappe.get_doc("CM Doc Mirror", "DocMirrorSender")

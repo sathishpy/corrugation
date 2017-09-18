@@ -64,22 +64,16 @@ class CMDocMirror(Document):
 	def mirror_queued_items(self, process_method):
 		items_to_sync = [item for item in self.doc_items if item.seq_no >= self.ack_seq]
 
-		ack = idx = retry = 0
-		while idx < len(items_to_sync):
+		ack = idx = 0
+		for idx in range(0, len(items_to_sync)):
 			item = items_to_sync[idx]
 			print("{0}: Mirroring item {1}".format(process_method.__name__, item.seq_no))
-			try:
-				ack = process_method(item)
-			except Exception as e:
-				print("Received expection {0}".format(e))
+			ack = process_method(item)
+
+			if (ack == self.ack_seq + 1):
+				self.ack_seq = ack
 			if (ack == item.seq_no):
-				self.ack_seq += 1
-				idx += 1
-				retry = 0
 				self.move_doc_item_to_mirrored_list(item)
-			else:
-				retry += 1
-			if (retry > 10): break
 
 	def mirror_pending_items(self):
 		if (self.mirror_type == "Sender"):
@@ -104,18 +98,22 @@ class CMDocMirror(Document):
 	def send_mirror_item(self, method, doc):
 		self.mirror_seq += 1
 		self.add_item_to_mirror_queue(self.mirror_seq, method, doc)
-		#self.mirror_queued_items(self.send_mirror_data)
 		self.save()
+		frappe.enqueue('corrugation.corrugation.utils.mirror_doc_updates')
 
 	def receive_mirror_item(self, seq_no, method, doc):
 		#don't accept seq_no that we are not anticipating
-		if (int(seq_no) > self.mirror_seq):
-			print("Out of order sequence no {0} received, expected: {1}".format(seq_no, self.mirror_seq))
-			return 0
+		#if (int(seq_no) > self.mirror_seq):
+		#	print("Out of order sequence no {0} received, expected: {1}".format(seq_no, self.mirror_seq))
+		#	return 0
 		self.add_item_to_mirror_queue(seq_no, method, doc)
-		self.mirror_queued_items(self.process_mirroring_request)
-		self.mirror_seq = int(seq_no) + 1
-		#self.save()
+		try:
+			self.mirror_queued_items(self.process_mirroring_request)
+		except Exception as e:
+			print("Received expection {0}".format(e))
+
+		self.mirror_seq += 1
+		print("Returning sequence no {0}".format(seq_no))
 		return seq_no
 
 	def add_item_to_mirror_queue(self, seq_no, method, doc):
@@ -175,20 +173,19 @@ def add_doc_to_mirroring_queue(doc, method):
 
 @frappe.whitelist()
 def mirror_document(seq_no, method, doc):
-	#print("Received mirror request for {0} {1}".format(seq_no, method))
 	if (frappe.db.get_value("CM Doc Mirror", "DocMirrorReceiver") is None):
 		return
 	mirror_doc = frappe.get_doc("CM Doc Mirror", "DocMirrorReceiver")
 	from six import string_types
 	if isinstance(doc, string_types):
-		print("Received mirror request for {0} {1}".format(seq_no, doc))
 		doc_map = json.loads(doc)
 		if isinstance(doc, unicode):
 			import datetime
 			doc_map = eval(doc_map)
-		else:
-			print("Docmap type is {0}".format(type(doc_map)))
+		print("Received mirror request for {0} {1}".format(seq_no, doc["name"]))
 		return mirror_doc.receive_mirror_item(seq_no, method, doc_map)
+	else:
+		print("Received unknown mirror request for {0} {1}".format(seq_no, method))
 
 def date_handler(obj):
 	if (hasattr(obj, 'isoformat')):

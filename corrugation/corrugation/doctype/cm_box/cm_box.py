@@ -45,7 +45,7 @@ class CMBox(Document):
 		if (self.box_type == "Top Plate"):
 			item.stock_uom = "Kg"
 			self.box_ply_count = 1
-		item.save(ignore_permissions=True)
+		item.save()
 		self.box_item = item.name
 
 		item_price = frappe.db.get_value("Item Price", filters={"item_code": self.box_code, "price_list": "Standard Selling"})

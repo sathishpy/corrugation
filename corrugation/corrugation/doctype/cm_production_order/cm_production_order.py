@@ -288,6 +288,7 @@ def create_new_stock_entry(cm_po):
 	se = frappe.new_doc("Stock Entry")
 	stock_entry = make_stock_entry(po.name, "Manufacture", po.qty)
 	se.update(stock_entry)
+	se.posting_date = cm_po.mfg_date
 
 	cm_po.update_rm_quantity(se)
 	cm_po.update_paper_quantity(se)
