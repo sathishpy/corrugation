@@ -10,7 +10,7 @@ from frappe import _
 
 def execute(filters=None):
 	columns, data = [], []
-	paper_rolls = frappe.db.sql("""select number, paper, weight, location, status from `tabCM Paper Roll` where weight > 0""",as_dict=1)
+	paper_rolls = frappe.db.sql("""select number, paper, weight, location, status from `tabCM Paper Roll` where weight > 0 order by number*1 asc""",as_dict=1)
 	columns = get_columns ()
 	for roll in paper_rolls:
 		lt = list()
