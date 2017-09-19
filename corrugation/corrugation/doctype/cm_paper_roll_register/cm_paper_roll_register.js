@@ -36,8 +36,11 @@ frappe.ui.form.on('CM Paper Roll Register', {
 			}
 		});
 	},
-	purchase_receipt: function(frm) {
+	populate_roll_details: function(frm) {
 		frm.events.invoke_function(frm, "populate_rolls")
+	},
+	purchase_receipt: function(frm) {
+		frm.events.invoke_function(frm, "populate_papers")
 	},
 });
 frappe.ui.form.on("CM Paper Roll Detail", "weight", function(frm, cdt, cdn) {

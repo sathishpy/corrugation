@@ -164,10 +164,14 @@ class CMSharedCorrugationOrder(Document):
 def make_other_layer(source_name):
 	crg_order = frappe.get_doc("CM Shared Corrugation Order", source_name)
 	other_order = frappe.new_doc("CM Shared Corrugation Order")
+	other_order.mfg_date = crg_order.mfg_date
 	other_order.layer_type = "Flute"
 	if (crg_order.layer_type == "Flute"):
 		other_order.layer_type = "Top"
 	for box_item in crg_order.box_details:
 		other_order.append("box_details", copy.copy(box_item))
-	other_order.populate_rolls()
+	try:
+		other_order.populate_rolls()
+	except:
+		pass
 	return other_order.as_dict()

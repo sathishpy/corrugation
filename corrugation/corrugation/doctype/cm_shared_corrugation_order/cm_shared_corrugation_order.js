@@ -48,7 +48,7 @@ frappe.ui.form.on('CM Shared Corrugation Order', {
 				filters: {
 									'box_desc': doc.box_details[0].box_desc,
 									'layer_type': row.rm_type,
-									'ignore_bom': 0,
+									'ignore_bom': doc.ignore_bom,
 								},
 			};
 		}

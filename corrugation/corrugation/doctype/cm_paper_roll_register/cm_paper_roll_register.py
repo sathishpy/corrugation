@@ -11,6 +11,16 @@ class CMPaperRollRegister(Document):
 	def autoname(self):
 		self.name = self.purchase_receipt + "-roll-register"
 
+	def populate_papers(self):
+		if (self.purchase_receipt is None): return
+		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
+		self.roll_count_items = []
+		for item in receipt.items:
+			if (frappe.db.get_value("Item", item.item_code, "item_group") != "Paper"): continue
+			roll_count_item = frappe.new_doc("CM Paper Roll Count Item")
+			roll_count_item.paper = item.item_code
+			self.append("roll_count_items", roll_count_item)
+
 	def populate_rolls(self):
 		if (self.purchase_receipt is None): return
 		self.total_weight, self.purchase_weight = 0, self.get_purchase_weight()
@@ -28,27 +38,16 @@ class CMPaperRollRegister(Document):
 		self.paper_rolls, self.charges = [], []
 
 		item_rates = self.get_actual_roll_rates()
-		for item in receipt.items:
-			item_doc = frappe.get_doc("Item", item.item_code)
-			if item_doc.item_group != "Paper": continue
-
-			weight = item.qty
-			while (weight > 0):
+		for paper_item in self.roll_count_items:
+			for i in range(0, paper_item.count):
 				paper_roll = frappe.new_doc("CM Paper Roll Detail")
-				paper_roll.paper = item.item_code
+				paper_roll.paper = paper_item.paper
 				paper_roll.number = idx
 				idx += 1
-				if (weight > 500):
-					paper_roll.weight = 500
-					weight -= 500
-				else:
-					paper_roll.weight = weight
-					weight = 0
 				(basic, tax, charge) = item_rates[paper_roll.paper]
 				paper_roll.unit_cost = (basic + charge)
 				self.append("paper_rolls", paper_roll)
-				self.total_weight += paper_roll.weight
-				print "Creating Roll {0}-{1}".format(item.item_code, paper_roll.weight)
+				print "Creating Roll {0}-{1}".format(paper_item.paper, paper_roll.weight)
 
 	def renumber_rolls(self):
 		if (len(self.paper_rolls) == 0): return
