@@ -52,7 +52,10 @@ class CMDocMirror(Document):
 		for idx in range(0, len(items_to_sync)):
 			item = items_to_sync[idx]
 			print("{0}: Mirroring item {1}".format(self.mirror_type, item.seq_no))
-			ack = process_method(item)
+			try:
+				ack = process_method(item)
+			except Exception as e:
+				print("{0}:Received expection {1}".format(self.mirror_type, e))
 
 			if (ack == self.ack_seq + 1):
 				self.ack_seq = ack
@@ -90,14 +93,10 @@ class CMDocMirror(Document):
 		#	print("Out of order sequence no {0} received, expected: {1}".format(seq_no, self.mirror_seq))
 		#	return 0
 		self.add_item_to_mirror_queue(seq_no, method, doc)
-		try:
-			self.mirror_queued_items(self.process_mirroring_request)
-		except Exception as e:
-			print("Received expection {0}".format(e))
-
 		self.mirror_seq += 1
-		print("Returning sequence no {0} for {1}".format(seq_no, self.mirror_seq))
 		self.save()
+		frappe.enqueue("corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.apply_doc_updates")
+		print("Returning sequence no {0} for {1}".format(seq_no, self.mirror_seq))
 		return seq_no
 
 	def add_item_to_mirror_queue(self, seq_no, method, doc):
@@ -176,6 +175,13 @@ def mirror_doc_updates():
     if (frappe.db.get_value("CM Doc Mirror", "DocMirrorSender") is None): return
     print("Checking pending items to mirror")
     mirror_doc = frappe.get_doc("CM Doc Mirror", "DocMirrorSender")
+    mirror_doc.mirror_pending_items()
+
+@frappe.whitelist()
+def apply_doc_updates():
+    if (frappe.db.get_value("CM Doc Mirror", "DocMirrorReceiver") is None): return
+    print("Checking pending items updates")
+    mirror_doc = frappe.get_doc("CM Doc Mirror", "DocMirrorReceiver")
     mirror_doc.mirror_pending_items()
 
 def date_handler(obj):
