@@ -10,7 +10,7 @@ from frappe import _
 
 def execute(filters=None):
 	columns, data = [], []
-	paper_rolls = frappe.db.sql("""select number, paper, weight, location, status from `tabCM Paper Roll` where weight > 0 order by number*1 asc""",as_dict=1)
+	paper_rolls = frappe.db.sql("""select number, paper, weight, location, manufacturer from `tabCM Paper Roll` where weight > 0 order by number*1 asc""",as_dict=1)
 	columns = get_columns ()
 	for roll in paper_rolls:
 		lt = list()
@@ -22,7 +22,7 @@ def execute(filters=None):
 			lt.append(attribute.attribute_value)
 		lt.append (item.standard_rate)
 		lt.append (item.valuation_rate)
-		lt.append ("")
+		lt.append (roll.manufacturer)
 		data.append (lt)
 	return columns, data
 
@@ -30,6 +30,6 @@ def get_columns():
 	columns = [
 			_("Roll No") + ":Int:70", _("Paper") + ":Link/Item:230",  _("Weight") + ":Float:70", _("Colour") + ":Data:100",
 			_("BF") + ":Float:70",  _("GSM") + ":Float:70", _("Deck") + ":Float:70",
-			_("Rate") + ":Currency:70", _("Landing Rate") + ":Currency:130", _("Supplier") + ":Data:100"
+			_("Rate") + ":Currency:70", _("Landing Rate") + ":Currency:100", _("Manufacturer") + ":Data:200"
 			]
 	return columns

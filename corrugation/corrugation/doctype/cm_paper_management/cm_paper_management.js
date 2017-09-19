@@ -34,36 +34,30 @@ frappe.ui.form.on('CM Paper Management', {
 		});
 	},
 	refresh: function(frm) {
-		if (frm.doc.mgmnt_type == "Update Rate") {
-			frm.add_custom_button(__('Update Rate'), function() {
-					frm.events.invoke_doc_function(frm, "update_paper_rate");
-			});
-		}
-		if (frm.doc.mgmnt_type == "New Paper") {
-			frm.add_custom_button(__('Add Paper'), function() {
-					frm.events.invoke_doc_function(frm, "add_new_paper");
-			});
-		}
-		if (frm.doc.mgmnt_type == "Paper Box Mapping") {
-			frm.add_custom_button(__('Sort On Weight'), function() {
-				frm.events.invoke_doc_function(frm, "sort_on_weight");
-			});
-			frm.add_custom_button(__('Sort On Box Count'), function() {
-				frm.events.invoke_doc_function(frm, "sort_on_box_count");
-			});
-			frm.add_custom_button(__('Sort On Deck'), function() {
-				frm.events.invoke_doc_function(frm, "sort_on_deck");
-			});
-		}
 	},
 	onload: function(frm) {
 		frm.events.mgmnt_type(frm)
 	},
+	update_rate: function(frm) {
+		frm.events.invoke_doc_function(frm, "update_paper_rate");
+	},
+	add_paper: function(frm) {
+		frm.events.invoke_doc_function(frm, "add_new_paper");
+	},
+	sort_on_deck: function(frm) {
+		frm.events.invoke_doc_function(frm, "sort_on_deck");
+	},
+	sort_on_box_count: function(frm) {
+		frm.events.invoke_doc_function(frm, "sort_on_box_count");
+	},
+	sort_on_weight: function(frm) {
+		frm.events.invoke_doc_function(frm, "sort_on_weight");
+	},
 	mgmnt_type: function(frm) {
-		frm.toggle_display("paper_rates", frm.doc.mgmnt_type == "Update Rate")
-		frm.toggle_display("new_papers", frm.doc.mgmnt_type == "New Paper")
-		frm.toggle_display("paper_to_boxes", frm.doc.mgmnt_type == "Paper Box Mapping")
-		frm.toggle_display("box_filter", frm.doc.mgmnt_type == "Paper Box Mapping")
+		frm.toggle_display("sb_paper_rate", frm.doc.mgmnt_type == "Update Rate")
+		frm.toggle_display("sb_new_paper", frm.doc.mgmnt_type == "New Paper")
+		frm.toggle_display("sb_paper_to_box", frm.doc.mgmnt_type == "Paper Box Mapping")
+		frm.toggle_display("sb_paper_to_box_fns", frm.doc.mgmnt_type == "Paper Box Mapping")
 		if (frm.doc.mgmnt_type == "Paper Box Mapping") {
 			frm.events.invoke_doc_function(frm, "map_paper_to_boxes");
 		}
