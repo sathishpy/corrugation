@@ -199,6 +199,18 @@ class CMProductionOrder(Document):
 		profit = frappe.db.get_value("CM Box Description", self.box_desc, "item_profit_amount")
 		self.profit = profit + self.planned_rm_cost - self.act_rm_cost
 
+	def validate_used_corrugated_boards(self):
+		used_board_count = 0
+		for board_item in self.paper_boards:
+			used_board_count += board_item.used_qty
+
+		tracked_board_count = 0
+		for crg_order in self.crg_orders:
+			tracked_board_count += crg_order.board_count
+
+		if (used_board_count != tracked_board_count):
+			frappe.throw("Not all used boards in production order have been tracked to corrugation order")
+
 	def update_used_corrugated_boards(self):
 		for crg_order in self.crg_orders:
 			order = frappe.get_doc("CM Corrugation Order", crg_order.crg_order)
@@ -221,6 +233,7 @@ class CMProductionOrder(Document):
 
 	def before_submit(self):
 		submit_sales_order(self.sales_order)
+		self.validate_used_corrugated_boards()
 		self.prod_order = submit_production_order(self)
 		self.stock_entry = create_new_stock_entry(self)
 		update_production_roll_qty(self)

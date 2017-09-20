@@ -35,6 +35,7 @@ class CMDocMirror(Document):
 		doc_dict = eval(item.doc)
 		doc_dict.pop("creation", None)
 		doc_dict.pop("modified", None)
+		doc_dict.pop("docstatus", None)
 		if (frappe.db.get_value(doc_dict["doctype"], doc_dict["name"]) is not None):
 			doc = frappe.get_doc(doc_dict["doctype"], doc_dict["name"])
 		else:
@@ -71,7 +72,8 @@ class CMDocMirror(Document):
 					if (ack == item.seq_no):
 						self.move_doc_item_to_mirrored_list(item)
 				except Exception as e:
-					print("{0}:Received expection - {1}".format(self.mirror_type, e))
+					print("{0}:Received exception - {1}".format(self.mirror_type, e))
+					print("{0}:Failed to process doc - {1}".format(self.mirror_type, item.doc))
 
 	def mirror_pending_items(self):
 		if (self.mirror_type == "Sender"):
