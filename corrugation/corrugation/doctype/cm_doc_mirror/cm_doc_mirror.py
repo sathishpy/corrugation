@@ -7,8 +7,13 @@ import frappe
 from frappe.model.document import Document
 from frappe.frappeclient import FrappeClient
 import json
+import threading
 
 class CMDocMirror(Document):
+	def __init__(self, arg1, arg2=None):
+		super(CMDocMirror, self).__init__(arg1, arg2)
+		self.table_lock = threading.Lock()
+
 	def autoname(self):
 		self.name = "DocMirror" + self.mirror_type
 
@@ -53,21 +58,20 @@ class CMDocMirror(Document):
 		return item.seq_no
 
 	def mirror_queued_items(self, process_method):
-		items_to_sync = [item for item in self.doc_items if item.seq_no >= self.ack_seq]
-
-		ack = idx = 0
-		for idx in range(0, len(items_to_sync)):
-			item = items_to_sync[idx]
-			print("{0}: Mirroring item {1}".format(self.mirror_type, item.seq_no))
-			try:
-				ack = process_method(item)
-			except Exception as e:
-				print("{0}:Received expection - {1}".format(self.mirror_type, e))
-
-			if (ack == self.ack_seq + 1):
-				self.ack_seq = ack
-			if (ack == item.seq_no):
-				self.move_doc_item_to_mirrored_list(item)
+		with self.table_lock:
+			items_to_sync = [item for item in self.doc_items if item.seq_no >= self.ack_seq]
+			ack = idx = 0
+			for idx in range(0, len(items_to_sync)):
+				item = items_to_sync[idx]
+				print("{0}: Mirroring item {1}".format(self.mirror_type, item.seq_no))
+				try:
+					ack = process_method(item)
+					if (ack == self.ack_seq + 1):
+						self.ack_seq = ack
+					if (ack == item.seq_no):
+						self.move_doc_item_to_mirrored_list(item)
+				except Exception as e:
+					print("{0}:Received expection - {1}".format(self.mirror_type, e))
 
 	def mirror_pending_items(self):
 		if (self.mirror_type == "Sender"):
@@ -111,19 +115,20 @@ class CMDocMirror(Document):
 			print ("Got Exception {0}".format(e))
 
 	def add_item_to_mirror_queue(self, seq_no, method, doc):
-		item = next((item for item in self.doc_items if item.doc_name == doc["name"] and item.doc_type == doc["doctype"] and item.doc_method == method), None)
-		if (item is not None):
+		with self.table_lock:
+			item = next((item for item in self.doc_items if item.doc_name == doc["name"] and item.doc_type == doc["doctype"] and item.doc_method == method), None)
+			if (item is not None):
+				item.doc = doc
+				print("{0}: Updated item {1}:{2} with seq_no {3} to mirror queue".format(self.mirror_type, type(doc), item.doc_name, item.seq_no))
+				return
+			item = frappe.new_doc("CM Doc Mirror Item")
+			item.seq_no = seq_no
+			item.doc_type = doc["doctype"]
+			item.doc_name = doc["name"]
+			item.doc_method = method
 			item.doc = doc
-			print("{0}: Updated item {1}:{2} with seq_no {3} to mirror queue".format(self.mirror_type, type(doc), item.doc_name, item.seq_no))
-			return
-		item = frappe.new_doc("CM Doc Mirror Item")
-		item.seq_no = seq_no
-		item.doc_type = doc["doctype"]
-		item.doc_name = doc["name"]
-		item.doc_method = method
-		item.doc = doc
-		self.append("doc_items", item)
-		print("{0}: Added item {1}:{2} with seq_no {3} to mirror queue".format(self.mirror_type, type(doc), item.doc_name, item.seq_no))
+			self.append("doc_items", item)
+			print("{0}: Added item {1}:{2} with seq_no {3} to mirror queue".format(self.mirror_type, type(doc), item.doc_name, item.seq_no))
 
 	def load_default_docs(self):
 		default_mon_events = {"Item": "on_update, after_delete",
