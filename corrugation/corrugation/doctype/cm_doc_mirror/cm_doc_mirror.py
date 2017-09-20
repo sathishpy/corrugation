@@ -171,7 +171,7 @@ def add_doc_to_mirroring_queue(doc, method):
 		monitored_item_events[doc_item.doc_type] = doc_item.doc_methods
 
 	if (doc.doctype not in monitored_item_events or method not in monitored_item_events[doc.doctype]): return
-	doc_dict = strip_local_values(doc.as_dict())
+	doc_dict = strip_unwanted_values(doc.as_dict())
 	#print("mirroring item {0} for method {1}".format(doc_dict, method))
 	print("Mirroring item {0}:{1} for method {2}".format(doc.doctype, doc.name, method))
 	mirror_doc.send_mirror_item(method, doc_dict)
@@ -187,7 +187,7 @@ def mirror_document(seq_no, method, doc):
 		if isinstance(doc, unicode):
 			import datetime
 			doc_map = eval(doc_map)
-		doc_map = strip_local_values(frappe._dict(doc_map))
+		doc_map = strip_unwanted_values(frappe._dict(doc_map))
 		print("Received mirror request for {0} {1}".format(seq_no, doc_map["name"]))
 		#print("Received mirror request for {0} {1}".format(doc_map, doc_map["name"]))
 		return mirror_doc.receive_mirror_item(seq_no, method, doc_map)
@@ -214,11 +214,22 @@ def date_handler(obj):
 	else:
 		raise TypeError
 
-def strip_local_values(doc_dict):
+def strip_unwanted_values(doc_dict):
 	doc_dict.pop("creation", None)
 	doc_dict.pop("modified", None)
 	doc_dict.pop("docstatus", None)
 	for (key, value) in doc_dict.items():
-		if "dict" in type(value):
-			doc_dict[key] = strip_local_values(value)
+		if not value:
+			doc_dict.pop(key, None)
+			continue
+		val_type = str(type(value))
+		if "dict" in val_type:
+			print("Dict Key is {0} value type={1}".format(key, val_type))
+			doc_dict[key] = strip_unwanted_values(value)
+		if "list" in val_type:
+			print("List Key is {0} value type={1}".format(key, val_type))
+			for item in value:
+				item_val_type = str(type(item))
+				if "dict" in item_val_type:
+					item = strip_unwanted_values(item)
 	return doc_dict
