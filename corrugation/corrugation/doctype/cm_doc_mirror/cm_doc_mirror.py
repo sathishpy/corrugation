@@ -93,21 +93,29 @@ class CMDocMirror(Document):
 		#	print("Out of order sequence no {0} received, expected: {1}".format(seq_no, self.mirror_seq))
 		#	return 0
 		self.add_item_to_mirror_queue(seq_no, method, doc)
-		self.mirror_seq += 1
-		self.save()
-		frappe.enqueue("corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.apply_doc_updates")
-		print("Returning sequence no {0} for {1}".format(seq_no, self.mirror_seq))
-		return seq_no
+		try:
+			self.save()
+			self.mirror_seq += 1
+			print("Returning sequence no {0} for {1}".format(seq_no, self.mirror_seq))
+			frappe.enqueue("corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.apply_doc_updates")
+			return seq_no
+		except Exception as e:
+			print ("Got Exception {0}".format(e))
 
 	def add_item_to_mirror_queue(self, seq_no, method, doc):
+		item = next((item for item in self.doc_items if item.doc_name == doc["name"] and item.doc_type == doc["doctype"] and item.doc_method == method), None)
+		if (item is not None):
+			item.doc = doc
+			print("{0}: Updated item {1}:{2} with seq_no {3} to mirror queue".format(self.mirror_type, type(doc), item.doc_name, item.seq_no))
+			return
 		item = frappe.new_doc("CM Doc Mirror Item")
 		item.seq_no = seq_no
 		item.doc_type = doc["doctype"]
 		item.doc_name = doc["name"]
 		item.doc_method = method
 		item.doc = doc
-		print("{0}: Adding item {1} with seq_no {2} to mirror queue".format(self.mirror_type, item.doc_name, item.seq_no))
 		self.append("doc_items", item)
+		print("{0}: Added item {1}:{2} with seq_no {3} to mirror queue".format(self.mirror_type, type(doc), item.doc_name, item.seq_no))
 
 	def load_default_docs(self):
 		default_mon_events = {"Item": "on_update, after_delete",
@@ -165,7 +173,9 @@ def mirror_document(seq_no, method, doc):
 		if isinstance(doc, unicode):
 			import datetime
 			doc_map = eval(doc_map)
+		doc_map = frappe._dict(doc_map)
 		print("Received mirror request for {0} {1}".format(seq_no, doc_map["name"]))
+		#print("Received mirror request for {0} {1}".format(doc_map, doc_map["name"]))
 		return mirror_doc.receive_mirror_item(seq_no, method, doc_map)
 	else:
 		print("Received unknown mirror request for {0} {1}".format(seq_no, method))
