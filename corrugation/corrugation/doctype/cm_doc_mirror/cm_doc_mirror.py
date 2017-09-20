@@ -218,4 +218,7 @@ def strip_local_values(doc_dict):
 	doc_dict.pop("creation", None)
 	doc_dict.pop("modified", None)
 	doc_dict.pop("docstatus", None)
+	for (key, value) in doc_dict.items():
+		if "dict" in type(value):
+			doc_dict[key] = strip_local_values(value)
 	return doc_dict
