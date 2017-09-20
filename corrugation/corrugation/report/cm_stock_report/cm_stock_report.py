@@ -32,6 +32,6 @@ def execute(filters=None):
 def get_columns():
 	columns = [
 			_("Warehouse") + ":Link/Warehouse:150", _("Item") + ":Link/Item:250",  _("Quantity") + ":Float:100",
-			_("Notes") + ":Data:500"
+			_("Notes") + ":Data:1000"
 			]
 	return columns
