@@ -133,7 +133,7 @@ class CMDocMirror(Document):
 	def load_default_docs(self):
 		default_mon_events = {"Item": "on_update, after_delete",
 								 "Item Group": "on_update, after_delete",
-								 "Item Price": "on_update",
+#								 "Item Price": "on_update",
 								 "CM Box": "on_update, after_delete",
 								 "CM Box Description": "on_submit, on_cancel",
 								 "Customer": "on_update, after_delete",
