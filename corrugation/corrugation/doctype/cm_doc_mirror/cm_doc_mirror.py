@@ -53,9 +53,6 @@ class CMDocMirror(Document):
 		return item.seq_no
 
 	def mirror_queued_items(self, process_method):
-		while self.lock:
-			sleep(0.05)
-		self.lock = 1
 		items_to_sync = [item for item in self.doc_items if item.seq_no >= self.ack_seq]
 		ack = idx = 0
 		for idx in range(0, len(items_to_sync)):
@@ -71,13 +68,27 @@ class CMDocMirror(Document):
 			except Exception as e:
 				print("{0}:Received exception - {1}".format(self.mirror_type, e))
 				print("{0}:Failed to process doc - {1}".format(self.mirror_type, item.doc))
+
+	def lock_table(self):
+		while self.lock:
+			sleep(0.05)
+		self.lock = 1
+		print("{0}: locking table".format(self.mirror_type))
+
+	def release_lock(self):
 		self.lock = 0
+		print("{0}: releasing table lock".format(self.mirror_type))
 
 	def mirror_pending_items(self):
-		if (self.mirror_type == "Sender"):
-			self.mirror_queued_items(self.send_mirror_data)
-		elif (self.mirror_type == "Receiver"):
-			self.mirror_queued_items(self.process_mirroring_request)
+		self.lock_table()
+		try:
+			if (self.mirror_type == "Sender"):
+				self.mirror_queued_items(self.send_mirror_data)
+			elif (self.mirror_type == "Receiver"):
+				self.mirror_queued_items(self.process_mirroring_request)
+		except:
+			pass
+		self.release_lock()
 
 	def move_doc_item_to_mirrored_list(self, item):
 		print("{1}: Moving item {0}:{2} to mirrored queue".format(item.seq_no, self.mirror_type, item.doc_name))
@@ -93,35 +104,39 @@ class CMDocMirror(Document):
 		self.remove(item)
 
 	def send_mirror_item(self, method, doc):
-		self.mirror_seq += 1
-		self.add_item_to_mirror_queue(self.mirror_seq, method, doc)
-		self.save()
-		frappe.enqueue("corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.mirror_doc_updates")
+		self.lock_table()
+		try:
+			self.mirror_seq += 1
+			self.add_item_to_mirror_queue(self.mirror_seq, method, doc)
+			self.save()
+			frappe.enqueue("corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.mirror_doc_updates")
+		except:
+			pass
+		self.release_lock()
 
 	def receive_mirror_item(self, seq_no, method, doc):
 		#don't accept seq_no that we are not anticipating
 		#if (int(seq_no) > self.mirror_seq):
 		#	print("Out of order sequence no {0} received, expected: {1}".format(seq_no, self.mirror_seq))
 		#	return 0
-		self.add_item_to_mirror_queue(seq_no, method, doc)
+		self.lock_table()
 		try:
+			self.add_item_to_mirror_queue(seq_no, method, doc)
 			self.mirror_seq += 1
 			frappe.enqueue("corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.apply_doc_updates")
 			self.save()
 			print("Returning sequence no {0} for {1}".format(seq_no, self.mirror_seq))
+			self.release_lock()
 			return seq_no
 		except Exception as e:
 			print ("Got Exception {0}".format(e))
+		self.release_lock()
 
 	def add_item_to_mirror_queue(self, seq_no, method, doc):
-		while self.lock:
-			sleep(0.05)
-		self.lock = 1
 		item = next((item for item in self.doc_items if item.doc_name == doc["name"] and item.doc_type == doc["doctype"] and item.doc_method == method), None)
 		if (item is not None):
 			item.doc = doc
 			print("{0}: Updated item {1}:{2} with seq_no {3} to mirror queue".format(self.mirror_type, item.doc_type, item.doc_name, item.seq_no))
-			self.lock = 0
 			return
 		item = frappe.new_doc("CM Doc Mirror Item")
 		item.seq_no = seq_no
@@ -131,7 +146,6 @@ class CMDocMirror(Document):
 		item.doc = doc
 		self.append("doc_items", item)
 		print("{0}: Added item {1}:{2} (seq:{3}) to mirror queue".format(self.mirror_type, item.doc_type, item.doc_name, item.seq_no))
-		self.lock = 0
 
 	def load_default_docs(self):
 		default_mon_events = {"Item": "on_update, after_delete",
