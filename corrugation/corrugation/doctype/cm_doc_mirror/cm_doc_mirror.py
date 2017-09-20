@@ -217,19 +217,19 @@ def mirror_document(seq_no, method, doc):
 
 @frappe.whitelist()
 def mirror_doc_updates():
-    if (frappe.db.get_value("CM Doc Mirror", "DocMirrorSender") is None): return
-    print("Checking pending items to mirror")
-    mirror_doc = get_locked_mirror_doc("DocMirrorSender")
-    mirror_doc.mirror_pending_items()
+	if (frappe.db.get_value("CM Doc Mirror", "DocMirrorSender") is None): return
+	print("Checking pending items to mirror")
+	mirror_doc = get_locked_mirror_doc("DocMirrorSender")
+	mirror_doc.mirror_pending_items()
 	mirror_doc.release_lock()
 
 @frappe.whitelist()
 def apply_doc_updates():
-    if (frappe.db.get_value("CM Doc Mirror", "DocMirrorReceiver") is None): return
-    print("Checking pending items updates")
+	if (frappe.db.get_value("CM Doc Mirror", "DocMirrorReceiver") is None): return
+	print("Checking pending items updates")
 
-    mirror_doc = get_locked_mirror_doc("DocMirrorReceiver")
-    mirror_doc.mirror_pending_items()
+	mirror_doc = get_locked_mirror_doc("DocMirrorReceiver")
+	mirror_doc.mirror_pending_items()
 	mirror_doc.release_lock()
 
 def date_handler(obj):
