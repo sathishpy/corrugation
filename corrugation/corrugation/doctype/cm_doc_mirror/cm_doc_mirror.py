@@ -87,6 +87,7 @@ class CMDocMirror(Document):
 				self.mirrored_items[idx].idx = idx
 			self.remove(self.mirrored_items[0])
 		self.remove(item)
+		self.save()
 
 	def send_mirror_item(self, method, doc):
 		self.mirror_seq += 1
