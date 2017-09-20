@@ -26,8 +26,15 @@ class CMDocMirror(Document):
 		return int(result)
 
 	def process_mirroring_request(self, item):
-		doc = frappe.new_doc(item.doc["doctype"])
-		doc.update(item.doc)
+		import datetime
+		doc_dict = eval(item.doc)
+		doc_dict.pop("creation", None)
+		doc_dict.pop("modified", None)
+		if (frappe.db.get_value(doc_dict["doctype"], doc_dict["name"]) is not None):
+			doc = frappe.get_doc(doc_dict["doctype"], doc_dict["name"])
+		else:
+			doc = frappe.new_doc(doc_dict["doctype"])
+		doc.update(doc_dict)
 
 		mock = False
 		if ("localhost" in self.mirror_url): mock = True
@@ -55,7 +62,7 @@ class CMDocMirror(Document):
 			try:
 				ack = process_method(item)
 			except Exception as e:
-				print("{0}:Received expection {1}".format(self.mirror_type, e))
+				print("{0}:Received expection - {1}".format(self.mirror_type, e))
 
 			if (ack == self.ack_seq + 1):
 				self.ack_seq = ack
