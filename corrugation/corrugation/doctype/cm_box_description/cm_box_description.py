@@ -24,7 +24,7 @@ class CMBoxDescription(Document):
 		rm_item.rm_type = layer
 		papers = get_layer_papers(layer, self.sheet_length, self.sheet_width, colour, "")
 		paper = get_suitable_paper(papers, quality)
-		print ("Selected paper {0} for {1}".format(paper, layer))
+		#print ("Selected paper {0} for {1}".format(paper, layer))
 		rm_item.rm = paper
 		self.append("item_papers", rm_item)
 
@@ -143,7 +143,7 @@ class CMBoxDescription(Document):
 			weight = float((self.sheet_width * deck) * gsm/1000)/10000
 		if ("Flute" in rm_type):
 			weight = float(weight * self.item_flute)
-		print ("Weight of length:{0} deck:{1} gsm:{2} is {3}".format(self.sheet_length, deck, gsm, weight))
+		#print ("Weight of length:{0} deck:{1} gsm:{2} is {3}".format(self.sheet_length, deck, gsm, weight))
 		return weight
 
 	def get_box_layer_weight(self, paper, rm_type):
@@ -183,7 +183,7 @@ class CMBoxDescription(Document):
 			item.rm_cost = item.rm_rate * item.rm_weight
 			self.item_paper_cost += item.rm_cost
 			paper_weight += float(self.get_box_layer_weight(item.rm, item.rm_type)/self.get_items_per_board())
-			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
+			#print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
 		misc_weight = 0
 		for item in self.item_others:
@@ -193,13 +193,13 @@ class CMBoxDescription(Document):
 			item.rm_cost = item.rm_weight * item.rm_rate
 			misc_weight += item.rm_weight
 			self.item_misc_cost += item.rm_cost
-			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
+			#print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
 
 		#Assume about 70% of GUM/Ink will be dried/wasted
 		self.item_weight = paper_weight + misc_weight * 0.3
 		if (frappe.db.get_value("CM Box", self.box, "box_type") == "Top Plate"):
 			self.item_paper_cost = self.item_paper_cost/self.item_weight
-		print("Paper cost={0} Misc cost={1} items={2}".format(self.item_paper_cost, self.item_misc_cost, self.get_items_per_board()))
+		#print("Paper cost={0} Misc cost={1} items={2}".format(self.item_paper_cost, self.item_misc_cost, self.get_items_per_board()))
 		if (self.item_paper_cost == 0): return
 
 		self.item_prod_cost = self.get_production_cost()
@@ -359,7 +359,7 @@ def get_item_rate(item_name, exclude_tax=True):
 	if (not exclude_tax): return max(std_rate, landing_rate)
 	if (std_rate == 0): std_rate = landing_rate * 0.88
 	extra_charges = max(0, (landing_rate - (std_rate * 1.12)))
-	print("Item {0} standard rate:{1} valuation rate:{2} charges:{3}".format(item_name, std_rate, landing_rate, extra_charges))
+	#print("Item {0} standard rate:{1} valuation rate:{2} charges:{3}".format(item_name, std_rate, landing_rate, extra_charges))
 	return (std_rate + extra_charges)
 
 def get_total_expenses(month):
@@ -415,7 +415,7 @@ def get_planned_paper_quantity(box_desc, rmtype, paper, mfg_qty):
 
 @frappe.whitelist()
 def is_layer_compatible(box_desc1, box_desc2, layers):
-	print ("Comparing desc {0} with {1} for layer {2}".format(box_desc1, box_desc2, layers))
+	#print ("Comparing desc {0} with {1} for layer {2}".format(box_desc1, box_desc2, layers))
 	papers1 = frappe.get_doc("CM Box Description", box_desc1).item_papers
 	papers2 = frappe.get_doc("CM Box Description", box_desc2).item_papers
 	for idx in range(0, len(papers1)):
