@@ -179,11 +179,11 @@ def get_locked_mirror_doc(doc_name):
 def add_doc_to_mirroring_queue(doc, method):
 	if (frappe.db.get_value("CM Doc Mirror", "DocMirrorSender") is None): return
 
-	ignore_list = ["CM Doc Mirror", "Communication", "DocType", "Version", "Error Log", "Authentication Log"]
+	ignore_list = ["CM Doc Mirror", "Communication", "DocType", "Version", "Error Log", "Authentication Log", "DefaultValue", "Desktop Icon"]
 	for doctype in ignore_list:
 		if doctype in doc.doctype: return
 
-	print("Attempting to mirror item {0}:{1} for method {2}".format(doc.doctype, doc.name, method))
+	#print("Attempting to mirror item {0}:{1} for method {2}".format(doc.doctype, doc.name, method))
 	mirror_doc = frappe.get_doc("CM Doc Mirror", "DocMirrorSender")
 	monitored_item_events = {}
 	for doc_item in mirror_doc.documents:
