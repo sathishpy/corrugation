@@ -34,12 +34,13 @@ class CMDocMirror(Document):
 			doc = frappe.get_doc(doc_dict["doctype"], doc_dict["name"])
 		else:
 			doc = frappe.new_doc(doc_dict["doctype"])
-		doc.update(doc_dict)
+			doc.update(doc_dict)
 
 		mock = False
 		if ("localhost" in self.mirror_url): mock = True
 		if (item.doc_method == "on_update"):
 			print("Updating item {0}-{1}".format(item.doc_type, item.doc_name))
+			doc.update(doc_dict)
 			if not mock: doc.save()
 		elif (item.doc_method == "on_submit"):
 			print("Submitting item {0}-{1}".format(item.doc_type, item.doc_name))
@@ -125,6 +126,7 @@ class CMDocMirror(Document):
 		try:
 			self.save()
 			print("{0}: Added item {1}:{2} (seq:{3}) to mirror queue".format(self.mirror_type, item.doc_type, item.doc_name, item.seq_no))
+			return seq_no
 		except Exception as e:
 			print ("Got Exception {0}".format(e))
 
@@ -181,7 +183,7 @@ def add_doc_to_mirroring_queue(doc, method):
 	for doctype in ignore_list:
 		if doctype in doc.doctype: return
 
-	#print("Attempting to mirror item {0}:{1} for method {2}".format(doc.doctype, doc.name, method))
+	print("Attempting to mirror item {0}:{1} for method {2}".format(doc.doctype, doc.name, method))
 	mirror_doc = frappe.get_doc("CM Doc Mirror", "DocMirrorSender")
 	monitored_item_events = {}
 	for doc_item in mirror_doc.documents:

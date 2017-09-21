@@ -299,7 +299,7 @@ class CMBoxDescription(Document):
 			if item.rm is None: continue
 
 			quantity = (bom.quantity * item.rm_weight)/int(self.get_items_per_board())
-			print ("Updating Item {0} of quantity {1}".format(item.rm, quantity))
+			#print ("Updating Item {0} of quantity {1}".format(item.rm, quantity))
 
 			if (len(bom.items) > 0):
 				bom_item = next((bi for bi in bom.items if bi.item_code == item.rm), None)

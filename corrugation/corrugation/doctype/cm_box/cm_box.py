@@ -59,7 +59,6 @@ class CMBox(Document):
 	def on_update(self):
 		item = frappe.get_doc("Item", self.box_item)
 		for box_bom in self.get_item_descriptions():
-			print "Updating box bom {0}".format(box_bom)
 			if (box_bom.docstatus == 1):
 				box_bom.update_cost_after_submit()
 				continue
@@ -75,6 +74,7 @@ class CMBox(Document):
 				box_bom.item_height = self.box_height
 				box_bom.populate_raw_materials()
 			box_bom.save(ignore_permissions=True)
+			print "Updated box bom {0}".format(box_bom.name)
 
 	def on_trash(self):
 		box_descs = frappe.get_all("CM Box Description", filters={'box': self.box_code})
