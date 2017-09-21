@@ -56,10 +56,10 @@ class CMDocMirror(Document):
 		ack = idx = 0
 		for idx in range(0, len(self.doc_items)):
 			item = self.doc_items[idx]
-			print("{0}: Mirroring item {1}:{2}".format(self.mirror_type, item.seq_no, item.doc_name))
+			print("{0}: Mirroring item {1}:{2}({3})".format(self.mirror_type, item.doc_type, item.doc_name, item.seq_no))
 			try:
 				ack = process_method(item)
-				if (ack == self.ack_seq + 1):
+				if (ack > self.ack_seq):
 					self.ack_seq = ack
 				if (ack == item.seq_no):
 					self.move_doc_item_to_mirrored_list(item)
@@ -110,9 +110,8 @@ class CMDocMirror(Document):
 
 	def add_item_to_mirror_queue(self, seq_no, method, doc):
 		item = next((item for item in self.doc_items if item.doc_name == doc["name"] and item.doc_type == doc["doctype"] and item.doc_method == method), None)
-		if (item is not None and self.mirror_type == "Sender"):
-			item.doc = doc
-			print("{0}: Updated item {1}:{2} with seq_no {3} to mirror queue".format(self.mirror_type, item.doc_type, item.doc_name, item.seq_no))
+		if (item is not None and (item.seq_no == seq_no or item.doc == doc)):
+			print("{0}: Duplicate item {1}:{2} with seq_no {3} ignored".format(self.mirror_type, item.doc_type, item.doc_name, item.seq_no))
 			return
 		self.mirror_seq += 1
 		item = frappe.new_doc("CM Doc Mirror Item")
@@ -134,7 +133,7 @@ class CMDocMirror(Document):
 								 "Item Group": "on_update, after_delete",
 #								 "Item Price": "on_update",
 								 "CM Box": "on_update, after_delete",
-								 "CM Box Description": "on_submit, on_cancel",
+								 "CM Box Description": "on_update, on_submit, on_cancel",
 								 "Customer": "on_update, after_delete",
 								 "Supplier": "on_update, after_delete",
 								 "Address": "on_update, after_delete",
@@ -200,19 +199,20 @@ def mirror_document(seq_no, method, doc):
 	if (frappe.db.get_value("CM Doc Mirror", "DocMirrorReceiver") is None):
 		return
 	from six import string_types
-	if isinstance(doc, string_types):
-		doc_map = json.loads(doc)
-		if isinstance(doc, unicode):
-			import datetime
-			doc_map = eval(doc_map)
-		doc_map = strip_unwanted_values(frappe._dict(doc_map))
-		print("Receiver: Received mirror request for {0} {1}".format(seq_no, doc_map["name"]))
-		mirror_doc = get_locked_mirror_doc("DocMirrorReceiver")
-		seq_no = mirror_doc.receive_mirror_item(seq_no, method, doc_map)
-		mirror_doc.release_lock()
-		return seq_no
-	else:
+	if not isinstance(doc, string_types):
 		print("Receiver: Received unknown mirror request for {0} {1}".format(seq_no, method))
+		return
+
+	doc_map = json.loads(doc)
+	if isinstance(doc, unicode):
+		import datetime
+		doc_map = eval(doc_map)
+	doc_map = strip_unwanted_values(frappe._dict(doc_map))
+	print("Receiver: Received mirror request({0}) for {1}:{2}".format(seq_no, doc_map["doctype"], doc_map["name"]))
+	mirror_doc = get_locked_mirror_doc("DocMirrorReceiver")
+	seq_no = mirror_doc.receive_mirror_item(seq_no, method, doc_map)
+	mirror_doc.release_lock()
+	return seq_no
 
 @frappe.whitelist()
 def mirror_doc_updates():
