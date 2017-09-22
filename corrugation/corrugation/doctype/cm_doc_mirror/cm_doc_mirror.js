@@ -19,7 +19,7 @@ frappe.ui.form.on('CM Doc Mirror', {
 				frm.events.invoke_function(frm, "mirror_pending_items")
 		});
 		frm.add_custom_button(__('Load Default Docs'), function() {
-				frm.events.invoke_function(frm, "load_default_docs")
+			frm.events.invoke_function(frm, "load_default_docs")
 		});
 	},
 });
