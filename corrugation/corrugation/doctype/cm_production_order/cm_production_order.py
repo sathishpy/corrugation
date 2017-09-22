@@ -153,8 +153,6 @@ class CMProductionOrder(Document):
 		return get_planned_paper_quantity(self.box_desc, rm_type, paper, self.mfg_qty)
 
 	def update_production_cost(self):
-		self.planned_rm_cost = frappe.db.get_value("CM Box Description", self.box_desc, "item_paper_cost")
-		self.planned_rm_cost += frappe.db.get_value("CM Box Description", self.box_desc, "item_misc_cost")
 		self.act_rm_cost = 0
 		self.crg_orders = []
 		for board_item in self.paper_boards:
@@ -229,6 +227,8 @@ class CMProductionOrder(Document):
 
 	def on_update(self):
 		check_material_availability(self)
+		self.planned_rm_cost = frappe.db.get_value("CM Box Description", self.box_desc, "item_paper_cost")
+		self.planned_rm_cost += frappe.db.get_value("CM Box Description", self.box_desc, "item_misc_cost")
 		self.update_production_cost()
 
 	def before_submit(self):

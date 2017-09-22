@@ -21,6 +21,8 @@ frappe.ui.form.on('CM Corrugation Order', {
 			frm.set_value("mfg_date", frappe.datetime.nowdate())
 			frm.add_fetch("box_desc", "sheet_length", "sheet_length")
 			frm.add_fetch("box_desc", "sheet_width", "sheet_width")
+		} else {
+			frm.set_df_property("mfg_qty", "read_only", 1);
 		}
 	},
 
@@ -86,6 +88,9 @@ frappe.ui.form.on('CM Corrugation Order', {
 
 	refresh: function(frm) {
 		if (frm.doc.docstatus == 1) {
+			frm.add_custom_button(__('Update Board Count'), function() {
+					frm.events.update_prod_qty(frm)
+			});
 			frm.add_custom_button(__('Make Other Layer'), function() {
 					frm.events.make_other_layer(frm)
 			});
@@ -116,6 +121,20 @@ frappe.ui.form.on('CM Corrugation Order', {
 			method: "corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order.make_other_layer",
 			frm: frm,
 		})
+	},
+	update_prod_qty(frm) {
+		if (frm.doc.docstatus != 1) return
+		frappe.prompt({fieldtype:"Int", label: __("Updated board quantity"), fieldname:"qty", 'default': frm.doc.mfg_qty },
+			function(data) {
+				frappe.call({
+					doc: frm.doc,
+					method:"update_production_quantity",
+					args: {"qty": data.qty},
+					callback: function(r) {
+						frm.refresh_fields()
+					}
+				});
+			}, __("Updated Quantity"), __("Update"));
 	},
 });
 frappe.ui.form.on("CM Production Roll Detail", "paper_roll", function(frm, cdt, cdn) {

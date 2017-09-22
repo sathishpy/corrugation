@@ -209,6 +209,25 @@ class CMCorrugationOrder(Document):
 		self.stock_entry = self.create_new_stock_entry()
 		update_production_roll_qty(self)
 
+	def update_production_quantity(self, qty):
+		stock_difference = qty - self.mfg_qty
+		self.actual_cost = (self.actual_cost * self.mfg_qty)/qty
+		self.stock_batch_qty += stock_difference
+		self.mfg_qty = qty
+		self.create_difference_stock_entry(stock_difference)
+		print("Updating produced quantity from {0} to {1}".format(self.mfg_qty, qty))
+		self.save(ignore_permissions=True)
+
+		board_used_list = frappe.db.sql("""select parent, crg_order, board_count from `tabCM Corrugation Board Item`
+										where crg_order='{0}'""".format(self.name), as_dict=True)
+		for board_info in board_used_list:
+			prod_order = frappe.get_doc("CM Production Order", board_info.parent)
+			prod_order.revert_used_corrugated_boards()
+			prod_order.update_production_cost()
+			prod_order.update_used_corrugated_boards()
+			prod_order.save()
+		self.reload()
+
 	def on_cancel(self):
 		self.stock_qty -= self.mfg_qty
 		if (self.stock_entry):
@@ -230,7 +249,6 @@ class CMCorrugationOrder(Document):
 			se.append("items", stock_item)
 		board_item = frappe.new_doc("Stock Entry Detail")
 		board_item.item_code = self.board_name
-		box_details = frappe.get_doc("CM Box Description", self.box_desc)
 		board_item.qty = self.mfg_qty
 		board_item.t_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Stores")})
 		se.append("items", board_item)
@@ -238,6 +256,17 @@ class CMCorrugationOrder(Document):
 		se.submit()
 		return se.name
 
+	def create_difference_stock_entry(self, quantity):
+		se = frappe.new_doc("Stock Entry")
+		se.purpose = "Repack"
+		se.from_bom = 0
+		se.to_warehouse  = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Stores")})
+		board_item = frappe.new_doc("Stock Entry Detail")
+		board_item.item_code = self.board_name
+		se.fg_completed_qty = board_item.qty = quantity
+		se.append("items", board_item)
+		se.calculate_rate_and_amount()
+		se.submit()
 
 @frappe.whitelist()
 def get_used_paper_qunatity_from_rolls(paper_rolls, paper):
