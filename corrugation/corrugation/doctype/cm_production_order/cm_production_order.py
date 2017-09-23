@@ -274,6 +274,7 @@ def submit_production_order(cm_po):
 	po.production_item = cm_po.box
 	box_details = frappe.get_doc("CM Box Description", cm_po.box_desc)
 	po.bom_no = box_details.item_bom
+	po.posting_date = cm_po.mfg_date
 	po.sales_order = cm_po.sales_order
 	po.skip_transfer = True
 	po.qty = cm_po.mfg_qty
@@ -301,13 +302,14 @@ def create_new_stock_entry(cm_po):
 	se = frappe.new_doc("Stock Entry")
 	stock_entry = make_stock_entry(po.name, "Manufacture", po.qty)
 	se.update(stock_entry)
-	se.posting_date = cm_po.mfg_date
 
 	cm_po.update_rm_quantity(se)
 	cm_po.update_paper_quantity(se)
 	se.calculate_rate_and_amount()
-	for item in se.items:
-		print "Item:{0} Quantity:{1}".format(item.item_code, item.qty)
+	se.set_posting_time = True
+	se.posting_date = cm_po.mfg_date
+	#for item in se.items:
+	#	print "Item:{0} Quantity:{1}".format(item.item_code, item.qty)
 	se.submit()
 
 	return se.name

@@ -15,9 +15,10 @@ def schedule_daily_jobs():
 
 def delete_submitted_document(doctype, docname):
     if (docname is None): return
-    print("Deleting submitted document {0}:{1}".format(doctype, docname))
     doc = frappe.get_doc(doctype, docname)
-    doc.cancel()
+    if (doc.docstatus == 1):
+        print("Deleting submitted document {0}:{1}".format(doctype, docname))
+        doc.cancel()
     doc.delete()
 
 def set_sales_terms(inv, method):

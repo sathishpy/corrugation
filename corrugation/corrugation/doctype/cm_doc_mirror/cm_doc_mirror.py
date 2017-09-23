@@ -7,10 +7,13 @@ import frappe
 from frappe.model.document import Document
 from frappe.frappeclient import FrappeClient
 import json
+import threading
 from time import sleep
 
 class CMDocMirror(Document):
-	lock = {"DocMirrorReceiver":0, "DocMirrorSender": 0}
+	lock = {"DocMirrorReceiver":threading.Lock(), "DocMirrorSender": threading.Lock()}
+	q_size = {"DocMirrorReceiver": 0, "DocMirrorSender": 0}
+
 	def autoname(self):
 		self.name = "DocMirror" + self.mirror_type
 
@@ -66,6 +69,7 @@ class CMDocMirror(Document):
 				if (ack == item.seq_no):
 					self.move_doc_item_to_mirrored_list(item)
 				self.save()
+				CMDocMirror.q_size[self.name] = len(self.doc_items)
 			except Exception as e:
 				print("{0}: **** Received exception while processing {1} - {2}".format(self.mirror_type, item.doc_name, e))
 				#print("{0}:Failed to process doc - {1}".format(self.mirror_type, item.doc))
@@ -138,6 +142,7 @@ class CMDocMirror(Document):
 		try:
 			self.save()
 			print("{0}: Added item {1}:{2} (seq:{3}) to mirror queue".format(self.mirror_type, item.doc_type, item.doc_name, item.seq_no))
+			CMDocMirror.q_size[self.name] = len(self.doc_items)
 			return seq_no
 		except Exception as e:
 			print ("Got Exception {0}".format(e))
@@ -177,37 +182,19 @@ class CMDocMirror(Document):
 def get_unlocked_doc(doc_name):
 	mirror_doc = frappe.get_doc("CM Doc Mirror", doc_name)
 	mirror_doc.reload()
-	if (mirror_doc.lock == 0):
-		mirror_doc = frappe.get_doc("CM Doc Mirror", doc_name)
-		mirror_doc.reload()
-	if (mirror_doc.lock == 0): return mirror_doc
+	return mirror_doc
 
 def get_locked_mirror_doc(doc_name):
 	if (frappe.db.get_value("CM Doc Mirror", doc_name) is None): return
-
-	alarm, timeout = 0, 20
-	CMDocMirror.lock[doc_name] += 1
+	print("{0}: Waiting to acquire lock".format(doc_name))
+	CMDocMirror.lock[doc_name].acquire()
 	mirror_doc = get_unlocked_doc(doc_name)
-	print("{0}: Acquiring lock {1}".format(doc_name, mirror_doc.lock))
-	while (mirror_doc is None and alarm < timeout):
-		sleep(0.05)
-		alarm += 1
-		mirror_doc = get_unlocked_doc(doc_name)
-
-	frappe.db.set_value("CM Doc Mirror", doc_name, "lock", 1)
-	mirror_doc.reload()
-
-	if (alarm >= timeout):
-		print("{0}: Acquired lock({1}) due to timeout".format(doc_name, mirror_doc.lock))
-	else:
-		print("{0}: locked({1}-{2}) table Q-Size={3}".format(doc_name, mirror_doc.lock, CMDocMirror.lock[doc_name], len(mirror_doc.doc_items)))
+	print("{0}: locked table, Q-Size={1}-{2}".format(doc_name, len(mirror_doc.doc_items), CMDocMirror.q_size[doc_name]))
 	return mirror_doc
 
 def release_locked_mirror_doc(mirror_doc):
-	frappe.db.set_value("CM Doc Mirror", mirror_doc.name, "lock", 0)
-	mirror_doc.reload()
-	CMDocMirror.lock[mirror_doc.name] -= 1
-	print("{0}: Released table lock({1}:{2})".format(mirror_doc.name, mirror_doc.lock, CMDocMirror.lock[mirror_doc.name]))
+	CMDocMirror.lock[mirror_doc.name].release()
+	print("{0}: Released table lock. Q-Size: {1}-{2}".format(mirror_doc.name, len(mirror_doc.doc_items), CMDocMirror.q_size[mirror_doc.name]))
 
 def add_doc_to_mirroring_queue(doc, method):
 	if (frappe.db.get_value("CM Doc Mirror", "DocMirrorSender") is None): return
