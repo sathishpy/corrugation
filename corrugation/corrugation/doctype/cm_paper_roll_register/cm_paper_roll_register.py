@@ -19,7 +19,7 @@ class CMPaperRollRegister(Document):
 			if (frappe.db.get_value("Item", item.item_code, "item_group") != "Paper"): continue
 			roll_count_item = frappe.new_doc("CM Paper Roll Count Item")
 			roll_count_item.paper = item.item_code
-			roll_count_item.count = receipt.qty/500
+			roll_count_item.count = item.qty/500
 			self.append("roll_count_items", roll_count_item)
 
 	def populate_rolls(self):
