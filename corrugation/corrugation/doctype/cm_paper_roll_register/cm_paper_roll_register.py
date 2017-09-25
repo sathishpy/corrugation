@@ -201,7 +201,7 @@ def create_new_rolls(doc, method):
 	print("Creating new roll register for doc {0}".format(doc.name))
 	new_register = frappe.new_doc("CM Paper Roll Register")
 	new_register.purchase_receipt = doc.name
-	new_register.populate_rolls()
+	new_register.populate_papers()
 	new_register.save(ignore_permissions=True)
 
 def find_roll_receipt_matching_invoice(pi):
