@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from frappe.utils import nowdate
+from corrugation.corrugation.utils import delete_submitted_document
 
 class CMPaperRollRegister(Document):
 	def autoname(self):
@@ -21,10 +22,11 @@ class CMPaperRollRegister(Document):
 			roll_count_item.paper = item.item_code
 			roll_count_item.count = item.qty/500
 			self.append("roll_count_items", roll_count_item)
+		self.total_weight, self.purchase_weight = 0, self.get_purchase_weight()
+		self.supplier = receipt.supplier
 
 	def populate_rolls(self):
 		if (self.purchase_receipt is None): return
-		self.total_weight, self.purchase_weight = 0, self.get_purchase_weight()
 		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
 
 		last_idx = frappe.db.count("CM Paper Roll")
@@ -34,7 +36,6 @@ class CMPaperRollRegister(Document):
 			idx = idx + 1
 			roll_name = frappe.db.get_value("CM Paper Roll", filters={"number": idx})
 
-		self.supplier = receipt.supplier
 		print("Populating {0} Paper items for receipt {1} starting {2} from {3}".format(len(receipt.items), self.purchase_receipt, idx, receipt.supplier))
 		self.paper_rolls, self.charges = [], []
 
@@ -186,14 +187,6 @@ class CMPaperRollRegister(Document):
 			paper_roll = frappe.get_doc("CM Paper Roll", roll_name)
 			print ("Deleting roll {0}".format(paper_roll.name))
 			paper_roll.delete()
-		docs = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
-		for invoice in [self.purchase_invoice, self.purchase_invoice_2, self.purchase_invoice_3]:
-			if (invoie is None): continue
-			docs += frappe.get_doc("Purchase Invoice", invoice)
-		for doc in docs:
-			print ("Deleting entry {0}".format(doc.name))
-			doc.cancel()
-			doc.delete()
 
 @frappe.whitelist()
 def create_new_rolls(doc, method):
