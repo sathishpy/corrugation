@@ -265,6 +265,8 @@ class CMProductionOrder(Document):
 		box_item = frappe.new_doc("Stock Entry Detail")
 		box_item.item_code = self.box
 		se.fg_completed_qty = box_item.qty = quantity
+		se.set_posting_time = True
+		se.posting_date = self.mfg_date
 		se.append("items", box_item)
 		se.calculate_rate_and_amount()
 		se.submit()

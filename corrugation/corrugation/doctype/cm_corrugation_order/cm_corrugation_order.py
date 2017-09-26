@@ -250,6 +250,8 @@ class CMCorrugationOrder(Document):
 		board_item = frappe.new_doc("Stock Entry Detail")
 		board_item.item_code = self.board_name
 		board_item.qty = self.mfg_qty
+		se.set_posting_time = True
+		se.posting_date = self.mfg_date
 		board_item.t_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Stores")})
 		se.append("items", board_item)
 		se.calculate_rate_and_amount()
@@ -264,6 +266,8 @@ class CMCorrugationOrder(Document):
 		board_item = frappe.new_doc("Stock Entry Detail")
 		board_item.item_code = self.board_name
 		se.fg_completed_qty = board_item.qty = quantity
+		se.set_posting_time = True
+		se.posting_date = self.mfg_date
 		se.append("items", board_item)
 		se.calculate_rate_and_amount()
 		se.submit()
