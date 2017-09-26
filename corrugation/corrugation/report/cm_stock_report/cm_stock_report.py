@@ -7,9 +7,12 @@ from frappe import _
 from erpnext.stock.dashboard.item_dashboard import get_data
 
 def execute(filters=None):
-	item_group = filters.get("item_group")
-	columns, data = [], []
-	items = get_data(None, None, item_group)
+	item_groups = [filters.get("group_name")]
+	if (filters.get("group_name") == "Others"):
+		item_groups = ["Gum", "Ink"]
+	columns, data, items = [], [], []
+	for item_group in item_groups:
+		items += get_data(None, None, item_group)
 	columns = get_columns ()
 	for item in items:
 		if item.actual_qty == 0: continue

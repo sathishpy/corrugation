@@ -5,10 +5,10 @@
 frappe.query_reports["CM Stock Report"] = {
 	"filters": [
 		{
-						"fieldname":"item_group",
+						"fieldname":"group_name",
 						"label": __("Item Group"),
-						"fieldtype": "Link",
-						"options": "Item Group",
+						"fieldtype": "Select",
+						"options": "Products\nPaper\nBoard Layer\nOthers",
 						"default": "Products",
 		},
 	]
