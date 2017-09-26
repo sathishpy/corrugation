@@ -56,8 +56,9 @@ def execute(filters=None):
 
 		#print ("Adding {0} {1} {2}".format(paper_qty, box_qty, box_cost))
 		data.append([from_date, paper_qty, box_qty, box_weight, box_cost])
+	chart = get_chart_data(columns, data)
 	data.append(["", "", "", "", ""])
-	return columns, data
+	return columns, data, None, chart
 
 def get_columns(filter):
 	columns = [
@@ -65,3 +66,35 @@ def get_columns(filter):
 			_("Box Production(Amount)") + ":Float:200",
 			]
 	return columns
+
+def get_chart_data(columns, data):
+	data.reverse()
+	x_intervals = ['x'] + [d[0] for d in data]
+
+	paper_qty, box_qty, box_weight = [], [], []
+
+	for d in data:
+		paper_qty.append(d[1])
+		box_qty.append(d[2])
+		box_weight.append(d[3])
+
+	columns = [x_intervals]
+	columns.append(["Paper"] + paper_qty)
+	columns.append(["Box"] + box_qty)
+	columns.append(["BoxWeight "] + box_weight)
+
+	chart = {
+		"data": {
+			'x': 'x',
+			'columns': columns,
+			'colors': {
+				'Paper': 'Brown',
+				'Box': 'Blue',
+				'BoxWeight': 'Green'
+			}
+		}
+	}
+
+	chart["chart_type"] = "line"
+
+	return chart
