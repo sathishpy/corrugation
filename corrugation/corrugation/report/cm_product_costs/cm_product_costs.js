@@ -15,6 +15,12 @@ frappe.query_reports["CM Product Costs"] = {
 						"label": __("To Date"),
 						"fieldtype": "Date",
 						"default": frappe.datetime.get_today(),
-		}
+		},
+		{
+						"fieldname":"consolidated",
+						"label": __("Consolidated"),
+						"fieldtype": "Check",
+						"default": 1,
+		},
 	]
 }

@@ -96,14 +96,14 @@ def get_data():
 				},
 				{
 					"type": "report",
-                    "name": "CM Product Costs",
-					"label": _("Production Cost Analysis"),
+                    "name": "CM Production Report",
+					"label": _("Production Analysis"),
 					"is_query_report": True,
 				},
 				{
 					"type": "report",
-                    "name": "CM Production Report",
-					"label": _("Production Analysis"),
+                    "name": "CM Product Costs",
+					"label": _("Production Cost Analysis"),
 					"is_query_report": True,
 				},
 			]
