@@ -100,6 +100,12 @@ def get_data():
 					"label": _("Production Cost Analysis"),
 					"is_query_report": True,
 				},
+				{
+					"type": "report",
+                    "name": "CM Production Report",
+					"label": _("Production Analysis"),
+					"is_query_report": True,
+				},
 			]
 		},
 		{
