@@ -221,7 +221,7 @@
    "read_only": 0, 
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
-   "reqd": 1, 
+   "reqd": 0, 
    "search_index": 0, 
    "set_only_once": 0, 
    "unique": 0
@@ -600,7 +600,7 @@
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
- "modified": "2017-09-25 15:26:03.159572", 
+ "modified": "2017-09-28 09:41:06.678014", 
  "modified_by": "Administrator", 
  "module": "Corrugation", 
  "name": "CM Paper Roll Register", 
