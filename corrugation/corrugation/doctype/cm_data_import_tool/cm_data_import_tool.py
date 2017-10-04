@@ -87,6 +87,7 @@ class CMDataImportTool(Document):
 
 	def import_parties(self):
 		entries = 0
+		temp_opening_difference = 0
 		for party in self.party_items:
 			if party.party_type != "Sundry Debtors" and party.party_type != "Sundry Creditors": continue
 			party_entry = None
@@ -116,9 +117,10 @@ class CMDataImportTool(Document):
 			self.add_party_address(party)
 
 			if (party.opening_balance != 0):
-				invoice = get_temp_sales_and_purchase_invoice(party.party_name, party.party_type, party.opening_balance)
+				invoice = get_temp_sales_and_purchase_invoice(party.party_name, party.party_type, party.opening_balance, self.posting_date)
 				invoice.save()
 				invoice.submit()
+				temp_opening_difference += party.opening_balance
 
 	def add_party_address(self, party):
 		if (party.party_address is None): return
@@ -173,7 +175,7 @@ class CMDataImportTool(Document):
 			parent = ledger.getElementsByTagName("PARENT")[0]
 			parent_type = getText(parent).strip()
 
-			if "Sundry" in parent_type: continue
+			if "Sundry" in parent_type and self.ignore_party: continue
 			if (not parent_type):
 				print ("Ignoring account {0} whaving no paprent type".format(ledger.getAttribute("NAME")))
 				continue
@@ -181,6 +183,7 @@ class CMDataImportTool(Document):
 			opening_balance = get_opening_balance(ledger)
 
 			account_entry = frappe.new_doc("CM Import Account Item")
+			if not self.ignore_balance and opening_balance == 0: continue
 			account_entry.account_name = ledger.getAttribute("NAME")
 
 			account_type = get_erpnext_mapped_account_group(parent_type)
@@ -285,8 +288,7 @@ class CMDataImportTool(Document):
 				purchase_item = self.voucher_items[idx]
 				idx = idx + 1
 				purchase_amount = purchase_item.voucher_amount * -1
-				invoice = get_temp_sales_and_purchase_invoice(voucher.party, "Creditors", purchase_amount)
-				invoice.posting_date = voucher.voucher_date
+				invoice = get_temp_sales_and_purchase_invoice(voucher.party, "Creditors", purchase_amount, voucher.voucher_date)
 				tax_amount = 0
 				while idx < len(self.voucher_items) and self.voucher_items[idx].voucher_type is None:
 					tax_item = self.voucher_items[idx]
@@ -300,8 +302,7 @@ class CMDataImportTool(Document):
 				sales_item = self.voucher_items[idx]
 				idx = idx + 1
 				sale_amount = sales_item.voucher_amount
-				invoice = get_temp_sales_and_purchase_invoice(voucher.party, "Debtors", sale_amount)
-				invoice.posting_date = voucher.voucher_date
+				invoice = get_temp_sales_and_purchase_invoice(voucher.party, "Debtors", sale_amount, voucher.voucher_date)
 				tax_amount = 0
 				while idx < len(self.voucher_items) and self.voucher_items[idx].voucher_type is None:
 					tax_item = self.voucher_items[idx]
@@ -516,7 +517,7 @@ def update_opening_balance(source):
 	je = frappe.new_doc("Journal Entry")
 	je.voucher_type = "Opening Entry"
 	je.remark = "Updating Opening Balance"
-	je.posting_date = nowdate()
+	je.posting_date = import_doc.posting_date
 	je.is_opening = "Yes"
 	from erpnext.setup.doctype.company.company import get_name_with_abbr
 	temp_account = get_name_with_abbr("Temporary Opening", frappe.defaults.get_defaults().company)
@@ -540,7 +541,7 @@ def create_temp_item(item, group):
 	temp_item.insert()
 	return temp_item
 
-def get_temp_sales_and_purchase_invoice(party, party_type, balance):
+def get_temp_sales_and_purchase_invoice(party, party_type, balance, inv_date):
 	temp_item = create_temp_item("Temp-Item", "Products")
 	invoice = None
 	if ("Creditors" in party_type):
@@ -556,6 +557,8 @@ def get_temp_sales_and_purchase_invoice(party, party_type, balance):
 				"qty": 1,
 				"rate": balance
 			})
+	invoice.set_posting_time = True
+	invoice.posting_date = inv_date
 	invoice.set_missing_values()
 	return invoice
 
