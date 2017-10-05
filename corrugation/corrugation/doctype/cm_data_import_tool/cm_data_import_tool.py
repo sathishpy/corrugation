@@ -56,6 +56,7 @@ class CMDataImportTool(Document):
 		dom = xml.dom.minidom.parse(filepath)
 		self.party_items = []
 		grouped_parties = {}
+		self.total_debit, self.total_credit = 0, 0
 
 		ledger_entries = dom.getElementsByTagName("LEDGER")
 		for ledger in ledger_entries:
@@ -65,17 +66,17 @@ class CMDataImportTool(Document):
 			party_entry = frappe.new_doc("CM Import Party Item")
 			party_entry.party_name = ledger.getAttribute("NAME")
 			party_entry.party_type = parent_type
-			tax_node = ledger.getElementsByTagName("SALESTAXNUMBER")
-			if len(tax_node) != 1:
-				tax_node = ledger.getElementsByTagName("INCOMETAXNUMBER")
 
-			if len(tax_node) == 1:
-				party_entry.party_tin = getText(tax_node[0])
+			party_entry.opening_balance = get_opening_balance(ledger)
+			if (party_entry.opening_balance == 0 and self.ignore_balance): continue
+			if ("Creditors" in parent_type):
+				self.total_credit += party_entry.opening_balance
+			else:
+				self.total_debit += party_entry.opening_balance
+
 			addr_node = ledger.getElementsByTagName("ADDRESS.LIST")
 			if (len(addr_node) > 0):
 				party_entry.party_address = getText(addr_node[0])
-			if (not self.ignore_balance):
-				party_entry.opening_balance = get_opening_balance(ledger)
 
 			if (parent_type in grouped_parties):
 				grouped_parties[parent_type].append(party_entry)

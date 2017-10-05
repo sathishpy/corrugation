@@ -15,12 +15,6 @@ frappe.ui.form.on('CM Data Import Tool', {
 			{fieldname: 'mapped_account', columns:3},
 			{fieldname: 'opening_balance', columns: 2},
 		];
-		frm.get_field('voucher_items').grid.editable_fields = [
-			{fieldname: 'voucher_date', columns: 3},
-			{fieldname: 'voucher_type', columns: 2},
-			{fieldname: 'party', columns:3},
-			{fieldname: 'voucher_amount', columns: 2},
-		];
 		frm.get_field('roll_items').grid.editable_fields = [
 			{fieldname: 'roll_no', columns: 2},
 			{fieldname: 'paper_color', columns: 2},
