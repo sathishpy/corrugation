@@ -68,7 +68,7 @@ class CMDataImportTool(Document):
 			party_entry.party_type = parent_type
 
 			party_entry.opening_balance = get_opening_balance(ledger)
-			if (party_entry.opening_balance == 0 and self.ignore_balance): continue
+			if (party_entry.opening_balance == 0 and self.ignore_zero_balance): continue
 			if ("Creditors" in parent_type):
 				self.total_credit += party_entry.opening_balance
 			else:
@@ -182,9 +182,9 @@ class CMDataImportTool(Document):
 				continue
 
 			opening_balance = get_opening_balance(ledger)
+			if opening_balance == 0 and self.ignore_zero_balance: continue
 
 			account_entry = frappe.new_doc("CM Import Account Item")
-			if not self.ignore_balance and opening_balance == 0: continue
 			account_entry.account_name = ledger.getAttribute("NAME")
 
 			account_type = get_erpnext_mapped_account_group(parent_type)
