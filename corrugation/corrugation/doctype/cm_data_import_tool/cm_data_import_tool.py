@@ -250,6 +250,7 @@ class CMDataImportTool(Document):
 			voucher_type = getText(voucher.getElementsByTagName("VOUCHERTYPENAME")[0])
 			date = datetime.strptime(getText(voucher.getElementsByTagName("DATE")[0]), '%Y%m%d').date()
 			entries = voucher.getElementsByTagName("ALLLEDGERENTRIES.LIST")
+			payment_receipt = True
 			for entry in entries:
 				party = trim_account(getText(entry.getElementsByTagName("LEDGERNAME")[0]))
 				item = frappe.new_doc("CM Voucher Item")
@@ -263,6 +264,9 @@ class CMDataImportTool(Document):
 					item.party_type = "Customer"
 				elif (voucher_type == "Purchase"):
 					item.party_type = "Supplier"
+				elif ((voucher_type == "Payment" or voucher_type == "Receipt") and payment_receipt):
+					payment_receipt = False
+					item.party_type = "Supplier" if voucher_type == "Payment" else "Customer"
 				else:
 					item.party_type = "Account"
 					item.party = get_erpnext_mapped_account(party)
@@ -448,6 +452,8 @@ def getText(node):
 def get_opening_balance(ledger):
 	balance = 0
 	balance_list = ledger.getElementsByTagName("OPENINGBALANCE")
+	billings = ledger.getElementsByTagName("BILLALLOCATIONS.LIST")
+	if (len(billings) > 0 and len(billings) == len(balance_list)): return 0
 	if (len(balance_list) > 0):
 		balance = balance_list[0]
 		#print ("Balance is {0}".format(getText(balance)))
