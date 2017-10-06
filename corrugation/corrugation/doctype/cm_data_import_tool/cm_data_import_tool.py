@@ -327,26 +327,26 @@ class CMDataImportTool(Document):
 					je, je_amount = create_new_journal_entry(date, remark, "Journal Entry"), 0
 					while from_item.voucher_amount < 0:
 						je_amount += from_item.voucher_amount
-						update_journal_entry_balance(je, get_erpnext_mapped_account(from_item.party), from_item.voucher_amount * -1)
+						update_journal_entry_balance(je, from_item.party, from_item.voucher_amount * -1)
 						from_item = self.voucher_items[idx]
 						idx = idx + 1
-					update_journal_entry_balance(je, get_erpnext_mapped_account(from_item.party), je_amount)
+					update_journal_entry_balance(je, from_item.party, je_amount)
 					je.save()
 					je.submit()
-				invoice = create_payment_entry(date, idx, "Pay", party, from_item.party, amount)
+				invoice = create_payment_entry(date, idx, "Pay", party, from_item.party, amount * -1)
 			elif (voucher.voucher_type in ["Journal", "Contra"]):
 				invoice = create_new_journal_entry(date, remark, voucher.voucher_type + " Entry")
-				account = get_erpnext_mapped_account(party)
+				account = party
 				while idx < len(self.voucher_items) and self.voucher_items[idx].voucher_type is None:
 					update_journal_entry_balance(invoice, account, amount * -1)
 					voucher = self.voucher_items[idx]
 					idx = idx + 1
-					account, amount = get_erpnext_mapped_account(voucher.party), voucher.voucher_amount
+					account, amount = voucher.party, voucher.voucher_amount
 				update_journal_entry_balance(invoice, account, amount * -1)
 			else:
 				print("Unsupported voucher type {0} found".format(voucher.voucher_type))
 				continue
-
+			#print ("Trying to save/submit invoice {0}".format(invoice.as_dict()))
 			invoice.save()
 			invoice.submit()
 
@@ -588,10 +588,10 @@ def create_payment_entry(date, number, pay_type, party, account, amount):
 	pentry.party = party
 	if (pay_type == "Pay"):
 		pentry.party_type = "Supplier"
-		pentry.paid_from = get_erpnext_mapped_account(account)
+		pentry.paid_from = account
 	elif (pay_type == "Receive"):
 		pentry.party_type = "Customer"
-		pentry.paid_to = get_erpnext_mapped_account(account)
+		pentry.paid_to = account
 	else:
 		frappe.throw("Payment type {0} is not supported for data import".format(pay_type))
 	pentry.account_type = "Bank"
