@@ -244,7 +244,7 @@ class CMDataImportTool(Document):
 
 		dom = xml.dom.minidom.parse(filepath)
 		voucher_entries = dom.getElementsByTagName("VOUCHER")
-		end_idx = min(self.start_idx + 100, len(voucher_entries))
+		end_idx = min(self.start_idx + 50, len(voucher_entries))
 		for idx in range(self.start_idx, end_idx):
 			voucher = voucher_entries[idx]
 			voucher_type = getText(voucher.getElementsByTagName("VOUCHERTYPENAME")[0])
