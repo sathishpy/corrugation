@@ -338,11 +338,11 @@ class CMDataImportTool(Document):
 				invoice = create_new_journal_entry(date, remark, voucher.voucher_type + " Entry")
 				account = party
 				while idx < len(self.voucher_items) and self.voucher_items[idx].voucher_type is None:
-					update_journal_entry_balance(invoice, account, amount * -1)
+					update_journal_entry_balance(invoice, account, amount)
 					voucher = self.voucher_items[idx]
 					idx = idx + 1
 					account, amount = voucher.party, voucher.voucher_amount
-				update_journal_entry_balance(invoice, account, amount * -1)
+				update_journal_entry_balance(invoice, account, amount)
 			else:
 				print("Unsupported voucher type {0} found".format(voucher.voucher_type))
 				continue
