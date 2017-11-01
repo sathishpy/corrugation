@@ -4,4 +4,4 @@ Customizations for corrugation manufacturing Industry
 
 #### License
 
-MIT
+GPLv3

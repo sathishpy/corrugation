@@ -131,11 +131,6 @@ def get_data():
 					"name": "CM Paper Management",
 					"label": _("Paper Management"),
 				},
-				{
-					"type": "doctype",
-					"name": "CM ESugama",
-					"label": _("E-Sugama"),
-				},
 			]
 		},
 		{
