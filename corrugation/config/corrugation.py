@@ -113,13 +113,13 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-                    "name": "CM Export Data",
-					"label": _("Export Data"),
+					"name": "CM Payment Manager",
+					"label": _("Payment Management"),
 				},
 				{
 					"type": "doctype",
-					"name": "CM Data Import Tool",
-					"label": _("Import Data"),
+					"name": "CM Paper Management",
+					"label": _("Paper Management"),
 				},
 				{
 					"type": "doctype",
@@ -128,8 +128,13 @@ def get_data():
 				},
 				{
 					"type": "doctype",
-					"name": "CM Paper Management",
-					"label": _("Paper Management"),
+                    "name": "CM Export Data",
+					"label": _("Export Data"),
+				},
+				{
+					"type": "doctype",
+					"name": "CM Data Import Tool",
+					"label": _("Import Data"),
 				},
 			]
 		},
