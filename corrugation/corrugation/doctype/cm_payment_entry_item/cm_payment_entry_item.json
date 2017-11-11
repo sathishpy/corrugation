@@ -37,7 +37,7 @@
    "read_only": 1, 
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
-   "reqd": 0, 
+   "reqd": 1, 
    "search_index": 0, 
    "set_only_once": 0, 
    "unique": 0
@@ -67,7 +67,7 @@
    "read_only": 1, 
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
-   "reqd": 0, 
+   "reqd": 1, 
    "search_index": 0, 
    "set_only_once": 0, 
    "unique": 0
@@ -446,7 +446,7 @@
  "issingle": 0, 
  "istable": 1, 
  "max_attachments": 0, 
- "modified": "2017-11-11 11:04:33.993237", 
+ "modified": "2017-11-12 00:26:52.197443", 
  "modified_by": "Administrator", 
  "module": "Corrugation", 
  "name": "CM Payment Entry Item", 
