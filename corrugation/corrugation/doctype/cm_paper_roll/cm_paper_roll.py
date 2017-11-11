@@ -18,3 +18,16 @@ class CMPaperRoll(Document):
 		if (not exclude_tax):
 			roll_rate += self.tax_cost
 		return roll_rate
+
+	def scrap_paper(self, qty):
+		self.weight -= min(qty, self.weight)
+		se = frappe.new_doc("Stock Entry")
+		se.purpose = "Repack"
+		stock_item = frappe.new_doc("Stock Entry Detail")
+		stock_item.item_code = self.paper
+		stock_item.qty = min(qty, self.weight)
+		stock_item.s_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Stores")})
+		se.append("items", stock_item)
+		se.calculate_rate_and_amount()
+		se.submit()
+		

@@ -3,6 +3,21 @@
 
 frappe.ui.form.on('CM Paper Roll', {
 	refresh: function(frm) {
-
-	}
+		frm.add_custom_button(__('Scrap Paper'), function() {
+				frm.events.scrap_paper(frm)
+		});
+	},
+	scrap_paper(frm) {
+		frappe.prompt({fieldtype:"Float", label: __("Amount of paper(kg) to scrap"), fieldname:"qty", 'default': frm.doc.weight },
+			function(data) {
+				frappe.call({
+					doc: frm.doc,
+					method:"scrap_paper",
+					args: {"qty": data.qty},
+					callback: function(r) {
+						frm.refresh_fields()
+					}
+				});
+			}, __("Scrap Paper Quantity"), __("Scarp Paper"));
+	},
 });
