@@ -43,10 +43,6 @@ frappe.ui.form.on('CM Payment Manager', {
 		};
 	},
 
-	get_payments: function(frm) {
-		frm.events.invoke_doc_function(frm, "populate_payment_entries");
-	},
-
 	match_invoices: function(frm) {
 		frm.events.invoke_doc_function(frm, "populate_matching_invoices");
 	},

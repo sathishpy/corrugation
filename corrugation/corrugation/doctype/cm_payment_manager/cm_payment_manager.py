@@ -14,7 +14,13 @@ import difflib
 class CMPaymentManager(Document):
 	def autoname(self):
 		self.name = self.bank_account + "-" + self.from_date + "-" + self.to_date
-		self.new_transaction_items = []
+		self.reconciled_transaction_items = self.new_transaction_items = []
+
+	def on_update(self):
+		if len(self.new_transaction_items + self.reconciled_transaction_items) == 0:
+			self.populate_payment_entries()
+		else:
+			self.move_reconciled_entries()
 
 	def populate_payment_entries(self):
 		if self.bank_statement is None: return
@@ -48,6 +54,7 @@ class CMPaymentManager(Document):
 
 	def populate_matching_invoices(self):
 		self.payment_invoice_items = []
+		added_payments = []
 		for entry in self.new_transaction_items:
 			if (not entry.party): continue
 			account = self.receivable_account if entry.party_type == "Customer" else self.payable_account
@@ -64,47 +71,37 @@ class CMPaymentManager(Document):
 				ent.outstanding_amount = e.get('outstanding_amount')
 				ent.allocated_amount = min(float(e.get('invoice_amount')), amount)
 				amount -= float(e.get('invoice_amount'))
-				matching_invoices += [ent.invoice]
+				matching_invoices += [ent.invoice_type + "|" + ent.invoice]
 				if (amount <= 0): break
 
 			order_doctype = "Sales Order" if entry.party_type=="Customer" else "Purchase Order"
 			from erpnext.controllers.accounts_controller import get_advance_payment_entries
 			payment_entries = get_advance_payment_entries(entry.party_type, entry.party, account, order_doctype, against_all_orders=True)
-			payment = next((payment for payment in payment_entries if payment.amount == entry.amount), None)
-			if (payment is None): continue
+			payment = next((payment for payment in payment_entries if payment.amount == entry.amount and payment not in added_payments), None)
+			if (payment is None):
+				print("Failed to find payments for {0}:{1}".format(entry.party, entry.amount))
+				continue
+			added_payments += [payment]
 			doc = frappe.get_doc(payment.reference_type, payment.reference_name)
-			added = next((entry.payment_entry for entry in self.payment_items if entry.payment_entry == doc.name), None)
-			if added is not None: continue
-			invoices = [entry.invoice for entry in doc.references]
-			self.append('payment_items', {"payment_type": doc.doctype,
-											"payment_entry": doc.name,
-											'party_type': entry.party_type,
-											"mode_of_payment": doc.mode_of_payment,
-											"reference": doc.reference_no,
-											"invoice_type": "Sales Invoice" if entry.party_type == "Customer" else "Purchase Invoice",
-											"account": account,
-											"invoices": ",".join(invoices + matching_invoices),
-											"paid_amount": doc.paid_amount
-										})
+			invoices = [entry.reference_doctype + "|" + entry.reference_name for entry in doc.references]
 			entry.reference_name = payment.reference_name
 			entry.reference_type = payment.reference_type
+			entry.mode_of_payment = "Wire Transfer"
+			entry.account = account
+			entry.invoices = ",".join(invoices + matching_invoices)
 
 	def create_payment_entries(self):
 		for payment_entry in self.new_transaction_items:
 			if (not payment_entry.party): continue
+			if (payment_entry.reference_name): continue
 			print("Creating payment entry for {0}".format(payment_entry.description))
 			payment = self.make_customer_payment(payment_entry)
-			invoices = [entry.invoice for entry in payment.references if entry is not None]
-			self.append('payment_items', {"payment_type": payment.doctype,
-											"payment_entry": payment.name,
-											"mode_of_payment": payment.mode_of_payment,
-											'party_type': payment_entry.party_type,
-											"reference": payment.reference_no,
-											"invoices": ",".join(invoices),
-											"paid_amount": payment.paid_amount
-										})
+			invoices = [entry.reference_doctype + "|" + entry.reference_name for entry in payment.references if entry is not None]
 			payment_entry.reference_name = payment.name
 			payment_entry.reference_type = payment.doctype
+			payment_entry.mode_of_payment = payment.mode_of_payment
+			payment_entry.account = self.receivable_account if payment_entry.party_type == "Customer" else self.payable_account
+			payment_entry.invoices = ",".join(invoices)
 		msgprint(_("Successfully created payment entries"))
 
 	def make_customer_payment(self, pe):
@@ -138,34 +135,47 @@ class CMPaymentManager(Document):
 	def update_payment_entry(self, payment):
 		lst = []
 		invoices = payment.invoices.split(',')
-		for invoice in invoices:
+		amount = float(payment.amount)
+		for invoice_entry in invoices:
+			invs = invoice_entry.split('|')
+			invoice_type, invoice = invs[0], invs[1]
+			outstanding_amount = frappe.get_value(invoice_type, invoice, 'outstanding_amount')
+
 			lst.append(frappe._dict({
-				'voucher_type': payment.payment_type,
-				'voucher_no' : payment.payment_entry,
-				'against_voucher_type' : payment.invoice_type,
+				'voucher_type': payment.reference_type,
+				'voucher_no' : payment.reference_name,
+				'against_voucher_type' : invoice_type,
 				'against_voucher'  : invoice,
 				'account' : payment.account,
 				'party_type': payment.party_type,
-				'party': frappe.get_value("Payment Entry", payment.payment_entry, "party"),
-				'unadjusted_amount' : 0,
-				'allocated_amount' : float(payment.paid_amount)
+				'party': frappe.get_value("Payment Entry", payment.reference_name, "party"),
+				'unadjusted_amount' : float(amount),
+				'allocated_amount' : min(outstanding_amount, amount)
 			}))
+			amount -= outstanding_amount
 		if lst:
 			from erpnext.accounts.utils import reconcile_against_document
 			reconcile_against_document(lst)
 
 	def submit_payment_entries(self):
-		for payment in self.payment_items:
-			doc = frappe.get_doc(payment.payment_type, payment.payment_entry)
+		for payment in self.new_transaction_items:
+			if payment.reference_name is None: continue
+			doc = frappe.get_doc(payment.reference_type, payment.reference_name)
 			if doc.docstatus == 1:
+				print("Reconciling payment {0}".format(payment.reference_name))
 				self.update_payment_entry(payment)
 			else:
-				doc.reference_no = payment.reference
+				print("Submitting payment {0}".format(payment.reference_name))
+				doc.reference_no = payment.payment_reference
 				doc.mode_of_payment = payment.mode_of_payment
 				doc.save()
 				doc.submit()
+		self.move_reconciled_entries()
 
+	def move_reconciled_entries(self):
 		for entry in self.new_transaction_items:
-			if entry.reference_type is not None:
+			if entry.reference_name is None: continue
+			doc = frappe.get_doc(entry.reference_type, entry.reference_name)
+			if doc.docstatus == 1 and doc.unallocated_amount == 0:
 				self.remove(entry)
 				self.append('reconciled_transaction_items', entry)
