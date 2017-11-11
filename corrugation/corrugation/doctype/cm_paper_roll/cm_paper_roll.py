@@ -4,6 +4,7 @@
 
 from __future__ import unicode_literals
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_item_rate
 
@@ -20,14 +21,14 @@ class CMPaperRoll(Document):
 		return roll_rate
 
 	def scrap_paper(self, qty):
-		self.weight -= min(qty, self.weight)
+		qty = min(qty, self.weight)
+		self.weight -= qty
 		se = frappe.new_doc("Stock Entry")
 		se.purpose = "Repack"
 		stock_item = frappe.new_doc("Stock Entry Detail")
 		stock_item.item_code = self.paper
-		stock_item.qty = min(qty, self.weight)
+		stock_item.qty = qty
 		stock_item.s_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Stores")})
 		se.append("items", stock_item)
 		se.calculate_rate_and_amount()
 		se.submit()
-		
