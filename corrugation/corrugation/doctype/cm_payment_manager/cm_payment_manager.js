@@ -6,7 +6,9 @@ frappe.ui.form.on('CM Payment Manager', {
 		frm.events.account_filters(frm)
 	},
 	refresh: function(frm) {
-
+		frm.set_df_property("bank_account", "read_only", frm.doc.__islocal ? 0 : 1);
+		frm.set_df_property("from_date", "read_only", frm.doc.__islocal ? 0 : 1);
+		frm.set_df_property("to_date", "read_only", frm.doc.__islocal ? 0 : 1);
 	},
 	invoke_doc_function(frm, method) {
 		frappe.call({
