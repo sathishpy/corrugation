@@ -33,6 +33,8 @@ class CMBox(Document):
 			frappe.throw("Height should be zero for plate items")
 		if ("Plate" not in self.box_type and self.box_height == 0):
 			frappe.throw("Height should be zero only for plate items")
+		if self.name != self.box_item:
+			frappe.rename_doc("Item", self.box_item, self.name)
 
 	def before_save(self):
 		item = self.get_item_doc()
