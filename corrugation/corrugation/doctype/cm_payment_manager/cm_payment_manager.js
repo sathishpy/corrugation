@@ -4,6 +4,7 @@
 frappe.ui.form.on('CM Payment Manager', {
 	setup: function(frm) {
 		frm.events.account_filters(frm)
+		frm.events.invoice_filter(frm)
 	},
 	refresh: function(frm) {
 		frm.set_df_property("bank_account", "read_only", frm.doc.__islocal ? 0 : 1);
@@ -31,18 +32,25 @@ frappe.ui.form.on('CM Payment Manager', {
 		};
 		frm.fields_dict['receivable_account'].get_query = function(doc, dt, dn) {
 			return {
-				filters:[
-					["Account", "account_type", "in", ["Receivable"]]
-				]
+				filters: {"account_type": "Receivable"}
 			}
 		};
 		frm.fields_dict['payable_account'].get_query = function(doc, dt, dn) {
 			return {
-				filters:[
-					["Account", "account_type", "in", ["Payable"]]
-				]
+				filters: {"account_type": "Payable"}
 			}
 		};
+	},
+
+	invoice_filter: function(frm) {
+		frm.set_query("invoice", "payment_invoice_items", function(doc, cdt, cdn) {
+			row = locals[cdt][cdn]
+			if (row.party_type == "Customer") {
+				return { filters:[[row.invoice_type, "customer", "in", [row.party]]]}
+			} else if (row.party_type == "Supplier") {
+				return { filters:[[row.invoice_type, "supplier", "in", [row.party]]]}
+			}
+		});
 	},
 
 	match_invoices: function(frm) {
