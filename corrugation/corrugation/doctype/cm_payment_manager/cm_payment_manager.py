@@ -231,10 +231,14 @@ class CMPaymentManager(Document):
 
 	def update_payment_entry(self, payment):
 		if (payment.reference_type == "Journal Entry"): return
+		if frappe.db.get_value(payment.reference_type, payment.reference_name, "unallocated_amount") == 0: return
+
 		lst = []
-		invoices = payment.invoices.split(',')
+		invoices = payment.invoices.strip().split(',')
+		if (len(invoices) == 0): return
 		amount = float(abs(payment.amount))
 		for invoice_entry in invoices:
+			if (not invoice_entry.strip()): continue
 			invs = invoice_entry.split('|')
 			invoice_type, invoice = invs[0], invs[1]
 			outstanding_amount = frappe.get_value(invoice_type, invoice, 'outstanding_amount')
