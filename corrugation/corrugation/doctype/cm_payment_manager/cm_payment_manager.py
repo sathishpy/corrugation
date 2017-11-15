@@ -17,7 +17,7 @@ class CMPaymentManager(Document):
 		self.reconciled_transaction_items = self.new_transaction_items = []
 		mapper_name = self.bank_account + "-Mappings"
 		if not frappe.db.exists("CM Bank Account Mapper", mapper_name):
-			mapper  = frappe.new_doc("CM Bank Account Mapper")
+			mapper = frappe.new_doc("CM Bank Account Mapper")
 			mapper.bank_account = self.bank_account
 			mapper.save()
 		self.bank_data_mapper = mapper_name
@@ -30,6 +30,7 @@ class CMPaymentManager(Document):
 		if len(self.new_transaction_items + self.reconciled_transaction_items) == 0:
 			self.populate_payment_entries()
 		else:
+			self.match_invoice_to_payment()
 			self.move_reconciled_entries()
 
 	def populate_payment_entries(self):
@@ -49,10 +50,11 @@ class CMPaymentManager(Document):
 				transaction_date = datetime.strptime(date, '%d-%m-%Y').date()
 				if (self.from_date and transaction_date < datetime.strptime(self.from_date, '%Y-%m-%d').date()): continue
 				if (self.to_date and transaction_date > datetime.strptime(self.to_date, '%Y-%m-%d').date()): continue
-				print("Processing entry DESC:{0}-W:{1}-D:{2}-DT:{3}".format(entry["Particulars"], entry["Withdrawals"], entry["Deposits"], entry["Date"]))
+				#print("Processing entry DESC:{0}-W:{1}-D:{2}-DT:{3}".format(entry["Particulars"], entry["Withdrawals"], entry["Deposits"], entry["Date"]))
 				bank_entry = self.append('new_transaction_items', {})
 				bank_entry.transaction_date = transaction_date
 				bank_entry.description = entry["Particulars"]
+
 				mapped_item = None
 				if self.bank_data_mapper:
 					mapped_items = frappe.get_doc("CM Bank Account Mapper", self.bank_data_mapper).mapped_items
@@ -66,56 +68,78 @@ class CMPaymentManager(Document):
 					parties = [party.name for party in party_list]
 					matches = difflib.get_close_matches(bank_entry.description.lower(), parties, 1, 0.4)
 					if len(matches) > 0: bank_entry.party = matches[0]
-				print("Finding {0} in {1}".format(bank_entry.description.lower(), bank_entry.party))
 				bank_entry.amount = -float(entry["Withdrawals"]) if not entry["Deposits"].strip() else float(entry["Deposits"])
 
 	def populate_matching_invoices(self):
 		self.payment_invoice_items = []
 		self.map_unknown_transactions()
-		added_payments = []
+		added_invoices = []
 		for entry in self.new_transaction_items:
 			if (not entry.party or entry.party_type == "Account"): continue
 			account = self.receivable_account if entry.party_type == "Customer" else self.payable_account
 			outstanding_invoices = get_outstanding_invoices(entry.party_type, entry.party, account)
+			#outstanding_invoices = [invoice for invoice in invoices if invoice.posting_date < entry.transaction_date]
 			sorted(outstanding_invoices, key=lambda k: k['posting_date'])
 			amount = abs(entry.amount)
-			matching_invoices = []
 			for e in outstanding_invoices:
+				added = next((inv for inv in added_invoices if inv == e.get('voucher_no')), None)
+				if (added is not None): continue
 				ent = self.append('payment_invoice_items', {})
-				ent.invoice_date = e.get('posting_date')
+				ent.transaction_date = entry.transaction_date
 				ent.payment_description = entry.description
 				ent.party_type = entry.party_type
 				ent.party = entry.party
-				ent.invoice_type = "Sales Invoice" if entry.party_type == "Customer" else "Purchase Invoice"
 				ent.invoice = e.get('voucher_no')
+				added_invoices += [ent.invoice]
+				ent.invoice_type = "Sales Invoice" if entry.party_type == "Customer" else "Purchase Invoice"
+				ent.invoice_date = e.get('posting_date')
 				ent.outstanding_amount = e.get('outstanding_amount')
 				ent.allocated_amount = min(float(e.get('invoice_amount')), amount)
 				amount -= float(e.get('invoice_amount'))
-				matching_invoices += [ent.invoice_type + "|" + ent.invoice]
-				if (amount <= 0): break
+				if (amount <= 5): break
+		self.match_invoice_to_payment()
+		self.populate_matching_vouchers()
+
+	def match_invoice_to_payment(self):
+		added_payments = []
+		for entry in self.new_transaction_items:
+			if (not entry.party or entry.party_type == "Account"): continue
+			entry.account = self.receivable_account if entry.party_type == "Customer" else self.payable_account
+			amount = abs(entry.amount)
+			payment, matching_invoices = None, []
+			for inv_entry in self.payment_invoice_items:
+				if (inv_entry.payment_description != entry.description or inv_entry.transaction_date != entry.transaction_date): continue
+				matching_invoices += [inv_entry.invoice_type + "|" + inv_entry.invoice]
+				payment = get_payments_matching_invoice(inv_entry.invoice, entry.amount)
+				doc = frappe.get_doc(inv_entry.invoice_type, inv_entry.invoice)
+				inv_entry.invoice_date = doc.posting_date
+				inv_entry.outstanding_amount = doc.outstanding_amount
+				inv_entry.allocated_amount = min(float(doc.outstanding_amount), amount)
+				amount -= inv_entry.allocated_amount
 
 			amount = abs(entry.amount)
-			order_doctype = "Sales Order" if entry.party_type=="Customer" else "Purchase Order"
-			from erpnext.controllers.accounts_controller import get_advance_payment_entries
-			payment_entries = get_advance_payment_entries(entry.party_type, entry.party, account, order_doctype, against_all_orders=True)
-			payment = next((payment for payment in payment_entries if payment.amount == amount and payment not in added_payments), None)
 			if (payment is None):
-				print("Failed to find payments for {0}:{1}".format(entry.party, amount))
-				continue
+				order_doctype = "Sales Order" if entry.party_type=="Customer" else "Purchase Order"
+				from erpnext.controllers.accounts_controller import get_advance_payment_entries
+				payment_entries = get_advance_payment_entries(entry.party_type, entry.party, entry.account, order_doctype, against_all_orders=True)
+				payment = next((payment for payment in payment_entries if payment.amount == amount and payment not in added_payments), None)
+				if (payment is None):
+					print("Failed to find payments for {0}:{1}".format(entry.party, amount))
+					continue
+				doc = frappe.get_doc(payment.reference_type, payment.reference_name)
+				matching_invoices += [pi_entry.reference_doctype + "|" + pi_entry.reference_name for pi_entry in doc.references]
 			added_payments += [payment]
-			doc = frappe.get_doc(payment.reference_type, payment.reference_name)
-			invoices = [entry.reference_doctype + "|" + entry.reference_name for entry in doc.references]
-			entry.reference_name = payment.reference_name
 			entry.reference_type = payment.reference_type
+			entry.reference_name = payment.reference_name
 			entry.mode_of_payment = "Wire Transfer"
-			entry.account = account
-			entry.invoices = ",".join(invoices + matching_invoices)
-		self.populate_matching_vouchers()
+			#entry.outstanding_amount = min(amount, 0)
+			entry.invoices = ",".join(matching_invoices)
+			#print("Matching payment is {0}:{1}".format(entry.reference_type, entry.reference_name))
 
 	def map_unknown_transactions(self):
 		for entry in self.new_transaction_items:
 			if (entry.party): continue
-			
+
 	def populate_matching_vouchers(self):
 		for entry in self.new_transaction_items:
 			if (not entry.party or entry.reference_name): continue
@@ -247,12 +271,13 @@ class CMPaymentManager(Document):
 				doc.save()
 				doc.submit()
 		self.move_reconciled_entries()
+		self.populate_matching_invoices()
 
 	def move_reconciled_entries(self):
 		idx = 0
 		while idx < len(self.new_transaction_items):
 			entry = self.new_transaction_items[idx]
-			print("Indx = {0} lengh={1} entry={2}".format(idx, len(self.new_transaction_items), entry.description))
+			print("Checking transaction {0}: {2} in {1} entries".format(idx, len(self.new_transaction_items), entry.description))
 			idx += 1
 			if entry.reference_name is None: continue
 			doc = frappe.get_doc(entry.reference_type, entry.reference_name)
@@ -270,3 +295,16 @@ def get_matching_journal_entries(from_date, to_date, account, against, amount):
 	jv_entries = frappe.db.sql(query, as_dict=True)
 	#print("voucher query:{0}\n Returned {1} entries".format(query, len(jv_entries)))
 	return jv_entries
+
+def get_payments_matching_invoice(invoice, amount):
+	query = """select parent as reference_name, reference_doctype as reference_type, outstanding_amount, allocated_amount
+				from `tabPayment Entry Reference`
+				where reference_name='{0}'
+				""".format(invoice)
+	payments = frappe.db.sql(query, as_dict=True)
+	if (len(payments) == 0): return
+	#print("Running query:{0} returned {1} entries".format(query, payments))
+	payment = next((payment for payment in payments if payment.allocated_amount == amount), payments[0])
+	#Hack: Update the reference type which is set to invoice type
+	payment.reference_type = "Payment Entry"
+	return payment
