@@ -31,7 +31,6 @@ class CMPaymentManager(Document):
 			self.populate_payment_entries()
 		else:
 			self.match_invoice_to_payment()
-			self.move_reconciled_entries()
 
 	def populate_payment_entries(self):
 		if self.bank_statement is None: return
