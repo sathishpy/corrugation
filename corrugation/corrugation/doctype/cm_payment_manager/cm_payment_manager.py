@@ -132,7 +132,9 @@ class CMPaymentManager(Document):
 			entry.reference_type = payment.reference_type
 			entry.reference_name = payment.reference_name
 			entry.mode_of_payment = "Wire Transfer"
-			#entry.outstanding_amount = min(amount, 0)
+			entry.outstanding_amount = min(amount, 0)
+			if (entry.payment_reference is None):
+				entry.payment_reference = entry.description
 			entry.invoices = ",".join(matching_invoices)
 			#print("Matching payment is {0}:{1}".format(entry.reference_type, entry.reference_name))
 
@@ -299,7 +301,10 @@ class CMPaymentManager(Document):
 			doc = frappe.get_doc(entry.reference_type, entry.reference_name)
 			if doc.docstatus == 1 and (entry.reference_type == "Journal Entry" or doc.unallocated_amount == 0):
 				self.remove(entry)
-				self.append('reconciled_transaction_items', entry)
+				rc_entry = self.append('reconciled_transaction_items', {})
+				dentry = entry.as_dict()
+				dentry.pop('idx', None)
+				rc_entry.update(dentry)
 				idx -= 1
 
 
