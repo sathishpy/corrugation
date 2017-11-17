@@ -4,6 +4,7 @@
 
 from __future__ import unicode_literals
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from erpnext.accounts.utils import get_outstanding_invoices
 from frappe.utils import nowdate
@@ -138,6 +139,15 @@ class CMPaymentManager(Document):
 	def map_unknown_transactions(self):
 		for entry in self.new_transaction_items:
 			if (entry.party): continue
+			inv_type = "Sales Invoice" if (entry.amount > 0) else "Purchase Invoice"
+			party_type = "customer" if (entry.amount > 0) else "supplier"
+
+			query = """select posting_date, name, {0}, grand_total
+							from `tab{1}` where grand_total={2} and posting_date < '{3}'
+							order by posting_date desc""".format(party_type, inv_type, abs(entry.amount), entry.transaction_date)
+			invoices = frappe.db.sql(query, as_dict = True)
+			if(len(invoices) > 0):
+				entry.party = invoices[0].get(party_type)
 
 	def populate_matching_vouchers(self):
 		for entry in self.new_transaction_items:
@@ -186,7 +196,7 @@ class CMPaymentManager(Document):
 				payment_entry.account = self.receivable_account if payment_entry.party_type == "Customer" else self.payable_account
 			payment_entry.reference_name = payment.name
 			payment_entry.reference_type = payment.doctype
-		msgprint(_("Successfully created payment entries"))
+		frappe.msgprint(_("Successfully created payment entries"))
 
 	def create_payment_entry(self, pe):
 		payment = frappe.new_doc("Payment Entry")
@@ -220,19 +230,20 @@ class CMPaymentManager(Document):
 		je = frappe.new_doc("Journal Entry")
 		je.is_opening = "No"
 		je.voucher_type = "Bank Entry"
+		je.cheque_no = pe.description
+		je.cheque_date = pe.transaction_date
 		je.remark = pe.description
 		je.posting_date = pe.transaction_date
 		if (pe.amount < 0):
-			je.append("accounts", {"account": pe.party, "debit_in_account_currency": pe.amount * -1})
-			je.append("accounts", {"account": self.bank_account, "credit_in_account_currency": pe.amount * -1})
+			je.append("accounts", {"account": pe.party, "debit_in_account_currency": abs(pe.amount)})
+			je.append("accounts", {"account": self.bank_account, "credit_in_account_currency": abs(pe.amount)})
 		else:
 			je.append("accounts", {"account": pe.party, "credit_in_account_currency": pe.amount})
 			je.append("accounts", {"account": self.bank_account, "debit_in_account_currency": pe.amount})
+		je.save()
+		return je
 
 	def update_payment_entry(self, payment):
-		if (payment.reference_type == "Journal Entry"): return
-		if frappe.db.get_value(payment.reference_type, payment.reference_name, "unallocated_amount") == 0: return
-
 		lst = []
 		invoices = payment.invoices.strip().split(',')
 		if (len(invoices) == 0): return
@@ -264,6 +275,8 @@ class CMPaymentManager(Document):
 			if payment.reference_name is None: continue
 			doc = frappe.get_doc(payment.reference_type, payment.reference_name)
 			if doc.docstatus == 1:
+				if (payment.reference_type == "Journal Entry"): continue
+				if doc.unallocated_amount == 0: continue
 				print("Reconciling payment {0}".format(payment.reference_name))
 				self.update_payment_entry(payment)
 			else:

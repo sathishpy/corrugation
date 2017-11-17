@@ -46,9 +46,15 @@ frappe.ui.form.on('CM Payment Manager', {
 		frm.set_query("invoice", "payment_invoice_items", function(doc, cdt, cdn) {
 			row = locals[cdt][cdn]
 			if (row.party_type == "Customer") {
-				return { filters:[[row.invoice_type, "customer", "in", [row.party]]]}
+				return {
+								filters:[[row.invoice_type, "customer", "in", [row.party]],
+												[row.invoice_type, "status", "!=", "Cancelled" ],]
+							}
 			} else if (row.party_type == "Supplier") {
-				return { filters:[[row.invoice_type, "supplier", "in", [row.party]]]}
+				return {
+								filters:[[row.invoice_type, "supplier", "in", [row.party]],
+												[row.invoice_type, "status", "!=", "Cancelled" ],]
+							}
 			}
 		});
 	},
