@@ -270,7 +270,10 @@ class CMPaymentManager(Document):
 			amount -= outstanding_amount
 		if lst:
 			from erpnext.accounts.utils import reconcile_against_document
-			reconcile_against_document(lst)
+			try:
+				reconcile_against_document(lst)
+			except:
+				frappe.throw("Excepection occurred while reconciling {0}".format(payment.reference_name))
 
 	def submit_payment_entries(self):
 		for payment in self.new_transaction_items:
@@ -318,9 +321,9 @@ def get_matching_journal_entries(from_date, to_date, account, against, amount):
 	return jv_entries
 
 def get_payments_matching_invoice(invoice, amount):
-	query = """select parent as reference_name, reference_doctype as reference_type, outstanding_amount, allocated_amount
-				from `tabPayment Entry Reference`
-				where reference_name='{0}'
+	query = """select pe.name as reference_name, per.reference_doctype as reference_type, per.outstanding_amount, per.allocated_amount
+				from `tabPayment Entry Reference` as per JOIN `tabPayment Entry` as pe on pe.name = per.parent
+				where per.reference_name='{0}' and pe.docstatus != 2
 				""".format(invoice)
 	payments = frappe.db.sql(query, as_dict=True)
 	if (len(payments) == 0): return
