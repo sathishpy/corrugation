@@ -77,11 +77,13 @@ class CMPaymentManager(Document):
 		for entry in self.new_transaction_items:
 			if (not entry.party or entry.party_type == "Account"): continue
 			account = self.receivable_account if entry.party_type == "Customer" else self.payable_account
-			outstanding_invoices = get_outstanding_invoices(entry.party_type, entry.party, account)
-			#outstanding_invoices = [invoice for invoice in invoices if invoice.posting_date < entry.transaction_date]
-			sorted(outstanding_invoices, key=lambda k: k['posting_date'])
+			invoices = get_outstanding_invoices(entry.party_type, entry.party, account)
+			transaction_date = datetime.strptime(entry.transaction_date, "%Y-%m-%d").date()
+			outstanding_invoices = [invoice for invoice in invoices if invoice.posting_date <= transaction_date]
 			amount = abs(entry.amount)
-			for e in outstanding_invoices:
+			matching_invoices = [invoice for invoice in outstanding_invoices if invoice.outstanding_amount == amount]
+			sorted(outstanding_invoices, key=lambda k: k['posting_date'])
+			for e in (matching_invoices + outstanding_invoices):
 				added = next((inv for inv in added_invoices if inv == e.get('voucher_no')), None)
 				if (added is not None): continue
 				ent = self.append('payment_invoice_items', {})
@@ -109,13 +111,15 @@ class CMPaymentManager(Document):
 			payment, matching_invoices = None, []
 			for inv_entry in self.payment_invoice_items:
 				if (inv_entry.payment_description != entry.description or inv_entry.transaction_date != entry.transaction_date): continue
+				if (inv_entry.party != entry.party): continue
 				matching_invoices += [inv_entry.invoice_type + "|" + inv_entry.invoice]
-				payment = get_payments_matching_invoice(inv_entry.invoice, entry.amount)
+				payment = get_payments_matching_invoice(inv_entry.invoice, entry.amount, entry.transaction_date)
 				doc = frappe.get_doc(inv_entry.invoice_type, inv_entry.invoice)
 				inv_entry.invoice_date = doc.posting_date
 				inv_entry.outstanding_amount = doc.outstanding_amount
 				inv_entry.allocated_amount = min(float(doc.outstanding_amount), amount)
 				amount -= inv_entry.allocated_amount
+				if (amount < 0): break
 
 			amount = abs(entry.amount)
 			if (payment is None):
@@ -214,7 +218,8 @@ class CMPaymentManager(Document):
 		payment.reference_date = pe.transaction_date
 		payment.save()
 		for inv_entry in self.payment_invoice_items:
-			if (pe.description != inv_entry.payment_description): continue
+			if (pe.description != inv_entry.payment_description or pe.transaction_date != inv_entry.transaction_date): continue
+			if (pe.party != inv_entry.party): continue
 			reference = payment.append("references", {})
 			reference.reference_doctype = inv_entry.invoice_type
 			reference.reference_name = inv_entry.invoice
@@ -273,7 +278,7 @@ class CMPaymentManager(Document):
 			try:
 				reconcile_against_document(lst)
 			except:
-				frappe.throw("Excepection occurred while reconciling {0}".format(payment.reference_name))
+				frappe.throw("Exception occurred while reconciling {0}".format(payment.reference_name))
 
 	def submit_payment_entries(self):
 		for payment in self.new_transaction_items:
@@ -287,7 +292,8 @@ class CMPaymentManager(Document):
 			else:
 				print("Submitting payment {0}".format(payment.reference_name))
 				if (payment.reference_type == "Payment Entry"):
-					doc.reference_no = payment.payment_reference
+					if (payment.payment_reference):
+						doc.reference_no = payment.payment_reference
 					doc.mode_of_payment = payment.mode_of_payment
 				doc.save()
 				doc.submit()
@@ -320,11 +326,11 @@ def get_matching_journal_entries(from_date, to_date, account, against, amount):
 	#print("voucher query:{0}\n Returned {1} entries".format(query, len(jv_entries)))
 	return jv_entries
 
-def get_payments_matching_invoice(invoice, amount):
+def get_payments_matching_invoice(invoice, amount, pay_date):
 	query = """select pe.name as reference_name, per.reference_doctype as reference_type, per.outstanding_amount, per.allocated_amount
 				from `tabPayment Entry Reference` as per JOIN `tabPayment Entry` as pe on pe.name = per.parent
-				where per.reference_name='{0}' and pe.docstatus != 2
-				""".format(invoice)
+				where per.reference_name='{0}' and (posting_date='{1}' or reference_date='{1}') and pe.docstatus != 2
+				""".format(invoice, pay_date)
 	payments = frappe.db.sql(query, as_dict=True)
 	if (len(payments) == 0): return
 	#print("Running query:{0} returned {1} entries".format(query, payments))
