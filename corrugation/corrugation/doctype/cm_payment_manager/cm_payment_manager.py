@@ -96,8 +96,8 @@ class CMPaymentManager(Document):
 				ent.invoice_type = "Sales Invoice" if entry.party_type == "Customer" else "Purchase Invoice"
 				ent.invoice_date = e.get('posting_date')
 				ent.outstanding_amount = e.get('outstanding_amount')
-				ent.allocated_amount = min(float(e.get('invoice_amount')), amount)
-				amount -= float(e.get('invoice_amount'))
+				ent.allocated_amount = min(float(e.get('outstanding_amount')), amount)
+				amount -= float(e.get('outstanding_amount'))
 				if (amount <= 5): break
 		self.match_invoice_to_payment()
 		self.populate_matching_vouchers()
