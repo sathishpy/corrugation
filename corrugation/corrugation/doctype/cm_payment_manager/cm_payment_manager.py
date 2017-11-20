@@ -126,12 +126,11 @@ class CMPaymentManager(Document):
 				order_doctype = "Sales Order" if entry.party_type=="Customer" else "Purchase Order"
 				from erpnext.controllers.accounts_controller import get_advance_payment_entries
 				payment_entries = get_advance_payment_entries(entry.party_type, entry.party, entry.account, order_doctype, against_all_orders=True)
+				payment_entries += self.get_matching_payments(entry.party, amount, entry.transaction_date)
 				payment = next((payment for payment in payment_entries if payment.amount == amount and payment not in added_payments), None)
 				if (payment is None):
 					print("Failed to find payments for {0}:{1}".format(entry.party, amount))
 					continue
-				doc = frappe.get_doc(payment.reference_type, payment.reference_name)
-				matching_invoices += [pi_entry.reference_doctype + "|" + pi_entry.reference_name for pi_entry in doc.references]
 			added_payments += [payment]
 			entry.reference_type = payment.reference_type
 			entry.reference_name = payment.reference_name
@@ -141,6 +140,13 @@ class CMPaymentManager(Document):
 				entry.payment_reference = entry.description
 			entry.invoices = ",".join(matching_invoices)
 			#print("Matching payment is {0}:{1}".format(entry.reference_type, entry.reference_name))
+
+	def get_matching_payments(self, party, amount, pay_date):
+		query = """select 'Payment Entry' as reference_type, name as reference_name, paid_amount as amount
+					from `tabPayment Entry` where party='{0}' and paid_amount={1} and posting_date='{2}' and docstatus != 2
+					""".format(party, amount, pay_date)
+		matching_payments = frappe.db.sql(query, as_dict=True)
+		return matching_payments
 
 	def map_unknown_transactions(self):
 		for entry in self.new_transaction_items:
