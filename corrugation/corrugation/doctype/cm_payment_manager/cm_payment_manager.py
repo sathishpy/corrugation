@@ -148,9 +148,9 @@ class CMPaymentManager(Document):
 			inv_type = "Sales Invoice" if (entry.amount > 0) else "Purchase Invoice"
 			party_type = "customer" if (entry.amount > 0) else "supplier"
 
-			query = """select posting_date, name, {0}, grand_total
-							from `tab{1}` where grand_total={2} and posting_date < '{3}'
-							order by posting_date desc""".format(party_type, inv_type, abs(entry.amount), entry.transaction_date)
+			query = """select posting_date, name, {0}, outstanding_amount
+							from `tab{1}` where ROUND(outstanding_amount)={2} and posting_date < '{3}'
+							""".format(party_type, inv_type, round(abs(entry.amount)), entry.transaction_date)
 			invoices = frappe.db.sql(query, as_dict = True)
 			if(len(invoices) > 0):
 				entry.party = invoices[0].get(party_type)
