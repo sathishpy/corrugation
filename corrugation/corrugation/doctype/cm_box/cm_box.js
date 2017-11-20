@@ -17,6 +17,9 @@ frappe.ui.form.on('CM Box', {
 				});
 			});
 		}
-
+	},
+	box_code: function(frm) {
+		frm.doc.box_code = frm.doc.box_code.replace(/\s+/g, '-').toUpperCase()
+		frm.refresh_fields()
 	},
 });
