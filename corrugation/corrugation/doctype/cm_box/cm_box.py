@@ -9,6 +9,10 @@ from frappe.model.document import Document
 from corrugation.corrugation.utils import delete_submitted_document
 
 class CMBox(Document):
+	def autoname(self):
+		self.name = self.box_code
+		self.box_item = None
+
 	def get_item_doc(self):
 		item = frappe.db.get_value("Item", filters={"item_code": self.box_code})
 		if item == None:
@@ -33,7 +37,8 @@ class CMBox(Document):
 			frappe.throw("Height should be zero for plate items")
 		if ("Plate" not in self.box_type and self.box_height == 0):
 			frappe.throw("Height should be zero only for plate items")
-		if self.name != self.box_item:
+		if self.box_item is not None and self.name != self.box_item:
+			print("Renaming {0} to {1}".format(self.box_item, self.name))
 			frappe.rename_doc("Item", self.box_item, self.name)
 
 	def before_save(self):
@@ -92,5 +97,8 @@ class CMBox(Document):
 			price_doc = frappe.get_doc("Item Price", item_price)
 			price_doc.delete()
 
-		item = frappe.get_doc("Item", self.box_code)
-		item.delete()
+		try:
+			item = frappe.get_doc("Item", self.box_code)
+			item.delete()
+		except:
+			frappe.msgprint("Failed to delete the associated item")
