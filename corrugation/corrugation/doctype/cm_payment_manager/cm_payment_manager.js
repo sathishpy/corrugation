@@ -48,12 +48,16 @@ frappe.ui.form.on('CM Payment Manager', {
 			if (row.party_type == "Customer") {
 				return {
 								filters:[[row.invoice_type, "customer", "in", [row.party]],
-												[row.invoice_type, "status", "!=", "Cancelled" ],]
+												[row.invoice_type, "status", "!=", "Cancelled" ],
+											  [row.invoice_type, "posting_date", "<", row.transaction_date ],
+											  [row.invoice_type, "outstanding_amount", ">", 0 ]]
 							}
 			} else if (row.party_type == "Supplier") {
 				return {
 								filters:[[row.invoice_type, "supplier", "in", [row.party]],
-												[row.invoice_type, "status", "!=", "Cancelled" ],]
+												[row.invoice_type, "status", "!=", "Cancelled" ],
+												[row.invoice_type, "posting_date", "<", row.transaction_date ],
+												[row.invoice_type, "outstanding_amount", ">", 0 ]]
 							}
 			}
 		});
