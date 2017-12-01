@@ -54,7 +54,7 @@ frappe.ui.form.on('CM Box Description', {
 		frm.add_fetch("box", "box_rate", "item_rate")
 		frm.events.update_cost(frm);
 	},
-	invoke_doc_function(frm, method, args=None) {
+	invoke_doc_function(frm, method, args = null) {
 		frappe.call({
 			doc: frm.doc,
 			method: method,
@@ -83,6 +83,9 @@ frappe.ui.form.on('CM Box Description', {
 		frm.events.invoke_doc_function(frm, "update_rate_and_cost")
 	},
 	update_cost: function(frm) {
+		frm.events.invoke_doc_function(frm, "update_cost")
+	},
+	item_rate : function(frm, cdt, cdn) {
 		frm.events.invoke_doc_function(frm, "update_cost")
 	},
 	item_pin_lap : function(frm, cdt, cdn) {

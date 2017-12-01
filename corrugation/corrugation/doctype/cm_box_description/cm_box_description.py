@@ -172,6 +172,12 @@ class CMBoxDescription(Document):
 			item.rm_rate = get_item_rate(item.rm, self.exclude_tax)
 		self.update_cost()
 
+	def update_box_rate(self):
+		box = frappe.get_doc("CM Box", self.box)
+		if (box.box_rate != self.item_rate):
+			print("Changing box rate to {0}".format(self.item_rate))
+			frappe.db.set_value("CM Box", self.box, "box_rate", self.item_rate)
+
 	def update_cost(self):
 		if (self.box is None): return
 		self.item_paper_cost, self.item_misc_cost = 0, 0
@@ -322,6 +328,7 @@ class CMBoxDescription(Document):
 		self.item_bom = bom.name
 
 	def before_save(self):
+		self.update_box_rate()
 		self.update_cost()
 
 	def before_submit(self):
