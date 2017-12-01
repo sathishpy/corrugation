@@ -6,10 +6,9 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_paper_attributes
-from erpnext.controllers.item_variant import create_variant
-from erpnext.controllers.item_variant import get_variant
 from erpnext.stock.utils import get_latest_stock_qty
 from operator import itemgetter
+from corrugation.corrugation.utils import create_new_paper
 
 class CMPaperManagement(Document):
 	def autoname(self):
@@ -109,16 +108,7 @@ class CMPaperManagement(Document):
 
 	def add_new_paper(self):
 		for new_paper in self.new_papers:
-			attributes = new_paper.bf_gsm_deck.strip().split("-")
-			if (len(attributes) != 3):
-				frappe.throw("Argume BF-GSM-Deck isn't in right format")
-			args = {"Colour": new_paper.colour, "BF": attributes[0], "GSM": attributes[1], "Deck": attributes[2]}
-			if (get_variant("PPR", args) != None):
-				frappe.throw("Paper {0} is already present".format(new_paper.bf_gsm_deck))
-			print("Creating the new paper {0}".format(args))
-			paper = create_variant("PPR", args)
-			paper.save()
-			new_paper.paper = paper.name
+			new_paper.paper = create_new_paper(new_paper.bf_gsm_deck, new_paper.colour)
 
 
 @frappe.whitelist()

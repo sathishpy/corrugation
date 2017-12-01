@@ -54,10 +54,11 @@ frappe.ui.form.on('CM Box Description', {
 		frm.add_fetch("box", "box_rate", "item_rate")
 		frm.events.update_cost(frm);
 	},
-	invoke_doc_function(frm, method) {
+	invoke_doc_function(frm, method, args=None) {
 		frappe.call({
 			doc: frm.doc,
 			method: method,
+			args: args,
 			callback: function(r) {
 				if(!r.exe) {
 					frm.refresh_fields();
@@ -126,19 +127,19 @@ frappe.ui.form.on('CM Box Description', {
 	scrap_ratio : function(frm) {
 		frm.events.update_cost(frm);
 	},
+	add_new_paper(frm) {
+		frappe.prompt([{fieldtype:"Data", label: __("New Paper(BF-GSM-Deck)"), fieldname:"paper", 'default': '16-180-80' },
+									 {fieldtype:"Select", label: __("Colour"), fieldname:"color", 'default': 'Brown', 'options':['White', 'Brown'] }],
+											function(data) {
+												frm.events.invoke_doc_function(frm, "add_new_paper", {"paper": data.paper, "color": data.color})
+											}, __("New Paper"), __("Add"));
+	},
+
 });
 frappe.ui.form.on("CM Paper Item", "rm", function(frm, cdt, cdn) {
 	row = locals[cdt][cdn]
-	frappe.call({
-		doc: frm.doc,
-		method: "update_layers",
-		args: {"rm_type": row.rm_type, "rm": row.rm},
-		callback: function(r) {
-			if(!r.exe) {
-				frm.refresh_fields();
-			}
-		}
-	});
+	if (!row.rm) return
+	frm.events.invoke_doc_function(frm, "update_layers", {"rm_type": row.rm_type, "rm": row.rm})
 });
 frappe.ui.form.on("CM Paper Item", "rm_rate", function(frm, cdt, cdn) {
 	frm.events.update_cost(frm);

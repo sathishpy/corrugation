@@ -336,6 +336,11 @@ class CMBoxDescription(Document):
 		self.update_rate_and_cost();
 		self.save(ignore_permissions=True)
 
+	def add_new_paper(self, paper, color):
+		from corrugation.corrugation.utils import create_new_paper
+		new_paper = create_new_paper(paper, color)
+		frappe.msgprint("Created papper {0}".format(new_paper))
+
 @frappe.whitelist()
 def get_paper_attributes(paper):
 	(color, bf, gsm, deck) = (None, 0, 0, 0)
