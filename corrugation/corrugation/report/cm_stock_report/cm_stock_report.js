@@ -8,7 +8,7 @@ frappe.query_reports["CM Stock Report"] = {
 						"fieldname":"group_name",
 						"label": __("Item Group"),
 						"fieldtype": "Select",
-						"options": "Products\nPaper\nBoard Layer\nOthers",
+						"options": "Products\nPaper\nBoard Layer\nOthers\nBoard Detail",
 						"default": "Products",
 		},
 	]

@@ -38,7 +38,7 @@ def create_new_paper(bf_gsm_deck, color):
         frappe.throw("Argument isn't in the right format(BF-GSM-Deck)")
     args = {"Colour": color, "BF": attributes[0], "GSM": attributes[1], "Deck": attributes[2]}
     if (get_variant("PPR", args) != None):
-        frappe.throw("Paper {0} is already present".format(new_paper.bf_gsm_deck))
+        frappe.throw("Paper {0} is already present".format(bf_gsm_deck))
     print("Creating the new paper {0}".format(args))
     paper = create_variant("PPR", args)
     paper.save()

@@ -357,7 +357,7 @@ def get_filtered_boards(txt, filters):
 						{0}
 						and name LIKE %(txt)s
 					""".format(deck_filter)
-	#print "Searching boards matching {0} with query {1}".format(box_desc.get_board_prefix(layer_type), filter_query)
+	#print "Searching boards matching {0} with query {1} and text {2}".format(box_desc.get_board_prefix(layer_type), filter_query, txt)
 	boards = frappe.db.sql(filter_query, {"txt": "%%%s%%" % txt})
 	filtered_boards = []
 	for (board, ) in boards:

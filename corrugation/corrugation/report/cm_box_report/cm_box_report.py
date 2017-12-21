@@ -17,6 +17,9 @@ def execute(filters=None):
 		lt.append (box.box_height)
 		lt.append (box.box_ply_count)
 		desc = frappe.db.get_value("CM Box Description", filters={"box": box.name})
+		if (desc is None):
+			print("No description present for box {0}".format(box.name))
+			continue
 		box_desc = frappe.get_doc("CM Box Description", desc)
 		lt.append(box_desc.sheet_length)
 		lt.append(box_desc.sheet_width)

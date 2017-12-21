@@ -8,6 +8,9 @@ from erpnext.stock.dashboard.item_dashboard import get_data
 
 def execute(filters=None):
 	item_groups = [filters.get("group_name")]
+	if ("Board Detail" in item_groups):
+		return execute_board_detail(filters)
+
 	if (filters.get("group_name") == "Others"):
 		item_groups = ["Gum", "Ink"]
 	columns, data, items = [], [], []
@@ -17,9 +20,9 @@ def execute(filters=None):
 	for item in items:
 		if item.actual_qty == 0: continue
 		lt = list()
-		lt.append (item.warehouse)
 		lt.append (item.item_code)
 		lt.append (item.actual_qty)
+		lt.append (item.warehouse)
 		notes = ""
 		if (item_group == "Paper"):
 			rolls = frappe.db.sql("""select number, weight from `tabCM Paper Roll` where paper='{0}'""".format(item.item_code), as_dict=1)
@@ -32,9 +35,35 @@ def execute(filters=None):
 		data.append (lt)
 	return columns, data
 
+def execute_board_detail(filters=None):
+	columns = get_detailed_corrugation_columns()
+	items = get_data(None, None, "Board Layer")
+	data = []
+	for item in items:
+		if item.actual_qty == 0: continue
+		orders = frappe.db.sql("""select mfg_date, name, stock_batch_qty from `tabCM Corrugation Order`
+										where board_name='{0}' and stock_batch_qty > 0 and docstatus != 2""".format(item.item_code), as_dict=1)
+		for order in orders:
+			if (order.stock_batch_qty == 0): continue
+			lt = list()
+			lt.append(order.mfg_date)
+			lt.append (item.item_code)
+			lt.append (order.stock_batch_qty)
+			lt.append(order.name)
+			data.append (lt)
+	print("Returning data")
+	return columns, data
+
 def get_columns():
 	columns = [
-			_("Warehouse") + ":Link/Warehouse:150", _("Item") + ":Link/Item:250",  _("Quantity") + ":Float:100",
+			_("Item") + ":Link/Item:250",  _("Quantity") + ":Float:100", _("Warehouse") + ":Link/Warehouse:150",
 			_("Notes") + ":Data:1000"
+			]
+	return columns
+
+def get_detailed_corrugation_columns():
+	columns = [
+			_("Date") + ":Date:200", _("Item") + ":Link/Item:250",  _("Quantity") + ":Float:100",
+			_("Corrugation Order") + ":Link/CM Corrugation Order:400"
 			]
 	return columns
