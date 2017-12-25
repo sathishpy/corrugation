@@ -157,14 +157,8 @@ class CMDocMirror(Document):
 								 "Customer": "on_update, after_delete",
 								 "Supplier": "on_update, after_delete",
 								 "Address": "on_update, after_delete",
-								 "Purchase Order": "on_submit, on_cancel",
-								 "Sales Order": "on_submit, on_cancel",
-								 "Purchase Receipt": "on_submit, on_cancel",
-								 "Purchase Invoice": "on_submit, on_cancel",
 								 "Sales Invoice": "on_submit, on_cancel",
-	#								 "Delivery Note": "on_submit, on_cancel",
 								 "Journal Entry": "on_submit, on_cancel",
-								 "Payment Entry": "on_submit, on_cancel",
 								 "Account": "on_update, on_delete",
 								}
 		print("Re-initialing document {0}".format(self.name))

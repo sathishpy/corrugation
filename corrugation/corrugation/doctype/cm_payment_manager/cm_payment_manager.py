@@ -9,7 +9,8 @@ from frappe.model.document import Document
 from erpnext.accounts.utils import get_outstanding_invoices
 from frappe.utils import nowdate
 from datetime import datetime
-import csv, os, re
+import csv, os, re, io
+import unicodecsv
 import difflib
 
 class CMPaymentManager(Document):
@@ -44,12 +45,16 @@ class CMPaymentManager(Document):
 
 		with open(filepath) as csvfile:
 			entries = csv.DictReader(csvfile)
+			#entries = unicodecsv.reader(csvfile, encoding='utf-8-sig')
 			for entry in entries:
 				date = entry["Date"].strip()
 				if (not date): continue
+				date_format = frappe.get_value("CM Bank Account Mapper", self.bank_data_mapper, "date_format")
+				if (date_format is None):
+					date_format = '%Y-%m-%d'
 				transaction_date = datetime.strptime(date, '%d-%m-%Y').date()
-				if (self.from_date and transaction_date < datetime.strptime(self.from_date, '%Y-%m-%d').date()): continue
-				if (self.to_date and transaction_date > datetime.strptime(self.to_date, '%Y-%m-%d').date()): continue
+				if (self.from_date and transaction_date < datetime.strptime(self.from_date, date_format).date()): continue
+				if (self.to_date and transaction_date > datetime.strptime(self.to_date, date_format).date()): continue
 				#print("Processing entry DESC:{0}-W:{1}-D:{2}-DT:{3}".format(entry["Particulars"], entry["Withdrawals"], entry["Deposits"], entry["Date"]))
 				bank_entry = self.append('new_transaction_items', {})
 				bank_entry.transaction_date = transaction_date
