@@ -10,8 +10,8 @@ from erpnext.accounts.utils import get_outstanding_invoices
 from frappe.utils import nowdate
 from datetime import datetime
 import csv, os, re, io
-import unicodecsv
 import difflib
+import copy
 
 class CMPaymentManager(Document):
 	def autoname(self):
@@ -34,6 +34,14 @@ class CMPaymentManager(Document):
 		else:
 			self.match_invoice_to_payment()
 
+	def get_transaction_entries(self, filepath):
+		transactions = []
+		with open(filepath) as csvfile:
+			entries = csv.DictReader(csvfile)
+			for entry in entries:
+				transactions.append(copy.deepcopy(entry))
+		return transactions
+
 	def populate_payment_entries(self):
 		if self.bank_statement is None: return
 		filename = self.bank_statement.split("/")[-1]
@@ -43,37 +51,35 @@ class CMPaymentManager(Document):
 		if (len(self.new_transaction_items + self.reconciled_transaction_items) > 0):
 			frappe.throw("Transactions already retreived from the statement")
 
-		with open(filepath) as csvfile:
-			entries = csv.DictReader(csvfile)
-			#entries = unicodecsv.reader(csvfile, encoding='utf-8-sig')
-			for entry in entries:
-				date = entry["Date"].strip()
-				if (not date): continue
-				date_format = frappe.get_value("CM Bank Account Mapper", self.bank_data_mapper, "date_format")
-				if (date_format is None):
-					date_format = '%Y-%m-%d'
-				transaction_date = datetime.strptime(date, '%d-%m-%Y').date()
-				if (self.from_date and transaction_date < datetime.strptime(self.from_date, date_format).date()): continue
-				if (self.to_date and transaction_date > datetime.strptime(self.to_date, date_format).date()): continue
-				#print("Processing entry DESC:{0}-W:{1}-D:{2}-DT:{3}".format(entry["Particulars"], entry["Withdrawals"], entry["Deposits"], entry["Date"]))
-				bank_entry = self.append('new_transaction_items', {})
-				bank_entry.transaction_date = transaction_date
-				bank_entry.description = entry["Particulars"]
+		date_format = frappe.get_value("CM Bank Account Mapper", self.bank_data_mapper, "date_format")
+		if (date_format is None):
+			date_format = '%Y-%m-%d'
+		if self.bank_data_mapper:
+			mapped_items = frappe.get_doc("CM Bank Account Mapper", self.bank_data_mapper).mapped_items
+		print("Statement date format is {0}".format(date_format))
+		transactions = self.get_transaction_entries(filepath)
+		for entry in transactions:
+			date = entry["Date"].strip()
+			#print("Processing entry DESC:{0}-W:{1}-D:{2}-DT:{3}".format(entry["Particulars"], entry["Withdrawals"], entry["Deposits"], entry["Date"]))
+			if (not date): continue
+			transaction_date = datetime.strptime(date, date_format).date()
+			if (self.from_date and transaction_date < datetime.strptime(self.from_date, '%Y-%m-%d').date()): continue
+			if (self.to_date and transaction_date > datetime.strptime(self.to_date, '%Y-%m-%d').date()): continue
+			bank_entry = self.append('new_transaction_items', {})
+			bank_entry.transaction_date = transaction_date
+			bank_entry.description = entry["Particulars"]
 
-				mapped_item = None
-				if self.bank_data_mapper:
-					mapped_items = frappe.get_doc("CM Bank Account Mapper", self.bank_data_mapper).mapped_items
-					mapped_item = next((entry for entry in mapped_items if entry.mapping_type == "Transaction" and entry.bank_data.lower() in bank_entry.description.lower()), None)
-				if (mapped_item is not None):
-					bank_entry.party_type = mapped_item.mapped_data_type
-					bank_entry.party = mapped_item.mapped_data
-				else:
-					bank_entry.party_type = "Supplier" if not entry["Deposits"].strip() else "Customer"
-					party_list = frappe.get_all(bank_entry.party_type, fields=["name"])
-					parties = [party.name for party in party_list]
-					matches = difflib.get_close_matches(bank_entry.description.lower(), parties, 1, 0.4)
-					if len(matches) > 0: bank_entry.party = matches[0]
-				bank_entry.amount = -float(entry["Withdrawals"]) if not entry["Deposits"].strip() else float(entry["Deposits"])
+			mapped_item = next((entry for entry in mapped_items if entry.mapping_type == "Transaction" and entry.bank_data.lower() in bank_entry.description.lower()), None)
+			if (mapped_item is not None):
+				bank_entry.party_type = mapped_item.mapped_data_type
+				bank_entry.party = mapped_item.mapped_data
+			else:
+				bank_entry.party_type = "Supplier" if not entry["Deposits"].strip() else "Customer"
+				party_list = frappe.get_all(bank_entry.party_type, fields=["name"])
+				parties = [party.name for party in party_list]
+				matches = difflib.get_close_matches(bank_entry.description.lower(), parties, 1, 0.4)
+				if len(matches) > 0: bank_entry.party = matches[0]
+			bank_entry.amount = -float(entry["Withdrawals"]) if not entry["Deposits"].strip() else float(entry["Deposits"])
 
 	def populate_matching_invoices(self):
 		self.payment_invoice_items = []

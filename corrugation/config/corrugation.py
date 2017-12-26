@@ -106,6 +106,12 @@ def get_data():
 					"label": _("Production Cost Analysis"),
 					"is_query_report": True,
 				},
+				{
+					"type": "report",
+                    "name": "CM Corrugation Report",
+					"label": _("Corrugation Job Report"),
+					"is_query_report": True,
+				},
 			]
 		},
 		{
