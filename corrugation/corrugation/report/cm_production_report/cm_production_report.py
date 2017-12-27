@@ -69,32 +69,25 @@ def get_columns(filter):
 
 def get_chart_data(columns, data):
 	data.reverse()
-	x_intervals = ['x'] + [d[0] for d in data]
+	labels = [d[0] for d in data]
 
 	paper_qty, box_qty, box_weight = [], [], []
 
 	for d in data:
-		paper_qty.append(d[1])
-		box_qty.append(d[2])
-		box_weight.append(d[3])
+		paper_qty.append(int(d[1]))
+		box_qty.append(int(d[2]))
+		box_weight.append(int(d[3]))
 
-	columns = [x_intervals]
-	columns.append(["Paper"] + paper_qty)
-	columns.append(["Box"] + box_qty)
-	columns.append(["BoxWeight "] + box_weight)
-
+	datasets = [{'title': 'Paper', 'values': paper_qty},
+				{'title': 'Box', 'values': box_qty},
+				{'title': 'BoxWeight', 'values': box_weight}]
 	chart = {
 		"data": {
-			'x': 'x',
-			'columns': columns,
-			'colors': {
-				'Paper': 'Brown',
-				'Box': 'Blue',
-				'BoxWeight': 'Green'
-			}
-		}
+                    'labels': labels,
+                    'datasets': datasets
+                }
 	}
 
-	chart["chart_type"] = "line"
+	chart["type"] = "line"
 
 	return chart

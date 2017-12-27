@@ -105,11 +105,10 @@ def get_total_expenses(start_date, end_date):
 	return expense_total
 
 def get_chart_data(columns, data):
+	labels = [d[0] for d in data]
+
 	last_idx = len(columns) - 1
-	x_intervals = ['x'] + [d[0] for d in data]
-
 	planned_cost, actual_cost, sales_price, total_profit, profit_percent = [], [], [], [], []
-
 	for d in data:
 		planned_cost.append(int(d[last_idx-4]))
 		actual_cost.append(int(d[last_idx-3]))
@@ -117,27 +116,19 @@ def get_chart_data(columns, data):
 		total_profit.append(int(d[last_idx-1]))
 		profit_percent.append(round(d[last_idx], 2))
 
-	columns = [x_intervals]
-	columns.append(["Planned Cost"] + planned_cost)
-	columns.append(["Actual Cost"] + actual_cost)
-	columns.append(["Sales Price"] + sales_price)
-	columns.append(["Total Profit"] + total_profit)
-	columns.append(["Profit Percet"] + profit_percent)
+	datasets = [{'title': 'Planned Cost', 'values': planned_cost},
+				{'title': 'Actual Cost', 'values': actual_cost},
+				{'title': 'Sales Price', 'values': sales_price},
+				{'title': 'Total Profit', 'values': total_profit},
+				{'title': 'Profit Percent', 'values': profit_percent}]
 
 	chart = {
 		"data": {
-			'x': 'x',
-			'columns': columns,
-			'colors': {
-				'Planned Cost': 'Brown',
-				'Actual Cost': 'Blue',
-				'Sales Price': 'Black',
-				'Total Profit': 'Green',
-				'Profit Percent': 'Red'
-			}
-		}
+                    'labels': labels,
+                    'datasets': datasets
+                }
 	}
 
-	chart["chart_type"] = "line"
+	chart["type"] = "line"
 
 	return chart
