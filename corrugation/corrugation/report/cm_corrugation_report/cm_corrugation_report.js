@@ -7,7 +7,7 @@ frappe.query_reports["CM Corrugation Report"] = {
 						"fieldname":"from_date",
 						"label": __("From Date"),
 						"fieldtype": "Date",
-						"default": frappe.datetime.add_months(frappe.datetime.get_today(), -1),
+						"default": frappe.datetime.add_days(frappe.datetime.get_today(), -7),
 		},
 		{
 						"fieldname":"to_date",
