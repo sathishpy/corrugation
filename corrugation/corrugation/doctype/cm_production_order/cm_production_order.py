@@ -15,6 +15,8 @@ from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order i
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import update_roll_qty
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import get_used_paper_qunatity_from_rolls
 from corrugation.corrugation.doctype.cm_corrugation_order.cm_corrugation_order import set_new_layer_defaults
+from datetime import datetime
+from datetime import timedelta
 
 class CMProductionOrder(Document):
 	def autoname(self):
@@ -169,6 +171,7 @@ class CMProductionOrder(Document):
 
 				order_item = frappe.new_doc("CM Corrugation Board Item")
 				order_item.crg_order = crg_order.name
+				order_item.crg_date = order.mfg_date
 				order_item.board_count = used_qty
 				self.append("crg_orders", order_item)
 				board_cost += used_qty * order.get_paper_cost_per_board()
@@ -266,7 +269,8 @@ class CMProductionOrder(Document):
 		box_item.item_code = self.box
 		se.fg_completed_qty = box_item.qty = quantity
 		se.set_posting_time = True
-		se.posting_date = self.mfg_date
+		nextday = datetime.strptime(self.mfg_date, "%Y-%m-%d") + timedelta(days=1)
+		se.posting_date = datetime.strftime(nextday, "%Y-%m-%d")
 		se.append("items", box_item)
 		se.calculate_rate_and_amount()
 		se.submit()
