@@ -17,6 +17,8 @@ from corrugation.corrugation.doctype.cm_box_description.cm_box_description impor
 from erpnext.stock.utils import get_latest_stock_qty
 from frappe import _
 import copy
+from datetime import datetime
+from datetime import timedelta
 
 class CMCorrugationOrder(Document):
 	def autoname(self):
@@ -267,7 +269,8 @@ class CMCorrugationOrder(Document):
 		board_item.item_code = self.board_name
 		se.fg_completed_qty = board_item.qty = quantity
 		se.set_posting_time = True
-		se.posting_date = self.mfg_date
+		nextday = datetime.strptime(self.mfg_date, "%Y-%m-%d") + timedelta(days=1)
+		se.posting_date = datetime.strftime(nextday, "%Y-%m-%d")
 		se.append("items", board_item)
 		se.calculate_rate_and_amount()
 		se.submit()

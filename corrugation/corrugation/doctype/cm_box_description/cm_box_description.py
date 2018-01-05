@@ -68,7 +68,7 @@ class CMBoxDescription(Document):
 		self.update_rate_and_cost()
 
 	def update_misc_items(self):
-		misc_items = {"Corrugation Gum": ("CRG-GUM", 1), "Pasting Gum": ("PST-GUM", 3), "Glue": ("GLU-GUM", 0.2), "Printing Ink": ("INK-BLUE", 0.3), "Stitching Coil": ("STCH-COIL", 0.2)}
+		misc_items = {"Corrugation Gum": ("CRG-GUM", 0.5), "Pasting Gum": ("PST-GUM", 3), "Glue": ("GLU-GUM", 0.13), "Printing Ink": ("INK-BLUE", 0.2), "Stitching Coil": ("STCH-COIL", 0.2)}
 		for rm_item in self.item_others:
 			if rm_item.rm: continue
 			(rm, percent) = misc_items[rm_item.rm_type]
