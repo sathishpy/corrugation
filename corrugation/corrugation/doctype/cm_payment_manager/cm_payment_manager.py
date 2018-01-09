@@ -48,9 +48,6 @@ class CMPaymentManager(Document):
 	def populate_payment_entries(self):
 		if self.bank_statement is None: return
 		filename = self.bank_statement.split("/")[-1]
-		filepath = frappe.get_site_path("private", "files", filename);
-		if (not os.path.isfile(filepath)):
-			filepath = frappe.get_site_path("public", "files", filename);
 		if (len(self.new_transaction_items + self.reconciled_transaction_items) > 0):
 			frappe.throw("Transactions already retreived from the statement")
 
@@ -59,8 +56,7 @@ class CMPaymentManager(Document):
 			date_format = '%Y-%m-%d'
 		if self.bank_data_mapper:
 			mapped_items = frappe.get_doc("CM Bank Account Mapper", self.bank_data_mapper).mapped_items
-		print("Statement date format is {0}".format(date_format))
-		transactions = get_transaction_entries(filepath, self.get_statement_headers())
+		transactions = get_transaction_entries(filename, self.get_statement_headers())
 		for entry in transactions:
 			date = entry["Date"].strip()
 			#print("Processing entry DESC:{0}-W:{1}-D:{2}-DT:{3}".format(entry["Particulars"], entry["Withdrawals"], entry["Deposits"], entry["Date"]))
@@ -375,21 +371,49 @@ def get_header_index(headers, row):
 def get_transaction_info(headers, header_index, row):
 	transaction = {}
 	for header in headers:
-		if not row[0]:
-			break
 		transaction[header] = row[header_index[header]]
+		if (transaction[header] == None):
+			transaction[header] = ""
 	return transaction
 
-def get_transaction_entries(filepath, headers):
+def get_transaction_entries(filename, headers):
 	header_index = {}
-	dict_data = {}
-	transactions = []
-	with open(filepath,'rb') as csvfile:
-		for row in  csv.reader(csvfile, delimiter=str(u',').encode('utf-8')):
-			if not row[0]: continue
-			if header_index:
-				transaction = get_transaction_info(headers, header_index, row)
-				transactions.append(transaction)
-			elif is_headers_present(headers, row):
-				header_index =  get_header_index(headers, row)
+	rows, transactions = [], []
+
+	if (filename.lower().endswith("xlsx")):
+		from frappe.utils.xlsxutils import read_xlsx_file_from_attached_file
+		rows = read_xlsx_file_from_attached_file(file_id=filename)
+	elif (filename.lower().endswith("csv")):
+		from frappe.utils.file_manager import get_file_path
+		from frappe.utils.csvutils import read_csv_content
+		filepath = get_file_path(filename)
+		with open(filepath,'rb') as csvfile:
+			rows = read_csv_content(csvfile.read())
+	elif (filename.lower().endswith("xls")):
+		rows = get_rows_from_xls_file(filename)
+	else:
+		frappe.throw("Only .csv and .xlsx files are supported currently")
+
+	for row in rows:
+		if len(row) == 0 or row[0] == None or not row[0]: continue
+		#print("Processing row {0}".format(row))
+		if header_index:
+			transaction = get_transaction_info(headers, header_index, row)
+			transactions.append(transaction)
+		elif is_headers_present(headers, row):
+			header_index =  get_header_index(headers, row)
 	return transactions
+
+def get_rows_from_xls_file(filename):
+	from frappe.utils.file_manager import get_file_path
+	filepath = get_file_path(filename)
+	import xlrd
+	book = xlrd.open_workbook(filepath)
+	sheets = book.sheets()
+	rows = []
+	for row in range(1, sheets[0].nrows):
+		row_values = []
+		for col in range(1, sheets[0].ncols):
+			row_values.append(sheets[0].cell_value(row, col))
+		rows.append(row_values)
+	return rows
