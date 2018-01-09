@@ -21,6 +21,10 @@ class CMPaymentManager(Document):
 		if not frappe.db.exists("CM Bank Account Mapper", mapper_name):
 			mapper = frappe.new_doc("CM Bank Account Mapper")
 			mapper.bank_account = self.bank_account
+			mapper.date_format = "%Y-%m-%d"
+			for header in ["Date", "Particulars", "Withdrawals", "Deposits", "Balance"]:
+				header_item = mapper.append("header_items", {})
+				header_item.mapped_header = header_item.stmt_header = header
 			mapper.save()
 		self.bank_data_mapper = mapper_name
 
@@ -34,13 +38,12 @@ class CMPaymentManager(Document):
 		else:
 			self.match_invoice_to_payment()
 
-	def get_transaction_entries(self, filepath):
-		transactions = []
-		with open(filepath) as csvfile:
-			entries = csv.DictReader(csvfile)
-			for entry in entries:
-				transactions.append(copy.deepcopy(entry))
-		return transactions
+	def get_statement_headers(self):
+		if not self.bank_data_mapper:
+			frappe.throw("Bank Data mapper doesn't exist")
+		mapper_doc = frappe.get_doc("CM Bank Account Mapper", self.bank_data_mapper)
+		headers = [entry.stmt_header for entry in mapper_doc.header_items]
+		return headers
 
 	def populate_payment_entries(self):
 		if self.bank_statement is None: return
@@ -57,7 +60,7 @@ class CMPaymentManager(Document):
 		if self.bank_data_mapper:
 			mapped_items = frappe.get_doc("CM Bank Account Mapper", self.bank_data_mapper).mapped_items
 		print("Statement date format is {0}".format(date_format))
-		transactions = self.get_transaction_entries(filepath)
+		transactions = get_transaction_entries(filepath, self.get_statement_headers())
 		for entry in transactions:
 			date = entry["Date"].strip()
 			#print("Processing entry DESC:{0}-W:{1}-D:{2}-DT:{3}".format(entry["Particulars"], entry["Withdrawals"], entry["Deposits"], entry["Date"]))
@@ -355,3 +358,38 @@ def get_payments_matching_invoice(invoice, amount, pay_date):
 	#Hack: Update the reference type which is set to invoice type
 	payment.reference_type = "Payment Entry"
 	return payment
+
+def is_headers_present(headers, row):
+	for header in headers:
+		if header not in row:
+			return False
+	return True
+
+def get_header_index(headers, row):
+	header_index = {}
+	for header in headers:
+		if header in row:
+			header_index[header] = row.index(header)
+	return header_index
+
+def get_transaction_info(headers, header_index, row):
+	transaction = {}
+	for header in headers:
+		if not row[0]:
+			break
+		transaction[header] = row[header_index[header]]
+	return transaction
+
+def get_transaction_entries(filepath, headers):
+	header_index = {}
+	dict_data = {}
+	transactions = []
+	with open(filepath,'rb') as csvfile:
+		for row in  csv.reader(csvfile, delimiter=str(u',').encode('utf-8')):
+			if not row[0]: continue
+			if header_index:
+				transaction = get_transaction_info(headers, header_index, row)
+				transactions.append(transaction)
+			elif is_headers_present(headers, row):
+				header_index =  get_header_index(headers, row)
+	return transactions
