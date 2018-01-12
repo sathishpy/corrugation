@@ -48,6 +48,7 @@ class CMBox(Document):
 		item.standard_rate = self.box_rate
 		item.item_group = "Products"
 		item.is_purchase_item = False
+		item.gst_hsn_code = 4819
 		item.default_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})
 		if (self.box_type == "Top Plate"):
 			item.stock_uom = "Kg"
