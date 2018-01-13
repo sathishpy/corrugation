@@ -16,7 +16,6 @@ import copy
 class CMPaymentManager(Document):
 	def autoname(self):
 		self.name = self.bank_account + "-" + self.from_date + "-" + self.to_date
-		self.reconciled_transaction_items = self.new_transaction_items = []
 		mapper_name = self.bank_account + "-Mappings"
 		if not frappe.db.exists("CM Bank Account Mapper", mapper_name):
 			mapper = frappe.new_doc("CM Bank Account Mapper")
@@ -79,6 +78,16 @@ class CMPaymentManager(Document):
 				matches = difflib.get_close_matches(bank_entry.description.lower(), parties, 1, 0.4)
 				if len(matches) > 0: bank_entry.party = matches[0]
 			bank_entry.amount = -float(entry["Withdrawals"]) if not entry["Deposits"].strip() else float(entry["Deposits"])
+		self.map_unknown_transactions()
+		self.map_transactions_on_journal_entry()
+
+	def map_transactions_on_journal_entry(self):
+		for entry in self.new_transaction_items:
+			vouchers = frappe.db.sql("""select name, posting_date from `tabJournal Entry`
+										where posting_date='{0}' and total_credit={1} and cheque_no='{2}' and docstatus != 2
+									""".format(datetime.strptime(entry.transaction_date, "%Y-%m-%d").date(), abs(entry.amount), entry.description), as_dict=True)
+			if (len(vouchers) == 1):
+				entry.reference_name = vouchers[0].name
 
 	def populate_matching_invoices(self):
 		self.payment_invoice_items = []
@@ -111,6 +120,7 @@ class CMPaymentManager(Document):
 				if (amount <= 5): break
 		self.match_invoice_to_payment()
 		self.populate_matching_vouchers()
+		self.map_transactions_on_journal_entry()
 
 	def match_invoice_to_payment(self):
 		added_payments = []
@@ -349,7 +359,6 @@ def get_payments_matching_invoice(invoice, amount, pay_date):
 				""".format(invoice, pay_date)
 	payments = frappe.db.sql(query, as_dict=True)
 	if (len(payments) == 0): return
-	#print("Running query:{0} returned {1} entries".format(query, payments))
 	payment = next((payment for payment in payments if payment.allocated_amount == amount), payments[0])
 	#Hack: Update the reference type which is set to invoice type
 	payment.reference_type = "Payment Entry"
