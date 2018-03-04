@@ -18,7 +18,7 @@ class CMPaperRollRegister(Document):
 		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
 		self.roll_count_items = []
 		for item in receipt.items:
-			if (frappe.db.get_value("Item", item.item_code, "item_group") != "Paper"): continue
+			if (frappe.db.get_value("Item", item.item_code, "variant_of") != "PPR"): continue
 			roll_count_item = frappe.new_doc("CM Paper Roll Count Item")
 			roll_count_item.paper = item.item_code
 			roll_count_item.count = item.qty/500

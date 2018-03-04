@@ -413,7 +413,7 @@ def filter_rolls_for_sheet(rolls, length, width):
 	for (roll, weight) in rolls:
 		paper = frappe.db.get_value("CM Paper Roll", roll, "paper")
 		(color, bf, gsm, deck) = get_paper_attributes(paper)
-		if ((deck >= (length-2) and deck <= (length + 10)) or (deck >= (width-2) and deck <= (width + 10))):
+		if ((deck >= (length-2) and deck <= (length + 20)) or (deck >= (width-2) and deck <= (width + 20))):
 			filtered_rolls.append((roll, weight))
 	return filtered_rolls
 

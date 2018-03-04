@@ -9,6 +9,7 @@ from corrugation.corrugation.doctype.cm_box_description.cm_box_description impor
 from erpnext.stock.utils import get_latest_stock_qty
 from operator import itemgetter
 from corrugation.corrugation.utils import create_new_paper
+from erpnext.controllers.item_variant import get_variant
 
 class CMPaperManagement(Document):
 	def autoname(self):

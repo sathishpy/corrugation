@@ -85,7 +85,7 @@ class CMPaymentManager(Document):
 		for entry in self.new_transaction_items:
 			vouchers = frappe.db.sql("""select name, posting_date from `tabJournal Entry`
 										where posting_date='{0}' and total_credit={1} and cheque_no='{2}' and docstatus != 2
-									""".format(datetime.strptime(entry.transaction_date, "%Y-%m-%d").date(), abs(entry.amount), entry.description), as_dict=True)
+									""".format(entry.transaction_date, abs(entry.amount), entry.description), as_dict=True)
 			if (len(vouchers) == 1):
 				entry.reference_name = vouchers[0].name
 

@@ -67,6 +67,8 @@ class CMBox(Document):
 	def on_update(self):
 		item = frappe.get_doc("Item", self.box_item)
 		for box_bom in self.get_item_descriptions():
+			if (box_bom.docstatus == 2):
+				continue
 			if (box_bom.docstatus == 1):
 				box_bom.update_cost_after_submit()
 				continue
