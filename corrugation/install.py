@@ -18,6 +18,7 @@ def add_paper_item_groups(raw_material_group):
         {"doctype": "Item Group", "item_group_name": _("Paper"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Gum"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Ink"), "is_group": 0, "parent_item_group": raw_material_group.name },
+<<<<<<< HEAD
         {"doctype": "Item Group", "item_group_name": _("Coil"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Board"), "is_group": 0, "parent_item_group": raw_material_group.name },
         {"doctype": "Item Group", "item_group_name": _("Board Layer"), "is_group": 0, "parent_item_group": raw_material_group.name },
@@ -70,17 +71,50 @@ def add_paper_template(name):
         },
     ]
     print("Adding paper template as Item")
+=======
+    ]
+    add_records(records)
+
+def add_paper_template(name):
+    records = [
+        {"doctype": "Item Attribute", "attribute_name":_("GSM"), "numeric_values": True, "from_range": 100, "increment": 20, "to_range": 220},
+        {"doctype": "Item Attribute", "attribute_name":_("BF"), "numeric_values": True, "from_range": 12, "increment": 2, "to_range": 20},
+        {"doctype": "Item Attribute", "attribute_name":_("Deck"), "numeric_values": True, "from_range": 50, "increment": 1, "to_range": 200},
+        {"doctype": "Item Attribute", "attribute_name": _("Supplier"), "item_attribute_values": [
+                {"attribute_value": _("Mangalore"), "abbr": "MLR"},
+                {"attribute_value": _("Shimogga"), "abbr": "SMG"},
+                {"attribute_value": _("Mysore"), "abbr": "MSR"},
+        ]},
+        {"doctype": "Item", "item_code": name, "item_group": "Paper", "stock_uom": "Kg", "default_material_request_type": "Purchase",
+                            "is_stock_item": True, "is_fixed_asset": False, "has_variants": True, "variant_based_on": "Item Attribute",
+                            "attributes": [
+                                {"attribute": _("Colour")},
+                                {"attribute": _("GSM")},
+                                {"attribute": _("BF")},
+                                {"attribute": _("Deck")},
+                                {"attribute": _("Supplier")},
+                            ]
+        },
+    ]
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
     add_records(records)
 
 def update_mf_settings():
     #Allow over production
+<<<<<<< HEAD
     print "Updating manufacturing settings"
+=======
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
     mf_settings = frappe.get_doc({"doctype": "Manufacturing Settings", "allow_production_on_holidays": 0})
     mf_settings.allow_production_on_holidays = 1
     mf_settings.allow_overtime = 1
     mf_settings.over_production_allowance_percentage = 50
     #This doesn't handle multiple companies
+<<<<<<< HEAD
     mf_settings.default_wip_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Stores")})
+=======
+    mf_settings.default_wip_warehouse = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Work In Progress")})
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
     mf_settings.default_fg_warehouse  = frappe.db.get_value("Warehouse", filters={"warehouse_name": _("Finished Goods")})
     mf_settings.save()
 
@@ -88,15 +122,19 @@ def update_mf_settings():
     stock_settings.tolerance = 50
     stock_settings.save()
 
+<<<<<<< HEAD
     buy_settings = frappe.get_doc({"doctype": "Buying Settings", "maintain_same_rate": 1})
     if (buy_settings is not None):
         buy_settings.maintain_same_rate = 0
         buy_settings.save()
 
+=======
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 def before_install():
     update_mf_settings()
 
     rm_group = "Raw Material"
+<<<<<<< HEAD
     paper_template = "PPR"
     raw_material_group = frappe.get_doc("Item Group", rm_group)
     if (raw_material_group.is_group == False):
@@ -109,3 +147,13 @@ def before_install():
 def after_install():
     doc = frappe.new_doc("CM Paper")
     doc.save(ignore_permissions=True)
+=======
+    paper_template = "Paper-RM"
+    raw_material_group = frappe.get_doc("Item Group", rm_group)
+    if (raw_material_group.is_group == False):
+        add_paper_item_groups(raw_material_group)
+
+    paper_rm = frappe.db.sql_list("""select name from `tabItem` where item_name=%s""", paper_template)
+    if not paper_rm:
+        add_paper_template(paper_template)
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a

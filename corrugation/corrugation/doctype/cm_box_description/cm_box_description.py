@@ -13,6 +13,7 @@ class CMBoxDescription(Document):
 			idx = len(items) + 1
 		else:
 			idx = 1
+<<<<<<< HEAD
 		self.name = self.item + "-DESC" + ('-%.3i' % idx)
 
 	def add_paper_item(self, layer, quality = 0):
@@ -351,6 +352,126 @@ class CMBoxDescription(Document):
 @frappe.whitelist()
 def get_paper_attributes(paper):
 	(color, bf, gsm, deck) = (None, 0, 0, 0)
+=======
+
+		self.name = self.item + "-description" + ('-%.3i' % idx)
+
+	def on_submit(self):
+		pass
+
+	def populate_paper_materials(self):
+		self.item_papers = []
+		rm_item = frappe.new_doc("CM Paper Item")
+		rm_item.rm_type = 'Top'
+		self.append("item_papers", rm_item)
+		print ("Ply count {0}".format(self.item_ply_count))
+		if (int(self.item_ply_count) == 5):
+			print ("Adding additional layers")
+			rm_item = frappe.new_doc("CM Paper Item")
+			rm_item.rm_type = 'Flute Liner'
+			self.append("item_papers", rm_item)
+
+			rm_item = frappe.new_doc("CM Paper Item")
+			rm_item.rm_type = "Liner"
+			self.append("item_papers", rm_item)
+
+		rm_item = frappe.new_doc("CM Paper Item")
+		rm_item.rm_type = 'Flute'
+		self.append("item_papers", rm_item)
+
+		rm_item = frappe.new_doc("CM Paper Item")
+		rm_item.rm_type = "Bottom"
+		self.append("item_papers", rm_item)
+
+	def populate_raw_materials(self):
+		self.populate_paper_materials()
+
+		rm_item = frappe.new_doc("CM Misc Item")
+		rm_item.rm_type = "Corrugation Gum"
+		rm_item.rm_percent = 3
+		self.append("item_others", rm_item)
+
+		rm_item = frappe.new_doc("CM Misc Item")
+		rm_item.rm_type = "Pasting Gum"
+		rm_item.rm_percent = 2
+		self.append("item_others", rm_item)
+
+		rm_item = frappe.new_doc("CM Misc Item")
+		rm_item.rm_type = "Printing Ink"
+		rm_item.rm_percent = 0.3
+		self.append("item_others", rm_item)
+
+	def populate_raw_materals_check(self):
+		if len(self.item_papers) != 0 or len(self.item_others) != 0: return
+		self.populate_raw_materals()
+
+	def get_overall_cost(self):
+		(top_weight, top_cost) = get_paper_weight_cost(self.item_rm_top)
+		(flute_weight, flute_cost) = get_paper_weight_cost(self.item_rm_flute)
+		(bottom_weight, bottom_cost) = get_paper_weight_cost(self.item_rm_bottom)
+		paper_cost = top_cost + flute_cost + bottom_cost
+		operating_cost = paper_cost * 0.1
+		return (paper_cost, operating_cost)
+
+	def get_paper_weight_cost(self, paper):
+		if paper is None: return (0, 0)
+		(gsm, bf, deck) = get_paper_measurements(paper)
+		print ("Sheet {0} sl={1} sw={2} deck={3}".format(gsm, self.sheet_length, self.sheet_width, deck))
+		weight = float((self.sheet_length * deck) * gsm/1000)/10000
+		cost = weight * get_item_rate(paper)
+		print("Paper {0} weight={1} rate={2} cost={3}".format(paper, weight, get_item_rate(paper), cost))
+		return (weight, cost)
+
+	def validate(self):
+		pass
+
+	def on_update(self):
+		self.update_cost()
+
+	def before_submit(self):
+		self.item_bom = make_new_bom(self.name)
+		print("Created item decsription {0} with bom {1}".format(self.name, self.item_bom))
+
+	def update_cost(self):
+		self.item_rm_cost = 0
+		paper_weight = 0
+		for item in self.item_papers:
+			if item.rm is None: continue
+			if (item.rm_type == 'Top' or item.rm_type == 'Bottom' or item.rm_type == 'Liner'):
+				(weight, cost) = self.get_paper_weight_cost(item.rm)
+				item.rm_weight = float(weight/self.item_per_sheet)
+				item.rm_cost = float(cost/self.item_per_sheet)
+				self.item_rm_cost += item.rm_cost
+				paper_weight += item.rm_weight
+			elif (item.rm_type == 'Flute' or item.rm_type == 'Flute Liner'):
+				(weight, cost) = self.get_paper_weight_cost(item.rm)
+				item.rm_weight = float(weight * self.item_flute/self.item_per_sheet)
+				item.rm_cost = float(cost * self.item_flute/self.item_per_sheet)
+				self.item_rm_cost += item.rm_cost
+				paper_weight += item.rm_weight
+			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
+
+		for item in self.item_others:
+			if item.rm is None: continue
+			item.rm_weight = paper_weight * item.rm_percent / 100
+			item.rm_cost = item.rm_weight * get_item_rate(item.rm)
+			self.item_rm_cost += item.rm_cost
+			print "Cost of rm {0} having weight {1} is {2}".format(item.rm, item.rm_weight, item.rm_cost)
+
+		print("Raw Material cost={0} items={1}".format(self.item_rm_cost, self.item_per_sheet))
+		if (self.item_rm_cost == 0): return
+
+		total_expense = get_total_expenses(0)
+		(boxes, production) = get_production_details(0)
+		print("Boxes = {0} production={1}".format(boxes, production))
+		if (boxes != 0 and self.item_prod_cost == 0): self.item_prod_cost = total_expense/boxes
+		self.item_total_cost = float(self.item_rm_cost + self.item_prod_cost)
+		self.item_profit = float((get_item_rate(self.item) - self.item_total_cost)*100/self.item_total_cost)
+		print("RM cost={0} OP Cost={1} Rate={2}".format(self.item_rm_cost, self.item_prod_cost, get_item_rate(self.item)))
+
+def get_paper_measurements(paper):
+	(gsm, bf, deck) = (0, 0, 0)
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 	item = frappe.get_doc("Item", paper)
 	for attribute in item.attributes:
 		if attribute.attribute == "GSM":
@@ -358,6 +479,7 @@ def get_paper_attributes(paper):
 		elif attribute.attribute == "BF":
 			bf = int(attribute.attribute_value)
 		elif attribute.attribute == "Deck":
+<<<<<<< HEAD
 			deck = float(attribute.attribute_value)
 		elif attribute.attribute == "Colour":
 			color = attribute.attribute_value
@@ -373,6 +495,17 @@ def get_item_rate(item_name, exclude_tax=True):
 	extra_charges = max(0, (landing_rate - (std_rate * 1.12)))
 	#print("Item {0} standard rate:{1} valuation rate:{2} charges:{3}".format(item_name, std_rate, landing_rate, extra_charges))
 	return (std_rate + extra_charges)
+=======
+			deck = int(attribute.attribute_value)
+	return (gsm, bf, deck)
+
+def get_item_rate(item_name):
+	item = frappe.get_doc("Item", item_name)
+	rate = item.valuation_rate
+	if (rate == 0):
+		rate = item.standard_rate
+	return rate
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 
 def get_total_expenses(month):
 	expenses = frappe.get_all("Journal Entry", fields={"voucher_type":"Journal Entry"})
@@ -380,7 +513,11 @@ def get_total_expenses(month):
 
 	for expense_entry in expenses:
 		expense = frappe.get_doc("Journal Entry", expense_entry.name)
+<<<<<<< HEAD
 		#print("{0}    {1}".format(expense.title, expense.total_debit))
+=======
+		print("{0}    {1}".format(expense.title, expense.total_debit))
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 		expense_total += expense.total_debit
 
 	return expense_total
@@ -398,6 +535,7 @@ def get_production_details(month):
 	return (total_boxes, total_production)
 
 @frappe.whitelist()
+<<<<<<< HEAD
 def get_no_of_boards_for_box(box_desc_name, layer, box_count):
 	box_desc = frappe.get_doc("CM Box Description", box_desc_name)
 	boards = box_count/box_desc.get_items_per_board()
@@ -496,3 +634,41 @@ def get_suitable_paper(papers, quality):
 			break
 		last_bf, last_gsm = bf, gsm
 	return suitable_paper
+=======
+def make_new_bom(source_name):
+	item_desc = frappe.get_doc("CM Box Description", source_name)
+
+	bom = frappe.new_doc("BOM")
+	bom.item = item_desc.item
+	bom.item_name = item_desc.item_name
+	bom.quantity = 1
+
+	list_empty = True
+
+	for item in (item_desc.item_papers + item_desc.item_others):
+		if item.rm is None: continue
+
+		quantity = (bom.quantity * item.rm_weight)/int(item_desc.item_per_sheet)
+		print ("Updating Item {0} of quantity {1}".format(item.rm, quantity))
+
+		if (list_empty is False):
+			bom_item = next((bi for bi in bom.items if bi.item_code == item.rm), None)
+			if bom_item is not None:
+				bom_item.qty += quantity
+				continue
+
+		bom_item = frappe.new_doc("BOM Item")
+		bom_item.item_code = item.rm
+		bom_item.qty = quantity
+		bom_item.rate = get_item_rate(item.rm)
+		rm_item = frappe.get_doc("Item", item.rm)
+		bom_item.stock_uom = rm_item.stock_uom
+		bom.append("items", bom_item)
+		list_empty = False
+
+	bom.base_operating_cost = bom.operating_cost = bom.quantity * item_desc.item_prod_cost
+	bom.save()
+	print "Creating new bom {0} for {1} with operating cost {2}".format(bom.name, bom.item_name, bom.operating_cost)
+	bom.submit()
+	return bom.name
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
