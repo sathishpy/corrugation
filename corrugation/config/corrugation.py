@@ -9,34 +9,24 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-<<<<<<< HEAD
 					"name": "CM Corrugation Order",
                     "label": _("Corrugation Order")
 				},
 				{
 					"type": "doctype",
-=======
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 					"name": "CM Production Order",
 					"description": _("Orders released for production."),
                     "label": _("Production Order")
 				},
 				{
 					"type": "doctype",
-<<<<<<< HEAD
 					"name": "CM Shared Corrugation Order",
 					"description": _("Shared Corrugation Orders."),
                     "label": _("Shared Corrugation Order")
-=======
-					"name": "CM Shared Production Order",
-					"description": _("Shared Production Orders."),
-                    "label": _("Shared Production Order")
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 				},
             ]
         },
         {
-<<<<<<< HEAD
             "label": _("Configuration"),
             "items": [
 				{
@@ -79,39 +69,6 @@ def get_data():
 					"type": "doctype",
 					"name": "Purchase Receipt",
 					"label": _("Purchase Receipt"),
-=======
-            "label": _("Stock"),
-            "items": [
-				{
-					"type": "doctype",
-					"name": "CM Paper Roll Register",
-                    "label": _("Register Paper Rolls")
-				},
-                {
-                    "type": "report",
-                    "name": "CM Paper Roll",
-                    "label": _("Paper Rolls"),
-					"is_query_report": True,
-                }
-			]
-		},
-		{
-			"label": _("Bill of Materials"),
-			"items": [
-				{
-					"type": "doctype",
-					"name": "CM Box Description",
-					"description": _("Bill of Materials (BOM)"),
-					"label": _("Box Description")
-				},
-				{
-					"type": "doctype",
-					"name": "BOM",
-					"icon": "fa fa-sitemap",
-					"label": _("BOM Browser"),
-					"description": _("Tree of Bill of Materials"),
-					"link": "Tree/BOM",
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 				},
 			]
 		},
@@ -119,7 +76,6 @@ def get_data():
 			"label": _("Reports"),
 			"icon": "fa fa-list",
 			"items": [
-<<<<<<< HEAD
                 {
                     "type": "report",
                     "name": "CM Box Report",
@@ -148,21 +104,12 @@ def get_data():
 					"type": "report",
                     "name": "CM Product Costs",
 					"label": _("Production Cost Analysis"),
-=======
-				{
-					"type": "report",
-                    "name": "CM Product Costs",
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 					"is_query_report": True,
 				},
 				{
 					"type": "report",
-<<<<<<< HEAD
                     "name": "CM Corrugation Report",
 					"label": _("Corrugation Job Report"),
-=======
-                    "name": "CM Tally Export",
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 					"is_query_report": True,
 				},
 			]
@@ -172,7 +119,6 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-<<<<<<< HEAD
 					"name": "CM Payment Manager",
 					"label": _("Payment Management"),
 				},
@@ -195,15 +141,6 @@ def get_data():
 					"type": "doctype",
 					"name": "CM Data Import Tool",
 					"label": _("Import Data"),
-=======
-                    "name": "CM Export Data",
-					"label": _("Data Export to Tally"),
-				},
-				{
-					"type": "doctype",
-					"name": "CM Party Import Tool",
-					"label": _("Import Master From Tally"),
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 				},
 			]
 		},

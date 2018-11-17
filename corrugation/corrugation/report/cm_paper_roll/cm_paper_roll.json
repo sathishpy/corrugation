@@ -7,11 +7,7 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
-<<<<<<< HEAD
  "modified": "2017-09-02 01:29:15.355832", 
-=======
- "modified": "2017-06-28 11:27:53.091016", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
  "modified_by": "Administrator", 
  "module": "Corrugation", 
  "name": "CM Paper Roll", 
@@ -25,12 +21,9 @@
   }, 
   {
    "role": "Manufacturing User"
-<<<<<<< HEAD
   }, 
   {
    "role": "Stock User"
-=======
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
   }
  ]
 }

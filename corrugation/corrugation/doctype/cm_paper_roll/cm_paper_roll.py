@@ -4,7 +4,6 @@
 
 from __future__ import unicode_literals
 import frappe
-<<<<<<< HEAD
 from frappe import _
 from frappe.model.document import Document
 from corrugation.corrugation.doctype.cm_box_description.cm_box_description import get_item_rate
@@ -33,16 +32,3 @@ class CMPaperRoll(Document):
 		se.append("items", stock_item)
 		se.calculate_rate_and_amount()
 		se.submit()
-=======
-from frappe.model.document import Document
-
-class CMPaperRoll(Document):
-	def autoname(self):
-		rolls = frappe.db.sql_list("""select name from `tabCM Paper Roll` where paper=%s""", self.paper)
-		if rolls:
-			idx = len(rolls) + 1
-		else:
-			idx = 1
-
-		self.name = self.paper + "-Roll" + ('-%.3i' % idx)
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a

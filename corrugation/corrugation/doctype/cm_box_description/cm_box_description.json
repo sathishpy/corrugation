@@ -1,13 +1,8 @@
 {
  "allow_copy": 0, 
  "allow_guest_to_view": 0, 
-<<<<<<< HEAD
  "allow_import": 1, 
  "allow_rename": 1, 
-=======
- "allow_import": 0, 
- "allow_rename": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
  "beta": 0, 
  "creation": "2017-05-23 18:11:15.373708", 
  "custom": 0, 
@@ -23,7 +18,6 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "box", 
    "fieldtype": "Link", 
    "hidden": 0, 
@@ -639,10 +633,6 @@
    "default": "0", 
    "fieldname": "item_stitched", 
    "fieldtype": "Check", 
-=======
-   "fieldname": "item", 
-   "fieldtype": "Link", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -650,16 +640,9 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Stitched", 
    "length": 0, 
    "no_copy": 0, 
-=======
-   "label": "Item", 
-   "length": 0, 
-   "no_copy": 0, 
-   "options": "Item", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
@@ -667,11 +650,7 @@
    "read_only": 0, 
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
-<<<<<<< HEAD
    "reqd": 0, 
-=======
-   "reqd": 1, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "search_index": 0, 
    "set_only_once": 0, 
    "unique": 0
@@ -682,13 +661,8 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "section_break_25", 
    "fieldtype": "Section Break", 
-=======
-   "fieldname": "column_break_2", 
-   "fieldtype": "Column Break", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -716,13 +690,8 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "sheet_length", 
    "fieldtype": "Float", 
-=======
-   "fieldname": "item_name", 
-   "fieldtype": "Data", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -730,22 +699,14 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Sheet Length", 
-=======
-   "label": "Item Name", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
    "print_hide_if_no_value": 0, 
-<<<<<<< HEAD
    "read_only": 1, 
-=======
-   "read_only": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
    "reqd": 0, 
@@ -759,14 +720,9 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "default": "1", 
    "fieldname": "item_per_length", 
    "fieldtype": "Float", 
-=======
-   "fieldname": "product_description", 
-   "fieldtype": "Section Break", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -774,11 +730,7 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Items Per Length", 
-=======
-   "label": "Product Description", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -795,7 +747,6 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-<<<<<<< HEAD
    "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
@@ -826,19 +777,12 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-=======
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "allow_on_submit": 0, 
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "column_break_22", 
    "fieldtype": "Column Break", 
-=======
-   "fieldname": "item_length", 
-   "fieldtype": "Float", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -846,10 +790,6 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
-=======
-   "label": "Length", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -870,11 +810,7 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "sheet_width", 
-=======
-   "fieldname": "item_width", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "fieldtype": "Float", 
    "hidden": 0, 
    "ignore_user_permissions": 0, 
@@ -883,22 +819,14 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Sheet Width", 
-=======
-   "label": "Width", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
    "print_hide_if_no_value": 0, 
-<<<<<<< HEAD
    "read_only": 1, 
-=======
-   "read_only": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
    "reqd": 0, 
@@ -912,14 +840,9 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "default": "2", 
    "fieldname": "item_per_sheet", 
    "fieldtype": "Int", 
-=======
-   "fieldname": "column_break_6", 
-   "fieldtype": "Column Break", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -927,10 +850,7 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Items Per Deck", 
-=======
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -951,14 +871,9 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "default": "0", 
    "fieldname": "swap_deck", 
    "fieldtype": "Check", 
-=======
-   "fieldname": "item_height", 
-   "fieldtype": "Float", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -966,11 +881,7 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Swap Deck and Length", 
-=======
-   "label": "Height", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -991,14 +902,8 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "rsec_aw_materials", 
    "fieldtype": "Section Break", 
-=======
-   "default": "3", 
-   "fieldname": "item_ply_count", 
-   "fieldtype": "Select", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1006,7 +911,6 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Raw Materials", 
    "length": 0, 
    "no_copy": 0, 
@@ -1041,12 +945,6 @@
    "label": "Cost Excluding Tax", 
    "length": 0, 
    "no_copy": 0, 
-=======
-   "label": "No Of Ply", 
-   "length": 0, 
-   "no_copy": 0, 
-   "options": "3\n5", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
@@ -1065,13 +963,8 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "column_break_28", 
    "fieldtype": "Column Break", 
-=======
-   "fieldname": "sec_manufacturing_details", 
-   "fieldtype": "Section Break", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1079,10 +972,6 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
-=======
-   "label": "Manufacturing Details", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -1103,14 +992,8 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "section_break_30", 
    "fieldtype": "Section Break", 
-=======
-   "default": "3", 
-   "fieldname": "item_pin_lap", 
-   "fieldtype": "Float", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1118,15 +1001,8 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "length": 0, 
    "no_copy": 0, 
-=======
-   "label": "Pinning Lap", 
-   "length": 0, 
-   "no_copy": 0, 
-   "options": "", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
@@ -1145,14 +1021,8 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "add_new_paper", 
    "fieldtype": "Button", 
-=======
-   "default": "0", 
-   "fieldname": "item_fold_lap", 
-   "fieldtype": "Float", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1160,16 +1030,9 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Add New Paper", 
    "length": 0, 
    "no_copy": 0, 
-=======
-   "label": "Folding Lap", 
-   "length": 0, 
-   "no_copy": 0, 
-   "options": "", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
@@ -1188,14 +1051,8 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "item_papers", 
    "fieldtype": "Table", 
-=======
-   "default": "1.5", 
-   "fieldname": "item_flute", 
-   "fieldtype": "Float", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1203,17 +1060,10 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Paper", 
    "length": 0, 
    "no_copy": 0, 
    "options": "CM Paper Item", 
-=======
-   "label": "Flute Ratio", 
-   "length": 0, 
-   "no_copy": 0, 
-   "options": "", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
@@ -1232,13 +1082,8 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "item_others", 
    "fieldtype": "Table", 
-=======
-   "fieldname": "column_break_12", 
-   "fieldtype": "Column Break", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1246,15 +1091,10 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Other Items", 
    "length": 0, 
    "no_copy": 0, 
    "options": "CM Misc Item", 
-=======
-   "length": 0, 
-   "no_copy": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
@@ -1273,14 +1113,8 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "section_break_21", 
    "fieldtype": "Section Break", 
-=======
-   "default": "2", 
-   "fieldname": "item_per_sheet", 
-   "fieldtype": "Int", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1288,10 +1122,6 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
-=======
-   "label": "Items Per Sheet", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -1308,7 +1138,6 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-<<<<<<< HEAD
    "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
@@ -1316,14 +1145,6 @@
    "default": "0", 
    "fieldname": "item_prod_cost", 
    "fieldtype": "Currency", 
-=======
-   "allow_on_submit": 0, 
-   "bold": 0, 
-   "collapsible": 0, 
-   "columns": 0, 
-   "fieldname": "sheet_length", 
-   "fieldtype": "Float", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1331,11 +1152,7 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Production Cost", 
-=======
-   "label": "Sheet Length", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -1352,7 +1169,6 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-<<<<<<< HEAD
    "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
@@ -1360,14 +1176,6 @@
    "default": "0", 
    "fieldname": "item_transport_cost", 
    "fieldtype": "Currency", 
-=======
-   "allow_on_submit": 0, 
-   "bold": 0, 
-   "collapsible": 0, 
-   "columns": 0, 
-   "fieldname": "sheet_width", 
-   "fieldtype": "Float", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1375,11 +1183,7 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Transport Cost", 
-=======
-   "label": "Sheet Width", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -1396,7 +1200,6 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-<<<<<<< HEAD
    "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
@@ -1404,14 +1207,6 @@
    "default": "0", 
    "fieldname": "item_other_cost", 
    "fieldtype": "Currency", 
-=======
-   "allow_on_submit": 0, 
-   "bold": 0, 
-   "collapsible": 0, 
-   "columns": 0, 
-   "fieldname": "rsec_aw_materials", 
-   "fieldtype": "Section Break", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1419,11 +1214,7 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Other Cost", 
-=======
-   "label": "Raw Materials", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -1444,13 +1235,8 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "column_break_24", 
    "fieldtype": "Column Break", 
-=======
-   "fieldname": "item_papers", 
-   "fieldtype": "Table", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1458,15 +1244,8 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "length": 0, 
    "no_copy": 0, 
-=======
-   "label": "Paper", 
-   "length": 0, 
-   "no_copy": 0, 
-   "options": "CM Paper Item", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
@@ -1481,7 +1260,6 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-<<<<<<< HEAD
    "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
@@ -1549,14 +1327,6 @@
    "columns": 0, 
    "fieldname": "item_total_cost", 
    "fieldtype": "Currency", 
-=======
-   "allow_on_submit": 0, 
-   "bold": 0, 
-   "collapsible": 0, 
-   "columns": 0, 
-   "fieldname": "item_others", 
-   "fieldtype": "Table", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1564,25 +1334,14 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Total Cost", 
    "length": 0, 
    "no_copy": 0, 
-=======
-   "label": "Other Items", 
-   "length": 0, 
-   "no_copy": 0, 
-   "options": "CM Misc Item", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
    "print_hide_if_no_value": 0, 
-<<<<<<< HEAD
    "read_only": 1, 
-=======
-   "read_only": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
    "reqd": 0, 
@@ -1596,11 +1355,7 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "section_break_32", 
-=======
-   "fieldname": "section_break_21", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "fieldtype": "Section Break", 
    "hidden": 0, 
    "ignore_user_permissions": 0, 
@@ -1625,7 +1380,6 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-<<<<<<< HEAD
    "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
@@ -1633,14 +1387,6 @@
    "default": "0", 
    "fieldname": "credit_period", 
    "fieldtype": "Int", 
-=======
-   "allow_on_submit": 0, 
-   "bold": 0, 
-   "collapsible": 0, 
-   "columns": 0, 
-   "fieldname": "item_rm_cost", 
-   "fieldtype": "Currency", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1648,22 +1394,14 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Credit Period(Months)", 
-=======
-   "label": "Raw Material Cost", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
    "print_hide_if_no_value": 0, 
-<<<<<<< HEAD
    "read_only": 0, 
-=======
-   "read_only": 1, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
    "reqd": 0, 
@@ -1677,14 +1415,9 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "default": "7", 
    "fieldname": "credit_rate", 
    "fieldtype": "Float", 
-=======
-   "fieldname": "item_prod_cost", 
-   "fieldtype": "Currency", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -1692,11 +1425,7 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Credit Rate", 
-=======
-   "label": "Production Cost", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -1717,11 +1446,7 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
-<<<<<<< HEAD
    "fieldname": "column_break_35", 
-=======
-   "fieldname": "column_break_24", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "fieldtype": "Column Break", 
    "hidden": 0, 
    "ignore_user_permissions": 0, 
@@ -1746,19 +1471,11 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-<<<<<<< HEAD
    "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
    "fieldname": "item_profit_amount", 
-=======
-   "allow_on_submit": 0, 
-   "bold": 0, 
-   "collapsible": 0, 
-   "columns": 0, 
-   "fieldname": "item_total_cost", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "fieldtype": "Currency", 
    "hidden": 0, 
    "ignore_user_permissions": 0, 
@@ -1767,11 +1484,7 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Profit", 
-=======
-   "label": "Total Cost", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -1788,11 +1501,7 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-<<<<<<< HEAD
    "allow_on_submit": 1, 
-=======
-   "allow_on_submit": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
@@ -1805,11 +1514,7 @@
    "in_global_search": 0, 
    "in_list_view": 0, 
    "in_standard_filter": 0, 
-<<<<<<< HEAD
    "label": "Profit %", 
-=======
-   "label": "Profit ", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
@@ -1925,11 +1630,7 @@
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
-<<<<<<< HEAD
  "modified": "2017-12-01 10:45:08.343552", 
-=======
- "modified": "2017-06-18 15:59:32.312285", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
  "modified_by": "Administrator", 
  "module": "Corrugation", 
  "name": "CM Box Description", 
@@ -1975,7 +1676,6 @@
    "share": 1, 
    "submit": 1, 
    "write": 1
-<<<<<<< HEAD
   }, 
   {
    "amend": 0, 
@@ -1996,8 +1696,6 @@
    "share": 1, 
    "submit": 0, 
    "write": 0
-=======
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
   }
  ], 
  "quick_entry": 0, 

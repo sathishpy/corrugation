@@ -204,11 +204,7 @@ def get_gl_data(from_dt, to_dt):
 			 		and voucher_type != 'Purchase Receipt' and posting_date between '{0}' and '{1}'
             group by voucher_type, voucher_no, account
             order by posting_date, voucher_no, account""".format(from_dt, to_dt)
-<<<<<<< HEAD
 	print ("Executing query: {0}".format(query))
-=======
-	#print ("Executing query: {0}".format(query))
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 
 	gl_entries = frappe.db.sql(query, as_dict=1)
 	#XXX: Replace with company abrv

@@ -17,11 +17,7 @@
    "allow_on_submit": 0, 
    "bold": 0, 
    "collapsible": 0, 
-<<<<<<< HEAD
    "columns": 2, 
-=======
-   "columns": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "fieldname": "rm_type", 
    "fieldtype": "Select", 
    "hidden": 0, 
@@ -29,35 +25,20 @@
    "ignore_xss_filter": 0, 
    "in_filter": 0, 
    "in_global_search": 0, 
-<<<<<<< HEAD
    "in_list_view": 1, 
-=======
-   "in_list_view": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "in_standard_filter": 0, 
    "label": "Type", 
    "length": 0, 
    "no_copy": 0, 
-<<<<<<< HEAD
    "options": "Top\nFlute\nLiner", 
-=======
-   "options": "Top\nFlute\nBottom\nFlute Liner\nLiner", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
    "print_hide_if_no_value": 0, 
-<<<<<<< HEAD
    "read_only": 1, 
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
    "reqd": 1, 
-=======
-   "read_only": 0, 
-   "remember_last_selected_value": 0, 
-   "report_hide": 0, 
-   "reqd": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "search_index": 0, 
    "set_only_once": 0, 
    "unique": 0
@@ -67,11 +48,7 @@
    "allow_on_submit": 0, 
    "bold": 0, 
    "collapsible": 0, 
-<<<<<<< HEAD
    "columns": 4, 
-=======
-   "columns": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "fieldname": "rm", 
    "fieldtype": "Link", 
    "hidden": 0, 
@@ -79,7 +56,6 @@
    "ignore_xss_filter": 0, 
    "in_filter": 0, 
    "in_global_search": 0, 
-<<<<<<< HEAD
    "in_list_view": 1, 
    "in_standard_filter": 0, 
    "label": "Paper", 
@@ -116,14 +92,6 @@
    "label": "Rate", 
    "length": 0, 
    "no_copy": 0, 
-=======
-   "in_list_view": 0, 
-   "in_standard_filter": 0, 
-   "label": "Material", 
-   "length": 0, 
-   "no_copy": 0, 
-   "options": "Item", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
@@ -138,17 +106,10 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-<<<<<<< HEAD
    "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
    "columns": 1, 
-=======
-   "allow_on_submit": 0, 
-   "bold": 0, 
-   "collapsible": 0, 
-   "columns": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "fieldname": "rm_weight", 
    "fieldtype": "Float", 
    "hidden": 0, 
@@ -165,11 +126,7 @@
    "precision": "", 
    "print_hide": 0, 
    "print_hide_if_no_value": 0, 
-<<<<<<< HEAD
    "read_only": 1, 
-=======
-   "read_only": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
    "reqd": 0, 
@@ -179,21 +136,12 @@
   }, 
   {
    "allow_bulk_edit": 0, 
-<<<<<<< HEAD
    "allow_on_submit": 1, 
    "bold": 0, 
    "collapsible": 0, 
    "columns": 2, 
    "fieldname": "rm_cost", 
    "fieldtype": "Currency", 
-=======
-   "allow_on_submit": 0, 
-   "bold": 0, 
-   "collapsible": 0, 
-   "columns": 0, 
-   "fieldname": "rm_cost", 
-   "fieldtype": "Float", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "ignore_xss_filter": 0, 
@@ -208,11 +156,7 @@
    "precision": "", 
    "print_hide": 0, 
    "print_hide_if_no_value": 0, 
-<<<<<<< HEAD
    "read_only": 1, 
-=======
-   "read_only": 0, 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
    "reqd": 0, 
@@ -231,11 +175,7 @@
  "issingle": 0, 
  "istable": 1, 
  "max_attachments": 0, 
-<<<<<<< HEAD
  "modified": "2017-11-20 15:38:41.078710", 
-=======
- "modified": "2017-06-18 00:53:26.342437", 
->>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
  "modified_by": "Administrator", 
  "module": "Corrugation", 
  "name": "CM Paper Item", 
