@@ -30,7 +30,11 @@
    "label": "Type", 
    "length": 0, 
    "no_copy": 0, 
+<<<<<<< HEAD
    "options": "Top\nFlute\nLiner", 
+=======
+   "options": "Top\nFlute\nBottom\nFlute Liner\nLiner", 
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
@@ -38,7 +42,11 @@
    "read_only": 0, 
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
+<<<<<<< HEAD
    "reqd": 1, 
+=======
+   "reqd": 0, 
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "search_index": 0, 
    "set_only_once": 0, 
    "unique": 0
@@ -69,7 +77,11 @@
    "read_only": 0, 
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
+<<<<<<< HEAD
    "reqd": 1, 
+=======
+   "reqd": 0, 
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "search_index": 0, 
    "set_only_once": 0, 
    "unique": 0
@@ -112,7 +124,11 @@
    "collapsible": 0, 
    "columns": 1, 
    "default": "0", 
+<<<<<<< HEAD
    "fieldname": "est_weight", 
+=======
+   "fieldname": "est_final_weight", 
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "fieldtype": "Float", 
    "hidden": 0, 
    "ignore_user_permissions": 0, 
@@ -121,14 +137,22 @@
    "in_global_search": 0, 
    "in_list_view": 1, 
    "in_standard_filter": 0, 
+<<<<<<< HEAD
    "label": "Est Weight", 
+=======
+   "label": "Est Final Weight", 
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "length": 0, 
    "no_copy": 0, 
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 
    "print_hide_if_no_value": 0, 
+<<<<<<< HEAD
    "read_only": 1, 
+=======
+   "read_only": 0, 
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "remember_last_selected_value": 0, 
    "report_hide": 0, 
    "reqd": 0, 
@@ -177,7 +201,11 @@
  "issingle": 0, 
  "istable": 1, 
  "max_attachments": 0, 
+<<<<<<< HEAD
  "modified": "2017-11-12 00:33:30.754361", 
+=======
+ "modified": "2017-06-22 17:23:03.093894", 
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
  "modified_by": "Administrator", 
  "module": "Corrugation", 
  "name": "CM Production Roll Detail", 

@@ -17,7 +17,11 @@
    "allow_on_submit": 0, 
    "bold": 0, 
    "collapsible": 0, 
+<<<<<<< HEAD
    "columns": 2, 
+=======
+   "columns": 1, 
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "fieldname": "posting_date", 
    "fieldtype": "Date", 
    "hidden": 0, 
@@ -77,7 +81,11 @@
    "allow_on_submit": 0, 
    "bold": 0, 
    "collapsible": 0, 
+<<<<<<< HEAD
    "columns": 1, 
+=======
+   "columns": 2, 
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
    "fieldname": "voucher_type", 
    "fieldtype": "Link", 
    "hidden": 0, 
@@ -206,7 +214,11 @@
  "issingle": 0, 
  "istable": 1, 
  "max_attachments": 0, 
+<<<<<<< HEAD
  "modified": "2017-07-22 17:31:26.464714", 
+=======
+ "modified": "2017-06-30 11:15:06.092086", 
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
  "modified_by": "Administrator", 
  "module": "Corrugation", 
  "name": "CM Transaction Item", 

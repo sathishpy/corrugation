@@ -4,15 +4,20 @@
 
 from __future__ import unicode_literals
 import frappe
+<<<<<<< HEAD
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import nowdate
 from corrugation.corrugation.utils import delete_submitted_document
+=======
+from frappe.model.document import Document
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 
 class CMPaperRollRegister(Document):
 	def autoname(self):
 		self.name = self.purchase_receipt + "-roll-register"
 
+<<<<<<< HEAD
 	def populate_papers(self):
 		if (self.purchase_receipt is None): return
 		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
@@ -148,11 +153,55 @@ class CMPaperRollRegister(Document):
 		#Update the cost only after setting the invoice
 		self.update_roll_cost()
 
+=======
+	def populate_rolls(self):
+		self.purchase_weight = self.get_purchase_weight()
+		self.total_weight = 0
+
+		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
+		print("Populating {0} CM Paper Rolls for receipt {1}".format(len(receipt.items), self.purchase_receipt))
+		self.paper_rolls = []
+		for item in receipt.items:
+			if not is_paper_item(item): continue
+			weight = item.qty
+
+			rolls = frappe.db.sql_list("""select name from `tabCM Paper Roll` where paper=%s""", item.item_code)
+			if rolls:
+				idx = len(rolls) + 1
+			else:
+				idx = 1
+			while (weight > 0):
+				paper_roll = frappe.new_doc("CM Paper Roll Detail")
+				paper_roll.paper = item.item_code
+				paper_roll.number = idx
+				idx += 1
+				if (weight > 500):
+					paper_roll.weight = 500
+					weight -= 500
+				else:
+					paper_roll.weight = weight
+					weight = 0
+				self.append("paper_rolls", paper_roll)
+				self.total_weight += paper_roll.weight
+				print "Creating Roll {0}-{1}".format(item.item_code, paper_roll.weight)
+
+	def register_rolls(self):
+		for roll in self.paper_rolls:
+			paper_roll = frappe.new_doc("CM Paper Roll")
+			paper_roll.paper = roll.paper
+			paper_roll.weight = roll.weight
+			paper_roll.status = "Ready"
+			paper_roll.save()
+
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 	def get_purchase_weight(self):
 		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
 		weight = 0
 		for item in receipt.items:
+<<<<<<< HEAD
 			if frappe.db.get_value("Item", item.item_code, "item_group") != "Paper": continue
+=======
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 			weight += item.qty
 		return weight
 
@@ -162,6 +211,7 @@ class CMPaperRollRegister(Document):
 			weight += roll.weight
 		return weight
 
+<<<<<<< HEAD
 	def on_validate(self):
 		receipt = frappe.get_doc("Purchase Receipt", self.purchase_receipt)
 		items = [item.item_code for item in receipt.items]
@@ -238,3 +288,17 @@ def update_invoice(pi, method):
 			roll_receipt.purchase_invoice_2 = roll_receipt.purchase_invoice
 			roll_receipt.purchase_invoice = None
 			roll_receipt.save()
+=======
+	def on_submit(self):
+		roll_weight = self.get_roll_weight()
+		purchase_weight = self.get_purchase_weight()
+		if (roll_weight != purchase_weight):
+			frappe.throw(_("Paper roll weight doesn't match the purchase weight"))
+		self.register_rolls()
+
+@frappe.whitelist()
+def is_paper_item(rm):
+	if "paper" in rm.item_name or "Paper" in rm.item_name:
+		return True
+	return False
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a

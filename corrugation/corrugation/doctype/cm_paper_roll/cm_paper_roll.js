@@ -3,6 +3,7 @@
 
 frappe.ui.form.on('CM Paper Roll', {
 	refresh: function(frm) {
+<<<<<<< HEAD
 		frm.add_custom_button(__('Scrap Paper'), function() {
 				frm.events.scrap_paper(frm)
 		});
@@ -20,4 +21,8 @@ frappe.ui.form.on('CM Paper Roll', {
 				});
 			}, __("Scrap Paper Quantity"), __("Scarp Paper"));
 	},
+=======
+
+	}
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 });

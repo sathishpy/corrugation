@@ -10,6 +10,7 @@ def get_data():
 			"icon": "octicon octicon-package",
 			"type": "module",
 			"label": _("Corrugation")
+<<<<<<< HEAD
 		},
 		{
 			"module_name": "Corrugation Order",
@@ -83,4 +84,7 @@ def get_data():
 			"type": "link",
 			"link": "List/Purchase Receipt"
 		},
+=======
+		}
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 	]

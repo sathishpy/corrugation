@@ -33,8 +33,12 @@ def get_result(filters):
                     voucher_type, voucher_no, party, against_voucher,
                     remarks, against
             from `tabGL Entry`
+<<<<<<< HEAD
 			where voucher_type != 'Stock Entry' AND posting_date >= '"""+ filters.from_date +
 			"""' AND posting_date <= '""" + filters.to_date + """'
+=======
+			where voucher_type != 'Stock Entry'
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
             {group_by_condition}
             order by posting_date, account""".format(group_by_condition=group_by_condition), filters, as_dict=1
 	)

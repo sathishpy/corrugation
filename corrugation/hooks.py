@@ -9,7 +9,11 @@ app_description = "Customizations for corrugation manufacturing Industry"
 app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "sathishpy@gmail.com"
+<<<<<<< HEAD
 app_license = "GNUv3"
+=======
+app_license = "MIT"
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 
 # Includes in <head>
 # ------------------
@@ -54,7 +58,11 @@ app_license = "GNUv3"
 # ------------
 
 before_install = "corrugation.install.before_install"
+<<<<<<< HEAD
 after_install = "corrugation.install.after_install"
+=======
+# after_install = "corrugation.install.after_install"
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 
 # Desk Notifications
 # ------------------
@@ -85,6 +93,7 @@ after_install = "corrugation.install.after_install"
 # 		"on_trash": "method"
 #	}
 # }
+<<<<<<< HEAD
 doc_events = {
     "Purchase Receipt": {
         "on_submit": "corrugation.corrugation.doctype.cm_paper_roll_register.cm_paper_roll_register.create_new_rolls",
@@ -102,6 +111,9 @@ doc_events = {
         "after_delete": "corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.add_doc_to_mirroring_queue",
     },
 }
+=======
+
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 # Scheduled Tasks
 # ---------------
 
@@ -122,6 +134,7 @@ doc_events = {
 # 		"corrugation.tasks.monthly"
 # 	]
 # }
+<<<<<<< HEAD
 scheduler_events = {
 #	"all": [
 #		"corrugation.corrugation.doctype.cm_doc_mirror.cm_doc_mirror.mirror_doc_updates"
@@ -130,6 +143,8 @@ scheduler_events = {
 		"corrugation.corrugation.utils.schedule_daily_jobs"
 	]
 }
+=======
+>>>>>>> 243d2cbcdd2be1575283550a2496da5aa3e6e60a
 
 # Testing
 # -------
