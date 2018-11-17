@@ -50,7 +50,7 @@ class CMPaperRollRegister(Document):
 				(basic, tax, charge) = item_rates[paper_roll.paper]
 				paper_roll.unit_cost = (basic + charge)
 				self.append("paper_rolls", paper_roll)
-				print "Creating Roll {0}-{1}".format(paper_item.paper, paper_roll.weight)
+				print ("Creating Roll {0}-{1}".format(paper_item.paper, paper_roll.weight))
 
 	def renumber_rolls(self):
 		if (len(self.paper_rolls) == 0): return
