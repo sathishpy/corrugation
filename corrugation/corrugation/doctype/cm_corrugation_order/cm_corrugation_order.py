@@ -240,7 +240,7 @@ class CMCorrugationOrder(Document):
 		cancel_production_roll_qty(self)
 
 	def create_new_stock_entry(self):
-		print ("Creating stock entry for corrugation order {0} of quantity {1}".format(self.box, self.mfg_qty))
+		print "Creating stock entry for corrugation order {0} of quantity {1}".format(self.box, self.mfg_qty)
 		se = frappe.new_doc("Stock Entry")
 		se.purpose = "Manufacture"
 		for paper in self.get_layer_papers():
@@ -322,7 +322,7 @@ def update_roll_qty(co):
 		print ("Amount of {0} paper {1} needed is {2}".format(rm_type, roll.paper, planned_qty[rm_type]))
 		used_roll = get_matching_last_used_roll(added_rolls, roll_item.paper_roll, rm_type)
 		if used_roll is not None and used_roll.paper_roll == roll_item.paper_roll:
-			print ("Used roll is {0} having final weight {1}".format(used_roll.paper_roll, used_roll.final_weight))
+			print "Used roll is {0} having final weight {1}".format(used_roll.paper_roll, used_roll.final_weight)
 			roll_item.start_weight = used_roll.final_weight
 
 		roll_item.est_weight = planned_qty[rm_type]

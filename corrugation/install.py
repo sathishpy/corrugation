@@ -74,7 +74,7 @@ def add_paper_template(name):
 
 def update_mf_settings():
     #Allow over production
-    print ("Updating manufacturing settings")
+    print "Updating manufacturing settings"
     mf_settings = frappe.get_doc({"doctype": "Manufacturing Settings", "allow_production_on_holidays": 0})
     mf_settings.allow_production_on_holidays = 1
     mf_settings.allow_overtime = 1

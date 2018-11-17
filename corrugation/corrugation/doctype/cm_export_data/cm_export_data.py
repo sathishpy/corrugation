@@ -36,14 +36,14 @@ class CMExportData(Document):
 		self.load_data()
 
 	def generate_xml(self):
-		print ("Generating export data")
+		print "Generating export data"
 		vouchers = [entry.voucher_no for entry in self.transaction_items]
 		vouchers = list(set(vouchers))
 		dom = get_tally_head()
 		for voucher in vouchers:
 			entries = [entry for entry in self.transaction_items if entry.voucher_no == voucher]
 			invoice = entries[0]
-			print ("Entry is {0}-{1}".format(invoice.posting_date, invoice.voucher_no))
+			print "Entry is {0}-{1}".format(invoice.posting_date, invoice.voucher_no)
 			request = dom.getElementsByTagName("REQUESTDATA")[0]
 			if (invoice.voucher_type == "Purchase Invoice"):
 				child = get_tally_purchase_message(entries)
@@ -54,7 +54,7 @@ class CMExportData(Document):
 			request.appendChild(child)
 
 		self.export_data = dom.toxml()
-		print (self.export_data)
+		print self.export_data
 
 
 	def on_update(self):

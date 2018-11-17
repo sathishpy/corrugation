@@ -16,7 +16,7 @@ class CMBox(Document):
 	def get_item_doc(self):
 		item = frappe.db.get_value("Item", filters={"item_code": self.box_code})
 		if item == None:
-			print ("Creating item for box {0}".format(self.box_name))
+			print "Creating item for box {0}".format(self.box_name)
 			return frappe.new_doc("Item")
 		else:
 			return frappe.get_doc("Item", item)
@@ -24,7 +24,7 @@ class CMBox(Document):
 	def get_item_descriptions(self):
 		bom = frappe.db.get_value("CM Box Description", filters={"box": self.box_code})
 		if bom == None:
-			print ("Creating BOM for box {0}".format(self.box_name))
+			print "Creating BOM for box {0}".format(self.box_name)
 			box =[frappe.new_doc("CM Box Description")]
 			return box
 		else:
@@ -84,7 +84,7 @@ class CMBox(Document):
 				box_bom.item_height = self.box_height
 				box_bom.populate_raw_materials()
 			box_bom.save(ignore_permissions=True)
-			print ("Updated box bom {0}".format(box_bom.name))
+			print "Updated box bom {0}".format(box_bom.name)
 
 	def on_trash(self):
 		box_descs = frappe.get_all("CM Box Description", filters={'box': self.box_code})

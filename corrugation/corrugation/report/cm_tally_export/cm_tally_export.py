@@ -10,7 +10,7 @@ def execute(filters=None):
     columns = get_columns(filters)
     entries = get_result(filters)
     for entry in entries:
-        print (entry)
+        print entry
 
     return columns, entries
 
@@ -26,7 +26,7 @@ def get_columns(filters):
 
 def get_result(filters):
     group_by_condition = "group by voucher_type, voucher_no, account"
-    print ("Filters is {0}".format(filters))
+    print "Filters is {0}".format(filters)
 
     gl_entries = frappe.db.sql("""
         	select  posting_date, account, sum(debit) as debit, sum(credit) as credit,
