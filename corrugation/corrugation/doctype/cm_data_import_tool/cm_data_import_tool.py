@@ -19,7 +19,7 @@ class CMDataImportTool(Document):
 	def extract_data(self):
 		if self.filename is None: return
 		self.party_items = self.account_items = self.box_items = self.roll_items = self.voucher_items = []
-		print "Retrieving data from file {0}".format(self.filename)
+		print ("Retrieving data from file {0}".format(self.filename))
 		filename = self.filename.split("/")[-1]
 
 		filepath = frappe.get_site_path("private", "files", filename);
@@ -466,7 +466,7 @@ def validate_headers(filepath, required_field_names):
 		field_names, missing_fields = [], []
 		read_csv_file = csv.reader(csvfile, delimiter= str(","))
 		field_names = (next(read_csv_file))
-		print "hearder is {0}".format(field_names)
+		print ("hearder is {0}".format(field_names))
 		for required_field in required_field_names:
 			if required_field not in field_names:
 				missing_fields.append(required_field)
@@ -627,5 +627,5 @@ def filter_account(doctype, txt, searchfield, start, page_len, filters):
 	account_type = filters["account_type"]
 
 	filter_query =	"""select name from `tabAccount` where parent_account LIKE '{0}%' and name LIKE '%{1}%'""".format(account_type, txt)
-	print "Selecting accounts using query {0}".format(filter_query)
+	print ("Selecting accounts using query {0}".format(filter_query))
 	return frappe.db.sql(filter_query)

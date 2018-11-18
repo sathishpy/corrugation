@@ -91,7 +91,7 @@ class CMProductionOrder(Document):
 			boards[idx], boards[bom_board_idx] = boards[bom_board_idx], boards[idx]
 			while needed_boards > 0 and idx < len(boards):
 				(board_name, qty) = boards[idx]
-				print "Adding {0} board items for {1}".format(needed_boards, board_name)
+				print ("Adding {0} board items for {1}".format(needed_boards, board_name))
 				new_item = frappe.new_doc("CM Production Board Detail")
 				new_item.layer_type = layer_type
 				new_item.layer = board_name
@@ -287,7 +287,7 @@ def submit_production_order(cm_po):
 	po.wip_warehouse = po.source_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_wip_warehouse")
 	po.fg_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_fg_warehouse")
 	po.submit()
-	print "Created production order {0} for {1} of quantity {2}".format(po.name, po.production_item, po.qty)
+	print ("Created production order {0} for {1} of quantity {2}".format(po.name, po.production_item, po.qty))
 	return po.name
 
 def submit_sales_order(sales_order):
@@ -303,7 +303,7 @@ def create_new_stock_entry(cm_po):
 		po = frappe.get_doc("Production Order", orders[0].name)
 	else: frappe.throw("Unable to find the production order for sales_order {0}".format(cm_po.sales_order))
 
-	print "Creating stock entry for production order {0} of quantity {1}".format(po.name, po.qty)
+	print ("Creating stock entry for production order {0} of quantity {1}".format(po.name, po.qty))
 
 	se = frappe.new_doc("Stock Entry")
 	stock_entry = make_stock_entry(po.name, "Manufacture", po.qty)

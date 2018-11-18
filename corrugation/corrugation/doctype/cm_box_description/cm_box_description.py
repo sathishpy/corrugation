@@ -323,7 +323,7 @@ class CMBoxDescription(Document):
 
 		bom.base_operating_cost = bom.operating_cost = bom.quantity * self.item_prod_cost
 		bom.save()
-		print "Creating new bom {0} for {1} with operating cost {2}".format(bom.name, bom.item_name, bom.operating_cost)
+		print ("Creating new bom {0} for {1} with operating cost {2}".format(bom.name, bom.item_name, bom.operating_cost))
 		bom.submit()
 		self.item_bom = bom.name
 
