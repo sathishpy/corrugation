@@ -176,7 +176,7 @@ class CMProductionOrder(Document):
 				self.append("crg_orders", order_item)
 				board_cost += used_qty * order.get_paper_cost_per_board()
 				print("Cost of {0} boards {1} is {2}".format(used_qty, board_item.layer, board_cost))
-			 	if needed_qty <= 0:
+				if needed_qty <= 0:
 					break
 			self.act_rm_cost += (board_cost/self.mfg_qty)
 		self.act_rm_cost += frappe.db.get_value("CM Box Description", self.box_desc, "item_misc_cost")

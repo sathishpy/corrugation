@@ -13,7 +13,7 @@ class CMProductCosts(Document):
 		self.name = "Production Report {0}-{1}".format(self.cm_month, self.cm_year)
 
 	def printUpdateCosts(self):
-		print ("Getting costs for {0}-{1}".format(self.cm_month, self.cm_year);)
+		print ("Getting costs for {0}-{1}".format(self.cm_month, self.cm_year))
 		prod_orders = frappe.get_all("Production Order", fields={"status":"Completed"})
 		print("Prod Order Name    Production Item     Qunatity     BOM-Cost    Actual-Cost")
 		for porder in prod_orders:
