@@ -14,11 +14,11 @@ class CMProductCosts(Document):
 
 	def printUpdateCosts(self):
 		print ("Getting costs for {0}-{1}".format(self.cm_month, self.cm_year))
-		prod_orders = frappe.get_all("Production Order", fields={"status":"Completed"})
+		prod_orders = frappe.get_all("Work Order", fields={"status":"Completed"})
 		print("Prod Order Name    Production Item     Qunatity     BOM-Cost    Actual-Cost")
 		for porder in prod_orders:
-			order = frappe.get_doc("Production Order", porder.name)
-			stock_entry = frappe.get_doc("Stock Entry", {"production_order":porder.name})
+			order = frappe.get_doc("Work Order", porder.name)
+			stock_entry = frappe.get_doc("Stock Entry", {"work_order":porder.name})
 			bom = frappe.get_doc("BOM", order.bom_no)
 			print ("{0}     {1}       {2}    {3}    {4}".format(order.name, order.production_item, order.produced_qty, (bom.base_total_cost/bom.quantity)*order.produced_qty, stock_entry.total_incoming_value))
 			#print ("{0}     {1}       {2}    {3}    {4}".format(order.name, order.production_item, order.produced_qty, order.bom_no, stock_entry.total_incoming_value))
@@ -36,9 +36,9 @@ class CMProductCosts(Document):
 		start_date = datetime.date(year=int(self.cm_year), month=month, day=1)
 		end_date = datetime.date(year=int(self.cm_year), month=month, day=15)
 
-		stock_entries = frappe.db.sql("""select name, posting_date, production_order
+		stock_entries = frappe.db.sql("""select name, posting_date, work_order
 										from `tabStock Entry`
-										where production_order is not NULL and posting_date between '{0}' and '{1}'"""\
+										where work_order is not NULL and posting_date between '{0}' and '{1}'"""\
 										.format(start_date, end_date),as_dict=1)
 
 		self.cm_act_indirect_cost = get_total_expenses(month)
@@ -49,9 +49,9 @@ class CMProductCosts(Document):
 
 		for se in stock_entries:
 			print ("--------------------------------------------------------------")
-			print ("Processing stock entry {0} on {1} for {2}".format(se.name, se.posting_date, se.production_order))
+			print ("Processing stock entry {0} on {1} for {2}".format(se.name, se.posting_date, se.work_order))
 
-			order = frappe.get_doc("Production Order", se.production_order)
+			order = frappe.get_doc("Work Order", se.work_order)
 			stock_entry = frappe.get_doc("Stock Entry", se.name)
 			bom = frappe.get_doc("BOM", order.bom_no)
 
@@ -114,12 +114,12 @@ def get_total_expenses(month):
 	return expense_total
 
 def get_production_details(month):
-	prod_orders = frappe.get_all("Production Order", fields={"status":"Completed"})
+	prod_orders = frappe.get_all("Work Order", fields={"status":"Completed"})
 	total_boxes = total_production = 0
 
 	for order_entry in prod_orders:
-		order = frappe.get_doc("Production Order", order_entry.name)
-		stock_entry = frappe.get_doc("Stock Entry", {"production_order":order.name})
+		order = frappe.get_doc("Work Order", order_entry.name)
+		stock_entry = frappe.get_doc("Stock Entry", {"work_order":order.name})
 		total_boxes += order.produced_qty
 		total_production += stock_entry.total_outgoing_value
 

@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from erpnext.manufacturing.doctype.production_order.production_order import make_stock_entry
+from erpnext.manufacturing.doctype.work_order.work_order import make_stock_entry
 from erpnext.stock.utils import get_latest_stock_qty
 from corrugation.corrugation.roll_selection import select_rolls_for_box
 from corrugation.corrugation.utils import delete_submitted_document
@@ -210,7 +210,7 @@ class CMProductionOrder(Document):
 			tracked_board_count += crg_order.board_count
 
 		if (used_board_count != tracked_board_count):
-			frappe.throw("Not all used boards in production order have been tracked to corrugation order")
+			frappe.throw("Not all used boards in Work Order have been tracked to corrugation order")
 
 	def update_used_corrugated_boards(self):
 		for crg_order in self.crg_orders:
@@ -244,7 +244,7 @@ class CMProductionOrder(Document):
 
 	def delete_stock_and_production_entry(self, stock_entry, prod_order):
 		delete_submitted_document("Stock Entry", stock_entry)
-		delete_submitted_document("Production Order", prod_order)
+		delete_submitted_document("Work Order", prod_order)
 		self.stock_entry = self.prod_order = None
 
 	def on_cancel(self):
@@ -276,7 +276,7 @@ class CMProductionOrder(Document):
 		se.submit()
 
 def submit_production_order(cm_po):
-	po = frappe.new_doc("Production Order")
+	po = frappe.new_doc("Work Order")
 	po.production_item = cm_po.box
 	box_details = frappe.get_doc("CM Box Description", cm_po.box_desc)
 	po.bom_no = box_details.item_bom
@@ -287,7 +287,7 @@ def submit_production_order(cm_po):
 	po.wip_warehouse = po.source_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_wip_warehouse")
 	po.fg_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_fg_warehouse")
 	po.submit()
-	print ("Created production order {0} for {1} of quantity {2}".format(po.name, po.production_item, po.qty))
+	print ("Created Work Order {0} for {1} of quantity {2}".format(po.name, po.production_item, po.qty))
 	return po.name
 
 def submit_sales_order(sales_order):
@@ -298,12 +298,12 @@ def submit_sales_order(sales_order):
 
 @frappe.whitelist()
 def create_new_stock_entry(cm_po):
-	orders = frappe.get_all("Production Order", fields={"production_item":cm_po.box, "sales_order":cm_po.sales_order})
+	orders = frappe.get_all("Work Order", fields={"production_item":cm_po.box})#, "sales_order":cm_po.sales_order})
 	if len(orders) > 0:
-		po = frappe.get_doc("Production Order", orders[0].name)
-	else: frappe.throw("Unable to find the production order for sales_order {0}".format(cm_po.sales_order))
+		po = frappe.get_doc("Work Order", orders[0].name)
+	else: frappe.throw("Unable to find the Work Order for sales_order {0}".format(cm_po.sales_order))
 
-	print ("Creating stock entry for production order {0} of quantity {1}".format(po.name, po.qty))
+	print ("Creating stock entry for Work Order {0} of quantity {1}".format(po.name, po.qty))
 
 	se = frappe.new_doc("Stock Entry")
 	stock_entry = make_stock_entry(po.name, "Manufacture", po.qty)
