@@ -13,7 +13,8 @@ with open('corrugation/__init__.py', 'rb') as f:
     version = str(ast.literal_eval(_version_re.search(
         f.read().decode('utf-8')).group(1)))
 
-requirements = parse_requirements("requirements.txt", session="")
+#requirements = parse_requirements("requirements.txt", session="")
+install_reqs = parse_requirements("requirements.txt", session=False)
 
 setup(
         name='corrugation',
@@ -24,6 +25,10 @@ setup(
         packages=find_packages(),
         zip_safe=False,
         include_package_data=True,
-        install_requires=[str(ir.req) for ir in requirements],
+        #install_requires=[str(ir.req) for ir in requirements],
+        try:
+            install_requires = [str(ir.req) for ir in install_reqs],
+        except:
+            install_requires = [str(ir.requirement) for ir in install_reqs],
         dependency_links=[str(ir._link) for ir in requirements if ir._link]
 )
