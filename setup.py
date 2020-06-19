@@ -27,5 +27,5 @@ setup(
         include_package_data=True,
         #install_requires=[str(ir.req) for ir in requirements],
         install_requires = [str(ir.requirement) for ir in install_reqs],
-        dependency_links=[str(ir._link) for ir in requirements if ir._link]
+        dependency_links=[str(ir._link) for ir in install_requires if ir._link]
 )
