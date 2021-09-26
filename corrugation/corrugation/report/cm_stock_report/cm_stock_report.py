@@ -37,9 +37,9 @@ def execute(filters=None):
 		elif (item_group == "Products"):
 			orders = frappe.db.sql("""select name from `tabCM Corrugation Order`
 											where box ='{0}' and stock_qty > 0 """.format(item.item_code), as_dict=1)
-			production_order = ", ".join(order.name  for order in orders)	
-			lt.append(production_order)
-		if (item_group <> "Products"):	
+			work_order = ", ".join(order.name  for order in orders)	
+			lt.append(work_order)
+		if (item_group !="Products"):	
 			lt.append(notes)
 		data.append (lt)
 	return columns, data

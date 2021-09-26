@@ -102,7 +102,7 @@ def select_rolls_for_box(paper_items):
 			if roll is None:
 				frappe.throw("Failed to find a roll of weight {0} for paper {1}".format(planned_qty, paper.rm))
 				break
-			print ("Selected Roll is {0} Weight {1}".format(roll.name, roll.weight)_)
+			print ("Selected Roll is {0} Weight {1}".format(roll.name, roll.weight))
 
 			roll_item = frappe.new_doc("CM Production Roll Detail")
 			roll_item.rm_type = paper.rm_type

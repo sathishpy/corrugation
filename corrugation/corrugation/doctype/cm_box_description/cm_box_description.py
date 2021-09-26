@@ -386,12 +386,12 @@ def get_total_expenses(month):
 	return expense_total
 
 def get_production_details(month):
-	prod_orders = frappe.get_all("Production Order", fields={"status":"Completed"})
+	prod_orders = frappe.get_all("Work Order", fields={"status":"Completed"})
 	total_boxes = total_production = 0
 
 	for order_entry in prod_orders:
-		order = frappe.get_doc("Production Order", order_entry.name)
-		stock_entry = frappe.get_doc("Stock Entry", {"production_order":order.name})
+		order = frappe.get_doc("Work Order", order_entry.name)
+		stock_entry = frappe.get_doc("Stock Entry", {"work_order":order.name})
 		total_boxes += order.produced_qty
 		total_production += stock_entry.total_outgoing_value
 
