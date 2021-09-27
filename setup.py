@@ -15,7 +15,7 @@ requirements = parse_requirements("requirements.txt", session="")
 setup(
 	name='corrugation',
 	version=version,
-	description='Customizations for Corrugated Box Mmanufacturing Industry',
+	description='Customizations for Corrugated Box Manufacturing Industry',
 	author='sathishpy@gmail.com',
 	author_email='sathishpy@gmail.com',
 	packages=find_packages(),
